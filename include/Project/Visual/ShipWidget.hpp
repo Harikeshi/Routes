@@ -7,6 +7,7 @@
 // TODO: Радиус ГАС устанавливаем на корабль по время создания
 // Создание во время инициализации Периметра или Выходных данных??
 
+namespace Visual {
 class ShipWidget
 {
 public:
@@ -41,3 +42,4 @@ private:
     double radiusHAS;
     QColor color;
 };
+} // namespace Visual

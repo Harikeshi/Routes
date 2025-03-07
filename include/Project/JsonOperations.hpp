@@ -9,6 +9,12 @@
 
 class JsonHelpers
 {
+    using Segment = Visual::Models::Segment;
+    using Route = Visual::Models::Route;
+    using Ship = Visual::Models::Ship;
+    using Target = Visual::Models::Target;
+    using Perimeter = Visual::Models::Perimeter;
+
 public:
     static QJsonObject jsonFromFile(const QString& path = "/home/harikeshi/work/new/example/routes/request.json")
     {

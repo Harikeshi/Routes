@@ -2,6 +2,8 @@
 
 #include "Segment.hpp"
 
+namespace Visual {
+namespace Models {
 class Route
 {
 public:
@@ -23,3 +25,5 @@ public:
 private:
     QVector<Segment> segments;
 };
+} // namespace Models
+} // namespace Visual

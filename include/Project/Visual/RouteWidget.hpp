@@ -8,71 +8,25 @@
 #include <QVector2D>
 #include <QWidget>
 
-class RouteState
-{
-public:
-    virtual void draw(QPainter& painter, const RouteWidget& widget) = 0;
-    virtual ~RouteState() = default;
-};
+namespace Visual {
 
-// Без отрисовки nullptr
-class WithOutDrawState : public RouteState
-{
-public:
-    void draw(QPainter& painter, const RouteWidget& widget) override
-    {
-    }
-};
-
-class CurrentDrawState : public RouteState
-{
-public:
-    void draw(QPainter& painter, const RouteWidget& widget) override
-    {
-        // TODO: Проход по всем отрисовка start->current
-        // Отрисовка только головы
-        // Отрисовка ShipWidgetSegment
-
-        for (size_t i = 0; i < widget.getCurrentIndex(); ++i)
-        {
-            widget.getSegments().at(i).draw(painter, widget.getColor());
-        }
-
-        widget.getSegments().at(widget.getCurrentIndex()).draw(painter, widget.getColor());
-    }
-};
-
-class FullDrawState : public RouteState
-{
-public:
-    void draw(QPainter& painter, const RouteWidget& widget) override
-    {
-        // Отрисовка только головы
-        // Отрисовка ShipWidget
-        // TODO: Проход по всем отрисовка start->end
-
-        for (size_t i = 0; i < widget.getSegments().size() - 1; ++i)
-        {
-            // TODO: Со стрелками
-            widget.getSegments().at(i).draw(painter, widget.getColor());
-        }
-        // TODO: без стрелки
-        widget.getSegments().at(widget.getSegments().size() - 1).draw(painter, widget.getColor());
-    }
-};
+class RouteState;
+class WithOutDrawState;
+class FullDrawState;
+class CurrentDrawState;
 
 class Memento
 {
 private:
-    std::shared_ptr<RouteState> state;
+    RouteState* state;
 
 public:
-    Memento(const std::shared_ptr<RouteState> state_)
+    Memento(RouteState* state_)
         : state(state_)
     {
     }
 
-    std::shared_ptr<RouteState> getState() const
+    RouteState* getState() const
     {
         return state;
     }
@@ -81,17 +35,17 @@ public:
 class Context // TODO: RouteWidget
 {
 private:
-    std::shared_ptr<RouteState> state_; // Текущее состояние
+    RouteState* state_; // Текущее состояние
 
-    std::shared_ptr<RouteState> contextData_; // Данные контекста
+    RouteState* contextData_; // Данные контекста
 
 public:
-    Context(std::shared_ptr<RouteState> state)
+    Context(RouteState* state)
         : state_(state)
     {
     }
 
-    void setState(std::shared_ptr<RouteState> state)
+    void setState(RouteState* state)
     {
         if (contextData_ != nullptr)
         {
@@ -106,12 +60,12 @@ public:
         }
     }
 
-    void setData(const std::shared_ptr<RouteState> data)
+    void setData(RouteState* data)
     {
         contextData_ = data;
     }
 
-    std::shared_ptr<RouteState> getData() const
+    RouteState* getData() const
     {
         return contextData_;
     }
@@ -122,13 +76,13 @@ public:
     }
 
     // Сохраняет текущее состояние в Memento
-    std::shared_ptr<Memento> saveState() const
+    Memento* saveState() const
     {
-        return std::make_shared<Memento>(contextData_);
+        return new Memento(contextData_);
     }
 
     // Восстанавливает состояние из Memento
-    void restoreState(const std::shared_ptr<Memento>& memento)
+    void restoreState(Memento* memento)
     {
         contextData_ = memento->getState();
         qDebug() << "Состояние восстановлено.";
@@ -137,7 +91,7 @@ public:
 
 class RouteWidget : public QWidget
 {
-    Q_OBJECT
+    // Q_OBJECT
 public:
     RouteWidget(QWidget* parent = nullptr)
         : QWidget(parent)
@@ -281,7 +235,8 @@ public:
         }
     }
 
-    void initialize(const QVector<Segment>& segments, const QColor& color, const double radius)
+    // TODO: Пересмотреть
+    void initialize(const QVector<Visual::Models::Segment>& segments, const QColor& color, const double radius)
     {
         for (const auto& segment : segments)
         {
@@ -311,6 +266,11 @@ public:
     }
 
     /* get/set */
+    size_t getCurrentIndex() const
+    {
+        return currentSegmentIndex;
+    }
+
     QPointF getPosition() const
     {
         return position;
@@ -425,3 +385,54 @@ protected:
     QPointF position;           // Текущая позиция
     QVector<QPointF> path;      // Путь пройденный от начала до текущей позиции
 };
+
+class RouteState
+{
+public:
+    virtual void draw(QPainter& painter, RouteWidget* widget) = 0;
+    virtual ~RouteState() = default;
+};
+
+// Без отрисовки nullptr
+class WithOutDrawState : public RouteState
+{
+public:
+    void draw(QPainter& painter, RouteWidget* widget) override
+    {
+    }
+};
+
+class CurrentDrawState : public RouteState
+{
+public:
+    void draw(QPainter& painter, RouteWidget* widget) override
+    {
+        // TODO: Проход по всем отрисовка start->current
+        // Отрисовка только головы
+        // Отрисовка ShipWidgetSegment
+
+        for (size_t i = 0; i < widget->getCurrentIndex(); ++i)
+        {
+            widget->getSegments().at(i)->draw(painter, widget->getColor());
+        }
+
+        widget->getSegments().at(widget->getCurrentIndex())->draw(painter, widget->getColor());
+    }
+};
+
+class FullDrawState : public RouteState
+{
+public:
+    void draw(QPainter& painter, RouteWidget* widget) override
+    {
+        // Отрисовка только головы
+        // TODO: Проход по всем отрисовка start->end
+
+        for (size_t i = 0; i < widget->getSegments().size(); ++i)
+        {
+            // TODO: Отрисовать все со стрелками
+            widget->getSegments().at(i)->draw(painter, widget->getColor());
+        }
+    }
+};
+} // namespace Visual

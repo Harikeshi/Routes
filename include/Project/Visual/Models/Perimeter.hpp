@@ -5,6 +5,8 @@
 #include <QPolygonF>
 #include <QVector>
 
+namespace Visual {
+namespace Models {
 class Perimeter
 {
 public:
@@ -45,3 +47,5 @@ public:
 private:
     QVector<QPolygonF> inners;
 };
+} // namespace Models
+} // namespace Visual

@@ -1,5 +1,7 @@
 #pragma once
 
+namespace Visual {
+namespace Models {
 class Target
 {
     // "detection_point": [0, 0],
@@ -23,3 +25,5 @@ public:
         return currentVelocity;
     }
 };
+} // namespace Models
+} // namespace Visual

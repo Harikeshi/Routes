@@ -3,6 +3,8 @@
 #include <QPainter>
 #include <QPointF>
 
+namespace Visual {
+namespace Models {
 class Ship
 {
     double detectionRange;
@@ -41,3 +43,5 @@ public:
         return maxVelocity;
     }
 };
+} // namespace Models
+} // namespace Visual

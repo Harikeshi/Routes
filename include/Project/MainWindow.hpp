@@ -26,6 +26,9 @@
 
 class MainWindow : public QMainWindow
 {
+    using Route = Visual::Models::Route;
+    using Perimeter = Visual::Models::Perimeter;
+
     Q_OBJECT
 
 public:

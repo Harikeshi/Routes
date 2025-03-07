@@ -23,13 +23,13 @@
 
 class DataWidget : public QTabWidget
 {
-    RequestWidget* requestWidget;
+    Data::RequestWidget* requestWidget;
 
 public:
     DataWidget(QWidget* parent = nullptr)
         : QTabWidget(parent)
     {
-        requestWidget = new RequestWidget();
+        requestWidget = new Data::RequestWidget();
         addTab(requestWidget, "Request.json");
     }
 

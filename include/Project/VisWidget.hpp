@@ -16,15 +16,15 @@
 
 #include "Visual/CoordinateSystem.hpp"
 #include "Visual/GridWidget.hpp"
+#include "Visual/ObjectWidget.hpp"
 #include "Visual/PerimeterWidget.hpp"
 #include "Visual/TargetWidget.hpp"
 #include "Visual/TimeWidget.hpp"
 
+#include "Visual/Models/Limits.hpp"
 #include "Visual/Models/Perimeter.hpp"
 #include "Visual/Models/Ship.hpp"
 #include "Visual/Models/Target.hpp"
-
-#include "Visual/Models/Limits.hpp"
 
 // Responsibility Визуализировать объекты
 
@@ -35,6 +35,20 @@
 
 class VisWidget : public QWidget
 {
+    using RouteWidget = Visual::RouteWidget;
+    using PerimeterWidget = Visual::PerimeterWidget;
+    using CoordinateSystem = Visual::CoordinateSystem;
+    using GridWidget = Visual::GridWidget;
+    using TargetWidget = Visual::TargetWidget;
+    using TimeWidget = Visual::TimeWidget;
+
+    using Route = Visual::Models::Route;
+    using Segment = Visual::Models::Segment;
+    using Ship = Visual::Models::Ship;
+    using Limits = Visual::Models::Limits;
+    using Perimeter = Visual::Models::Perimeter;
+    using Target = Visual::Models::Target;
+
     Q_OBJECT
 
 public:
@@ -64,13 +78,13 @@ public:
         connect(this, &VisWidget::sendMultiplier, time, &TimeWidget::updateTime);
     }
 
-    std::unique_ptr<RouteState> state;
+    std::unique_ptr<Visual::RouteState> state;
 
-    std::unique_ptr<RouteState> lastState;
+    std::unique_ptr<Visual::RouteState> lastState;
 
     bool inState = false;
 
-    void setState(std::unique_ptr<RouteState> newState)
+    void setState(std::unique_ptr<Visual::RouteState> newState)
     {
         // TODO: При повторном нажатии на то же состояние откат к предыдущему
         // TODO: При нажатии на новое смена на новое

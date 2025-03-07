@@ -4,6 +4,7 @@
 
 // TODO: пересмотреть, вылетает
 
+namespace Visual {
 class TargetWidget : public RouteWidget
 {
 public:
@@ -47,3 +48,4 @@ public:
         RouteWidget::clear();
     }
 };
+} // namespace Visual

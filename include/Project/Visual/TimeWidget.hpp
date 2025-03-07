@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+namespace Visual {
 class TimeWidget : public QWidget
 {
 public:
@@ -58,3 +59,4 @@ private:
 
     // double time;
 };
+} // namespace Visual

@@ -10,8 +10,11 @@
 
 #include "Models/Segment.hpp"
 
+namespace Visual {
 class SegmentWidget : public QWidget
 {
+    using Segment = Visual::Models::Segment;
+
     QPointF start;
     QPointF end;
 
@@ -132,3 +135,4 @@ private:
         painter.setPen(pen);
     }
 };
+} // namespace Visual

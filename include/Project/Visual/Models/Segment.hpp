@@ -8,6 +8,8 @@
 
 #include <cmath>
 
+namespace Visual {
+namespace Models {
 class Segment
 {
     QPointF start;
@@ -56,3 +58,5 @@ public:
         qDebug() << "start: [" << start.x() << ", " << start.y() << "], end: [" << end.x() << ", " << end.y() << "], speed: " << baseSpeed;
     }
 };
+} // namespace Models
+} // namespace Visual

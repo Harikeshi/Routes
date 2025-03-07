@@ -4,15 +4,16 @@
 #include <QWidget>
 
 #include "Models/Limits.hpp"
-#include "Models/Perimeter.hpp"
 
+namespace Visual {
 class GridWidget : public QWidget
 {
+    using Limits = Visual::Models::Limits;
+
     Q_OBJECT
 
     QColor color;
     int steps; // Количество шагов
-    // double minX, minY, maxX, maxY;
 
 public:
     GridWidget(QWidget* parent = nullptr)
@@ -21,14 +22,6 @@ public:
         color = QColor(220, 220, 220);
         steps = 20;
     }
-
-    // void initialize(const std::pair<std::pair<double, double>, std::pair<double, double>>& limits)
-    // {
-    //     minX = limits.first.first;
-    //     minY = limits.first.second;
-    //     maxX = limits.second.first;
-    //     maxY = limits.second.second;
-    // }
 
     void setColor(const QColor& col)
     {
@@ -54,10 +47,7 @@ public:
 
         painter.setPen(pen);
         painter.setFont(font);
-        //     minX = limits.first.first;
-        //     minY = limits.first.second;
-        //     maxX = limits.second.first;
-        //     maxY = limits.second.second;
+
         // Вертикальные линии (ось X)
         auto step = (limits.maxX - limits.minX) / steps;
 
@@ -103,3 +93,4 @@ public:
         return image;
     }
 };
+} // namespace Visual

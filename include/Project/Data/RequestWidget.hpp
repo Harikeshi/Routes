@@ -14,6 +14,7 @@
 #include <QTabWidget>
 #include <QVector>
 
+namespace Data {
 class RequestWidget : public QWidget
 {
 private:
@@ -101,3 +102,4 @@ public:
 private:
     QTreeWidget* treeWidget;
 };
+} // namespace Data

@@ -12,7 +12,7 @@
 //        - есть пересечения, прокладываем путь, до пересечения
 //        - нет пересечения, принимаем путь
 //    5. возвращаем новую точку.
-
+namespace Visual {
 class RandomTarget
 {
 public:
@@ -92,3 +92,4 @@ public:
         return currentPoint;
     }
 };
+} // namespace Visual

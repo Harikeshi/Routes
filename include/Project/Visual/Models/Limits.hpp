@@ -1,5 +1,7 @@
 #pragma once
 
+namespace Visual {
+namespace Models {
 struct Limits
 {
     double minX;
@@ -7,3 +9,5 @@ struct Limits
     double maxX;
     double maxY;
 };
+} // namespace Models
+} // namespace Visual

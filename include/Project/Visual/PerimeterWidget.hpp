@@ -7,6 +7,7 @@
 #include <QVector2D>
 #include <QWidget>
 
+namespace Visual {
 class PerimeterWidget : public QWidget
 {
     Q_OBJECT
@@ -144,3 +145,4 @@ private:
     // TODO: Outer = inners[0]
     QVector<QPolygonF> inners;
 };
+} // namespace Visual

@@ -4,39 +4,20 @@
 #include <QTransform>
 
 #include "Models/Limits.hpp"
-#include "Models/Perimeter.hpp"
 
+namespace Visual {
 class CoordinateSystem
 {
+    using Limits = Visual::Models::Limits;
+
 public:
     // QTransform transform;
     CoordinateSystem() = default;
-
-    // CoordinateSystem(const Limits& limits)
-    //     : minX{limits.minX}, minY{limits.minY}, maxX{limits.maxX}, maxY{limits.maxY}
-    // {
-    // }
 
     // TODO: 1 какой логический путь пройден за тик -> вернуть из функции апдейт, далее реальный путь разделить на текущую скорость с ускорением и прибавить к общему времени
     // TODO: узнать сколько реально проходит с той или иной цифрой скорости
     // TODO: берем шаг в 0.1 минуты, считаем реально сколько проходит за такой шаг, далее откладываем на сегменте это расстояние в переводе на экранное расстояние
     // TODO: множитель увеличивает 0.1 на какое-то значение и рассчитывается с учетом этого множителя
-
-    // void setLimits(const double miX, const double maX, const double miY, const double maY)
-    // {
-    //     minX = miX;
-    //     maxX = maX;
-    //     minY = miY;
-    //     maxY = maY;
-    // }
-
-    // void setLimits(const std::pair<double, double> mins, const std::pair<double, double> maxs)
-    // {
-    //     minX = mins.first;
-    //     minY = mins.second;
-    //     maxX = maxs.first;
-    //     maxY = maxs.second;
-    // }
 
     QPointF toLogical(const QPointF& screen_pos) const
     {
@@ -71,24 +52,7 @@ public:
         return transform;
     }
 
-    // double getScaleX() const
-    // {
-    //     return scaleX;
-    // }
-
-    // double getScaleY() const
-    // {
-    //     return scaleY;
-    // }
-
 private:
     QTransform transform;
-
-    // double scaleX;
-    // double scaleY;
-
-    // double minX;
-    // double minY;
-    // double maxX;
-    // double maxY;
 };
+} // namespace Visual
