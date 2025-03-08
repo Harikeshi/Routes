@@ -1,8 +1,8 @@
 #pragma once
 
+#include "Visual/Models/Object.hpp"
 #include "Visual/Models/Perimeter.hpp"
 #include "Visual/Models/Route.hpp"
-#include "Visual/Models/Ship.hpp"
 #include "Visual/Models/Target.hpp"
 
 #include <QFile>
@@ -11,8 +11,7 @@ class JsonHelpers
 {
     using Segment = Visual::Models::Segment;
     using Route = Visual::Models::Route;
-    using Ship = Visual::Models::Ship;
-    using Target = Visual::Models::Target;
+    using Object = Visual::Models::Object;
     using Perimeter = Visual::Models::Perimeter;
 
 public:
@@ -215,11 +214,11 @@ public:
         return result;
     }
 
-    static Ship parseToShip(const QJsonObject& obj)
+    static Object parseShip(const QJsonObject& obj)
     {
         // TODO: !Проверку сделать отдельно
 
-        Ship ship;
+        Object ship;
 
         if (!obj.contains("ships_parameters"))
         {
@@ -243,11 +242,11 @@ public:
         return ship;
     }
 
-    static Target parseToTarget(const QJsonObject& obj)
+    static Object parseTarget(const QJsonObject& obj)
     {
         // TODO: !Проверку сделать отдельно
 
-        Target target;
+        Object target;
 
         if (!obj.contains("form_target"))
         {

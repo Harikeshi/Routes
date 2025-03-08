@@ -41,6 +41,10 @@ public:
 
     void draw(QPainter& painter, const QVector<Visual::SegmentWidget*>& segments, const QColor& color) override
     {
+        QPen pen = QPen(color, 2);
+        pen.setCosmetic(true);
+
+        painter.setPen(pen);
     }
 };
 

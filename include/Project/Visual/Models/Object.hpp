@@ -5,11 +5,11 @@
 
 namespace Visual {
 namespace Models {
-class Ship
+class Object
 {
     double detectionRange;
     double maxVelocity;
-    double searchVelocity;
+    double currentVelocity;
     // double turningRadius;
     // double minLenghtSection;
 public:
@@ -18,9 +18,9 @@ public:
         detectionRange = range;
     }
 
-    void setSearchVelocity(const double velocity)
+    void setCurrentVelocity(const double velocity)
     {
-        searchVelocity = velocity;
+        currentVelocity = velocity;
     }
 
     void setMaxVelocity(const double velocity)
@@ -33,9 +33,9 @@ public:
         return detectionRange;
     }
 
-    double getSearchVelocity() const
+    double getCurrentVelocity() const
     {
-        return searchVelocity;
+        return currentVelocity;
     }
 
     double getMaxVelocity() const

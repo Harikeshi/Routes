@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ObjectWidget.hpp"
 #include "RouteState.hpp"
 #include "SegmentWidget.hpp"
 
@@ -21,7 +22,7 @@ class RouteWidget : public QWidget
     // Q_OBJECT
 public:
     RouteWidget(QWidget* parent = nullptr, RouteState* state = new CurrentDrawState())
-        : QWidget(parent), state(state)
+        : QWidget(parent), state(state), head(new ObjectWidget(this))
     {
     }
 
@@ -100,7 +101,7 @@ public:
     }
 
     // TODO: Пересмотреть
-    void initialize(const QVector<Visual::Models::Segment>& segments, const QColor& color, const double radius)
+    void initialize(const QVector<Visual::Models::Segment>& segments, const QColor& color, const Visual::Models::Object& parameters)
     {
         for (const auto& segment : segments)
         {
@@ -108,7 +109,9 @@ public:
         }
 
         this->setColor(color);
-        this->setRadius(radius);
+        this->setRadius(parameters.getDetectionRange());
+
+        this->head->initialize(parameters);
 
         clear();
     }
@@ -243,7 +246,18 @@ public:
 
     void draw(QPainter& painter)
     {
+        // Отрисовка пути
         state->draw(painter, segments, color);
+
+        // Отрисовка Объекта
+        if (!segments.isEmpty() && currentSegmentIndex < segments.size())
+        {
+            head->draw(painter, *segments.at(currentSegmentIndex), color);
+        }
+    }
+
+    void updateHead()
+    {
     }
 
     // Сохраняет текущее состояние в Memento
@@ -258,12 +272,22 @@ public:
         state = memento->getState();
     }
 
+    void initHead(const Visual::Models::Object parameters)
+    {
+        head->initialize(parameters);
+    }
+
+    bool setModel(const Visual::Objects object)
+    {
+        return head->setModel(object);
+    }
+
 protected:
     // Memento
     RouteState* state; // Текущее состояние
 
     QVector<SegmentWidget*> segments; // Логический путь
-
+    ObjectWidget* head;
     QColor color; // TODO: Перенести в сегмент
 
     size_t currentSegmentIndex; // Индекс текущего сегмента

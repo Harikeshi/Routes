@@ -1,16 +1,33 @@
 #pragma once
 
+#include "Models/Object.hpp"
+#include "SegmentWidget.hpp"
+
 #include <QPainter>
 #include <QPolygonF>
 #include <QWidget>
 
+#include <map>
+
 namespace Visual {
+
+enum Objects
+{
+    Arrow,
+    Enemy,
+    Ship
+};
+
 class ObjectWidget : public QWidget
 {
+    using Segment = Visual::SegmentWidget;
+
     // TODO: Класс движушегося объекта
     // Точка берется с Route
     // ObjectWidget только отрисовывает
     QPolygonF model; // Это форма объекта
+
+    std::map<Visual::Objects, std::function<QPolygonF(const double)>> models;
 
     double radiusHAS; // Радиус ГАС
 
@@ -21,32 +38,93 @@ public:
     ObjectWidget(QWidget* parent = nullptr)
         : QWidget(parent)
     {
+        registerModels();
     }
 
-    void draw(QPainter& painter)
+    void initialize(const Visual::Models::Object& parameters)
     {
+        radiusHAS = parameters.getDetectionRange();
+        currentVelocity = parameters.getCurrentVelocity();
+        currentVelocity = parameters.getMaxVelocity();
     }
+
+    void registerModels()
+    {
+        // Arrow
+        models[Visual::Objects::Arrow] = [](const double size) {
+            QPolygonF arrow;
+
+            arrow << QPointF(0, 0)
+                  << QPointF(-size, size / 2)
+                  << QPointF(-size, -size / 2);
+
+            return arrow;
+        };
+
+        // Enemy
+        models[Visual::Objects::Enemy] = [](const double size) {
+            QPolygonF enemy;
+
+            enemy << QPointF(0, 0)
+                  << QPointF(-1.5 * size, 0)
+                  << QPointF(-size, +size)
+                  << QPointF(0, +size);
+
+            return enemy;
+        };
+    }
+
+    void draw(QPainter& painter, const Segment& segment, const QColor& color)
+    {
+        qDebug() << "Позиция подается в Object: " << segment.getCurrentPoint();
+        drawHas(painter, segment.getCurrentPoint());
+
+        drawModel(painter, segment, color);
+    }
+
+    void drawHas(QPainter& painter, const QPointF& center)
+    {
+        // TODO: Color?
+        painter.drawEllipse(center, radiusHAS, radiusHAS);
+    }
+
+    void setModel(const QPolygonF& polygon)
+    {
+        model = polygon;
+    }
+
+    bool setModel(const Objects object, const double size = 100)
+    {
+        auto mod = models.find(object);
+
+        if (mod != models.end())
+        {
+            this->model = mod->second(size);
+
+            return true;
+        }
+
+        return false;
+    }
+
     // TODO: Переместить в Object
-    void drawArrow(QPainter& painter, const QColor& color, const double size) const
+    void drawModel(QPainter& painter, const Segment& segment, const QColor& color)
     {
         // // Отрисовка стрелки
-        // double angle = std::atan2(end.y() - start.y(), end.x() - start.x());
+        double angle = std::atan2(segment.getEnd().y() - segment.getStart().y(), segment.getEnd().x() - segment.getStart().x());
 
-        // QPolygonF arrow;
+        qDebug() << "Угол поворота: " << angle;
+        qDebug() << "Позиция подается в drawModel: " << segment.getCurrentPoint();
 
-        // arrow << QPointF(0, 0)
-        //       << QPointF(-size, size / 2)
-        //       << QPointF(-size, -size / 2);
+        QTransform transform; // перенос в точку
+        transform.translate(segment.getCurrentPoint().x(), segment.getCurrentPoint().y());
+        transform.rotateRadians(angle); // повернуть на угол
 
-        // QTransform transform; // перенос в точку
-        // transform.translate(current.x(), current.y());
-        // transform.rotateRadians(angle); // повернуть на угол
+        model = transform.map(model);
 
-        // arrow = transform.map(arrow);
-
-        // // Заполнить полигон
-        // painter.setBrush(color);
-        // painter.drawPolygon(arrow);
+        // Заполнить полигон
+        painter.setBrush(color);
+        painter.drawPolygon(model);
     }
 };
 } // namespace Visual

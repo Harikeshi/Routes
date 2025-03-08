@@ -22,8 +22,8 @@
 #include "Visual/TimeWidget.hpp"
 
 #include "Visual/Models/Limits.hpp"
+#include "Visual/Models/Object.hpp"
 #include "Visual/Models/Perimeter.hpp"
-#include "Visual/Models/Ship.hpp"
 #include "Visual/Models/Target.hpp"
 
 // Responsibility Визуализировать объекты
@@ -43,10 +43,9 @@ class VisWidget : public QWidget
 
     using Route = Visual::Models::Route;
     using Segment = Visual::Models::Segment;
-    using Ship = Visual::Models::Ship;
+    using Object = Visual::Models::Object;
     using Limits = Visual::Models::Limits;
     using Perimeter = Visual::Models::Perimeter;
-    using Target = Visual::Models::Target;
 
     Q_OBJECT
 
@@ -64,6 +63,7 @@ public:
         perimeter = new PerimeterWidget(this);
 
         target = new RouteWidget(this);
+
         target->setNullPosition();
         target->setColor(Qt::black);
 
@@ -156,6 +156,9 @@ protected:
     {
         showFullTargetPath(painter);
 
+        // Установить Объект
+        // Установить Has
+        painter.setPen(Qt::black);
         target->draw(painter);
     }
 
@@ -352,7 +355,8 @@ public:
         {
             auto route = new RouteWidget(this); // TODO
 
-            route->initialize(route_.getSegments(), palette[routes.size() % palette.size()], shipParameters.getDetectionRange());
+            route->initialize(route_.getSegments(), palette[routes.size() % palette.size()], shipParameters);
+            route->setModel(Visual::Objects::Arrow);
 
             this->routes.append(route);
         }
@@ -366,27 +370,27 @@ public:
         loadFirstScreen();
     }
 
-    void setRoutes(const QVector<QVector<Segment>>& segmentsVector)
-    {
-        routes = QVector<RouteWidget*>();
+    // void setRoutes(const QVector<QVector<Segment>>& segmentsVector)
+    // {
+    //     routes = QVector<RouteWidget*>();
 
-        for (const auto& segments : segmentsVector)
-        {
-            auto route = new RouteWidget();
+    //     for (const auto& segments : segmentsVector)
+    //     {
+    //         auto route = new RouteWidget();
 
-            route->initialize(segments, palette[routes.size() % palette.size()], 1);
+    //         route->initialize(segments, palette[routes.size() % palette.size()], 1);
 
-            routes.append(route);
-        }
+    //         routes.append(route);
+    //     }
 
-        routesLoaded = true;
+    //     routesLoaded = true;
 
-        resetRoutesToDefault();
+    //     resetRoutesToDefault();
 
-        initLimitsFromRoutes();
+    //     initLimitsFromRoutes();
 
-        loadFirstScreen();
-    }
+    //     loadFirstScreen();
+    // }
 
     void setPerimeter(const Perimeter& p)
     {
@@ -525,33 +529,20 @@ public:
             // Отрисовка пути цели
             update();
         }
-
-        // Если Периметр загружен и отключена прокладка пути цели
-        //     // cs.setTransform(rect());
-
-        //     // Только внутри Widget
-        //     if (rect().contains(event->pos()))
-        //     {
-        //         QPointF pos = cs.toLogical(event->pos());
-        //         QString tooltipText = QString("X: %1, Y: %2").arg(pos.x()).arg(pos.y());
-        //         QToolTip::showText(event->globalPos(), tooltipText, this);
-        //     }
     }
 
     void mouseReleaseEvent(QMouseEvent* event) override
     {
-        // cs.setTransform(rect());
-
         if (event->button() == Qt::LeftButton && drawing)
         {
-            // cs.setTransform(rect());
-
             addTargetSegments();
 
             update();
 
             // TODO:RESET
             target->clear();
+            target->initHead(targetParameters);
+            target->setModel(Visual::Objects::Enemy);
 
             if (!paused)
             {
@@ -559,10 +550,6 @@ public:
                 targetTimer->start(15);
             }
         }
-
-        qDebug() << "------------------------------------";
-        for (auto segment : target->getSegments())
-            segment->show();
     }
 
     void addTargetSegments()
@@ -594,7 +581,6 @@ private slots:
             if (!route->update(speedMultiplier))
             {
                 // TODO: Требуется проверка что все доехали, а не один как сейчас
-                qDebug() << "Stop!";
                 timer->stop();
             }
         }
@@ -700,9 +686,9 @@ public:
 
         auto perimeter = JsonHelpers::parseToPolygon(obj);
 
-        shipParameters = JsonHelpers::parseToShip(obj);
+        shipParameters = JsonHelpers::parseShip(obj);
 
-        targetParameters = JsonHelpers::parseToTarget(obj);
+        targetParameters = JsonHelpers::parseTarget(obj);
 
         setPerimeter(perimeter);
     }
@@ -713,8 +699,8 @@ private:
     QVector<QColor> palette = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::cyan, Qt::magenta};
 
     // Начальные данные из входных данных
-    Ship shipParameters;
-    Target targetParameters;
+    Object shipParameters;
+    Object targetParameters;
 
     // TODO: Добавить State и Momento
 
@@ -731,12 +717,11 @@ private:
 
     // БЭНКи
     QVector<RouteWidget*> routes;
-    // QVector<Ship*> ships;
+    RouteWidget* target;
 
     QTimer* timer; // Таймер БЭНКов
 
     // Target
-    RouteWidget* target;
     QVector<QPointF> targetPath; // Экранный путь цели(координаты screen)
     QTimer* targetTimer;         // Таймер цели
     double targetSpeed = 5;      // TODO: Брать из targetParameters
