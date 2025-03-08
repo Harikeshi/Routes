@@ -77,6 +77,7 @@ public:
     void draw(QPainter& painter, const Segment& segment, const QColor& color)
     {
         qDebug() << "Позиция подается в Object: " << segment.getCurrentPoint();
+
         drawHas(painter, segment.getCurrentPoint());
 
         drawModel(painter, segment, color);
@@ -85,6 +86,8 @@ public:
     void drawHas(QPainter& painter, const QPointF& center)
     {
         // TODO: Color?
+        painter.setBrush(Qt::NoBrush);
+
         painter.drawEllipse(center, radiusHAS, radiusHAS);
     }
 
@@ -120,11 +123,14 @@ public:
         transform.translate(segment.getCurrentPoint().x(), segment.getCurrentPoint().y());
         transform.rotateRadians(angle); // повернуть на угол
 
+        auto temp = model;
         model = transform.map(model);
 
         // Заполнить полигон
         painter.setBrush(color);
         painter.drawPolygon(model);
+
+        std::swap(model, temp);
     }
 };
 } // namespace Visual

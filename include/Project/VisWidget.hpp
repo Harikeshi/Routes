@@ -158,7 +158,6 @@ protected:
 
         // Установить Объект
         // Установить Has
-        painter.setPen(Qt::black);
         target->draw(painter);
     }
 

@@ -5,6 +5,7 @@
 
 namespace Visual {
 namespace Models {
+// Ship
 class Object
 {
     double detectionRange;

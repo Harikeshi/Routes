@@ -22,7 +22,7 @@ class RouteWidget : public QWidget
     // Q_OBJECT
 public:
     RouteWidget(QWidget* parent = nullptr, RouteState* state = new CurrentDrawState())
-        : QWidget(parent), state(state), head(new ObjectWidget(this))
+        : QWidget(parent), state(state), head(new ObjectWidget())
     {
     }
 
@@ -46,13 +46,12 @@ public:
         direction.normalize();
 
         QVector2D step = direction * segment->getSpeed() * speedMultiplier; // за минуту с учетом множителя скорости
-        QPointF nextPosition = position + step.toPointF();
+        QPointF nextPosition = lastCurrentPoint + step.toPointF();
 
-        if ((position == segments.back()->getEnd()) || (QVector2D(nextPosition - segment->getStart()).length() >= QVector2D(segment->getEnd() - segment->getStart()).length()))
+        if ((lastCurrentPoint == segments.back()->getEnd()) || (QVector2D(nextPosition - segment->getStart()).length() >= QVector2D(segment->getEnd() - segment->getStart()).length()))
         {
-            position = segment->getEnd();
+            // position = segment->getEnd();
 
-            //currentLength += segments[currentSegmentIndex]->length();          //*
             segments[currentSegmentIndex]->setCurrentPoint(segment->getEnd()); //*
 
             qDebug() << "Текущая точка сегмента: " << segments[currentSegmentIndex]->getCurrentPoint();
@@ -64,7 +63,7 @@ public:
         }
         else
         {
-            position = nextPosition;
+            // position = nextPosition;
             // Расстояние от конца текущего сегмента, до точки position
             segments[currentSegmentIndex]->setCurrentPoint(nextPosition); //*
 
@@ -250,9 +249,15 @@ public:
         state->draw(painter, segments, color);
 
         // Отрисовка Объекта
-        if (!segments.isEmpty() && currentSegmentIndex < segments.size())
+        if (!segments.isEmpty() && currentSegmentIndex <= segments.size())
         {
-            head->draw(painter, *segments.at(currentSegmentIndex), color);
+            auto index = currentSegmentIndex;
+            if (currentSegmentIndex == segments.size())
+            {
+                --index;
+            }
+
+            head->draw(painter, *segments.at(index), color);
         }
     }
 
