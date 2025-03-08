@@ -157,49 +157,6 @@ public:
         return segments[currentSegmentIndex]->getCurrentPoint();
     }
 
-    void drawCurrent(QPainter& painter)
-    {
-        QPen pen = QPen(color, 2);
-        pen.setCosmetic(true);
-
-        painter.setPen(pen);
-
-        for (const auto segment : segments)
-        {
-            segment->draw(painter, color, 100);
-        }
-
-        // Отрисовка пройденного пути
-        // if (!path.isEmpty())
-        // {
-        //     for (int j = 0; j < path.size() - 1; ++j)
-        //     {
-        //         auto start = path[j];
-        //         auto end = path[j + 1];
-
-        //         painter.drawLine(start, end);
-        //     }
-        // }
-    }
-
-    // void drawFull(QPainter& painter)
-    // {
-    //     QPen pen = QPen(color, 2);
-    //     pen.setCosmetic(true);
-
-    //     painter.setPen(pen);
-
-    //     // Отрисовка пройденного пути
-    //     if (!path.isEmpty())
-    //     {
-    //         // show logical path
-    //         for (const auto& segment : segments)
-    //         {
-    //             segment.draw(painter, true, 10);
-    //         }
-    //     }
-    // }
-
     void draw(QPainter& painter, const bool showLines, const bool full)
     {
         QPen pen = QPen(color, 2);
@@ -249,7 +206,8 @@ public:
         reset();
     }
 
-    void reset()
+    // TODO: По сути это clear, а ресет это clear + segments.clear()
+    void reset1()
     {
         // Сброс к начальным значениям пути
         // Обнуляем все кроме segments
@@ -317,15 +275,14 @@ public:
         radius = r;
     }
 
-    void clear()
+    // TODO: Только очистка
+    void clear1()
     {
-        segments.clear();
+        segments.clear(); // TODO: это reset
     }
 
     bool isEmpty() const
     {
-        qDebug() << "Route::isEmpty():: segments.size(): " << segments.size();
-
         return segments.isEmpty();
     }
 
@@ -361,29 +318,68 @@ protected:
     }
 
 public:
-    void setState()
+    void setState(RouteState* state)
     {
+        if (contextData_ != nullptr)
+        {
+            // Откат к предыдущей
+            state_ = contextData_;
+            contextData_ = nullptr;
+        }
+        else
+        {
+            contextData_ = state_;
+            state_ = state;
+        }
+    }
+
+    void setData(RouteState* data)
+    {
+        contextData_ = data;
+    }
+
+    RouteState* getData() const
+    {
+        return contextData_;
+    }
+
+    void draw(QPainter& painter)
+    {
+        state_->draw(painter, this);
+    }
+
+    // Сохраняет текущее состояние в Memento
+    Memento* saveState() const
+    {
+        return new Memento(contextData_);
+    }
+
+    // Восстанавливает состояние из Memento
+    void restoreState(Memento* memento)
+    {
+        contextData_ = memento->getState();
+        qDebug() << "Состояние восстановлено.";
     }
 
 protected:
     // Memento
-    QStack<RouteState*> stateStack;
+    RouteState* state_; // Текущее состояние
 
-    int steps{0}; // TODO: для тестов
+    RouteState* contextData_; // Данные контекста
 
     QVector<SegmentWidget*> segments; // Логический путь
 
     QColor color; // TODO: Перенести в сегмент
 
-    double currentTime; // Прошло времени с начала маршрута
-
-    double currentLength; // TODO: не используется. Длина пройденного пути
-    // TODO: при инициализации маршрута брать данные о скорости и радиусе ГАС из json
-    double radius = 10; // Радиус ГАС
-
     size_t currentSegmentIndex; // Индекс текущего сегмента
-    QPointF position;           // Текущая позиция
-    QVector<QPointF> path;      // Путь пройденный от начала до текущей позиции
+    double currentLength;       // TODO: не используется. Длина пройденного пути
+
+    // TODO: при инициализации маршрута брать данные о скорости и радиусе ГАС из json
+    double currentTime;    // Прошло времени с начала маршрута
+    double radius = 10;    // Радиус ГАС
+    QPointF position;      // Текущая позиция
+    QVector<QPointF> path; // Путь пройденный от начала до текущей позиции
+    int steps{0};          // TODO: для тестов
 };
 
 class RouteState
