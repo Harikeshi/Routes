@@ -15,6 +15,8 @@ class SegmentWidget : public QWidget
 {
     using Segment = Visual::Models::Segment;
 
+    // TODO: Добавить Segment
+    // TODO: Должен быть сегмент + color, current
     QPointF start;
     QPointF end;
 
@@ -30,6 +32,11 @@ public:
     {
     }
 
+    void clear()
+    {
+        current = start;
+    }
+
     void initialize(const Segment& segment)
     {
         start = segment.getStart();
@@ -39,16 +46,21 @@ public:
         baseSpeed = segment.getSpeed();
     }
 
-    void draw(QPainter& painter, const QColor& color, const double size = 10) const
+    void drawCurrent(QPainter& painter, const QColor& color) const
     {
         setPen(painter, color);
-        // TODO: если полностью пройден то current == end
-        painter.drawLine(start, current);
 
-        if (end == current)
-            drawArrow(painter, color, size);
+        painter.drawLine(start, current);
     }
 
+    void drawFull(QPainter& painter, const QColor& color) const
+    {
+        setPen(painter, color);
+
+        painter.drawLine(start, end);
+    }
+
+    // TODO: Переместить в Object
     void drawArrow(QPainter& painter, const QColor& color, const double size) const
     {
         // Отрисовка стрелки
@@ -61,7 +73,7 @@ public:
               << QPointF(-size, -size / 2);
 
         QTransform transform; // перенос в точку
-        transform.translate(end.x(), end.y());
+        transform.translate(current.x(), current.y());
         transform.rotateRadians(angle); // повернуть на угол
 
         arrow = transform.map(arrow);

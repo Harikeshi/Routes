@@ -1,6 +1,5 @@
 #include <Project/MainWindow.hpp>
 #include <Project/Visual/RouteWidget.hpp>
-#include <Project/Visual/TargetWidget.hpp>
 
 int main(int argc, char* argv[])
 {

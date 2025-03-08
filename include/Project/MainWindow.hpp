@@ -151,7 +151,7 @@ protected:
         }
         else if (event->key() == Qt::Key_B)
         {
-            visWidget->full();
+            visWidget->showCompletedRoutes();
         }
         else if (event->key() == Qt::Key_P)
         {

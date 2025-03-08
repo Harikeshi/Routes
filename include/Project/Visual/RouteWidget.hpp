@@ -1,5 +1,6 @@
 #pragma once
 
+#include "RouteState.hpp"
 #include "SegmentWidget.hpp"
 
 #include <QDebug>
@@ -15,95 +16,23 @@ class WithOutDrawState;
 class FullDrawState;
 class CurrentDrawState;
 
-class Memento
-{
-private:
-    RouteState* state;
-
-public:
-    Memento(RouteState* state_)
-        : state(state_)
-    {
-    }
-
-    RouteState* getState() const
-    {
-        return state;
-    }
-};
-
-class Context // TODO: RouteWidget
-{
-private:
-    RouteState* state_; // Текущее состояние
-
-    RouteState* contextData_; // Данные контекста
-
-public:
-    Context(RouteState* state)
-        : state_(state)
-    {
-    }
-
-    void setState(RouteState* state)
-    {
-        if (contextData_ != nullptr)
-        {
-            // Откат к предыдущей
-            state_ = contextData_;
-            contextData_ = nullptr;
-        }
-        else
-        {
-            contextData_ = state_;
-            state_ = state;
-        }
-    }
-
-    void setData(RouteState* data)
-    {
-        contextData_ = data;
-    }
-
-    RouteState* getData() const
-    {
-        return contextData_;
-    }
-
-    void draw()
-    {
-        // state_->draw(*this);
-    }
-
-    // Сохраняет текущее состояние в Memento
-    Memento* saveState() const
-    {
-        return new Memento(contextData_);
-    }
-
-    // Восстанавливает состояние из Memento
-    void restoreState(Memento* memento)
-    {
-        contextData_ = memento->getState();
-        qDebug() << "Состояние восстановлено.";
-    }
-};
-
 class RouteWidget : public QWidget
 {
     // Q_OBJECT
 public:
-    RouteWidget(QWidget* parent = nullptr)
-        : QWidget(parent)
+    RouteWidget(QWidget* parent = nullptr, RouteState* state = new CurrentDrawState())
+        : QWidget(parent), state(state)
     {
     }
 
     // Вычислить текущую точку,
     bool update(const double speedMultiplier)
     {
+        qDebug() << "Текущий индекс: " << currentSegmentIndex;
         if (currentSegmentIndex >= segments.size())
         {
             steps = 0;
+            qDebug() << "Выход из update()";
             return false;
         }
 
@@ -111,33 +40,46 @@ public:
         const SegmentWidget* segment = segments[currentSegmentIndex];
         QVector2D direction(segment->getEnd() - segment->getStart());
 
+        auto lastCurrentPoint = segments[currentSegmentIndex]->getCurrentPoint();
+
         direction.normalize();
 
         QVector2D step = direction * segment->getSpeed() * speedMultiplier; // за минуту с учетом множителя скорости
-        qDebug() << "Скорость на отрезке: " << segment->getSpeed();
         QPointF nextPosition = position + step.toPointF();
 
         if ((position == segments.back()->getEnd()) || (QVector2D(nextPosition - segment->getStart()).length() >= QVector2D(segment->getEnd() - segment->getStart()).length()))
         {
             position = segment->getEnd();
-            currentLength += segments[currentSegmentIndex]->length();            //*
-            segments[currentSegmentIndex++]->setCurrentPoint(segment->getEnd()); //*
+
+            //currentLength += segments[currentSegmentIndex]->length();          //*
+            segments[currentSegmentIndex]->setCurrentPoint(segment->getEnd()); //*
+
+            qDebug() << "Текущая точка сегмента: " << segments[currentSegmentIndex]->getCurrentPoint();
+
+            currentLength += std::hypot(lastCurrentPoint.x() - segment->getEnd().x(), lastCurrentPoint.y() - segment->getEnd().y());
+            currentSegmentIndex++;
+
+            qDebug() << "Измененный индекс: " << currentSegmentIndex;
         }
         else
         {
             position = nextPosition;
             // Расстояние от конца текущего сегмента, до точки position
-            currentLength += std::hypot(position.x() - segments[currentSegmentIndex]->getCurrentPoint().x(), position.y() - segments[currentSegmentIndex]->getCurrentPoint().y()); //*
-            segments[currentSegmentIndex]->setCurrentPoint(nextPosition);                                                                                                          //*
+            segments[currentSegmentIndex]->setCurrentPoint(nextPosition); //*
+
+            currentLength += std::hypot(lastCurrentPoint.x() - nextPosition.x(), lastCurrentPoint.y() - nextPosition.y());
         }
 
-        qDebug() << "Шаг [" << steps++ << "]: начало: " << position << ", конец: " << nextPosition << ", скорость: " << segment->getSpeed() * speedMultiplier;
+        //qDebug() << "Шаг [" << steps++ << "]: начало: " << lastCurrentPoint << ", конец: " << segments[currentSegmentIndex]->getCurrentPoint() << ", скорость: " << segment->getSpeed() * speedMultiplier;
 
         // TODO: Убрать вычислить из текущего положения segment->current
         // Кажется будет медленнее
         // Добавляем время
         // time = currentLength + std::hypot(position.x() - segments[currentSegmentIndex].getCurrentPoint().x(), position.y() - segments[currentSegmentIndex].getCurrentPoint().y())/ speed
         currentTime += std::hypot(position.x() - path.back().x(), position.y() - path.back().y()) / segment->getSpeed(); // TODO: Потенциальное деление на 0
+        // qDebug() << "Предыдущая текущая точка: " << lastCurrentPoint << ", Новая текущая точка: " << segments[currentSegmentIndex]->getCurrentPoint();
+
+        qDebug() << "Текущая Длина:" << currentLength;
 
         path.append(position);
 
@@ -157,41 +99,6 @@ public:
         return segments[currentSegmentIndex]->getCurrentPoint();
     }
 
-    void draw(QPainter& painter, const bool showLines, const bool full)
-    {
-        QPen pen = QPen(color, 2);
-        pen.setCosmetic(true);
-
-        painter.setPen(pen);
-
-        qDebug() << "Route::draw():: path.size(): " << path.size();
-
-        // Отрисовка пройденного пути
-        if (!path.isEmpty())
-        {
-            // TODO: Отличается отроисовкой полного пути
-            if (full)
-            {
-                // show logical path
-                for (int j = 0; j < segments.size(); ++j)
-                {
-                    painter.drawLine(segments[j]->getStart(), segments[j]->getEnd());
-                }
-
-                return;
-            }
-
-            if (showLines)
-                for (int j = 0; j < path.size() - 1; ++j)
-                {
-                    auto start = path[j];
-                    auto end = path[j + 1];
-
-                    painter.drawLine(start, end);
-                }
-        }
-    }
-
     // TODO: Пересмотреть
     void initialize(const QVector<Visual::Models::Segment>& segments, const QColor& color, const double radius)
     {
@@ -203,22 +110,34 @@ public:
         this->setColor(color);
         this->setRadius(radius);
 
-        reset();
+        clear();
     }
 
-    // TODO: По сути это clear, а ресет это clear + segments.clear()
-    void reset1()
+    void reset()
+    {
+        clear();
+
+        segments.clear(); // TODO: это reset
+        setNull(position);
+    }
+
+    // TODO: Только очистка
+    void clear()
     {
         // Сброс к начальным значениям пути
-        // Обнуляем все кроме segments
         currentTime = 0;
+        currentLength = 0;
+        currentSegmentIndex = 0; // Выбран первый отрезок
+        path.clear();            // Обнуляем путь
 
         if (!segments.isEmpty())
         {
-            currentSegmentIndex = 0;            // Выбран первый отрезок
-            position = segments[0]->getStart(); // Позиция в начальной точке
+            for (const auto& segment : segments)
+            {
+                segment->clear();
+            }
 
-            path.clear(); // Обнуляем путь
+            position = segments[0]->getStart(); // Позиция в начальной точке
             path.append(position);
         }
     }
@@ -246,11 +165,6 @@ public:
         segments.push_back(segment);
     }
 
-    // void addSegment(const SegmentWidget& segment)
-    // {
-    //     segments.push_back(segment);
-    // }
-
     QColor getColor() const
     {
         return color;
@@ -273,12 +187,6 @@ public:
     void setRadius(const double& r)
     {
         radius = r;
-    }
-
-    // TODO: Только очистка
-    void clear1()
-    {
-        segments.clear(); // TODO: это reset
     }
 
     bool isEmpty() const
@@ -318,54 +226,41 @@ protected:
     }
 
 public:
+    void setNullPosition()
+    {
+        setNull(position);
+    }
+
+    State getStateType() const
+    {
+        return state->type();
+    }
+
     void setState(RouteState* state)
     {
-        if (contextData_ != nullptr)
-        {
-            // Откат к предыдущей
-            state_ = contextData_;
-            contextData_ = nullptr;
-        }
-        else
-        {
-            contextData_ = state_;
-            state_ = state;
-        }
-    }
-
-    void setData(RouteState* data)
-    {
-        contextData_ = data;
-    }
-
-    RouteState* getData() const
-    {
-        return contextData_;
+        this->state = state;
     }
 
     void draw(QPainter& painter)
     {
-        state_->draw(painter, this);
+        state->draw(painter, segments, color);
     }
 
     // Сохраняет текущее состояние в Memento
-    Memento* saveState() const
+    Memento* saveState(const Qt::Key& key) const
     {
-        return new Memento(contextData_);
+        return new Memento(state, key);
     }
 
     // Восстанавливает состояние из Memento
     void restoreState(Memento* memento)
     {
-        contextData_ = memento->getState();
-        qDebug() << "Состояние восстановлено.";
+        state = memento->getState();
     }
 
 protected:
     // Memento
-    RouteState* state_; // Текущее состояние
-
-    RouteState* contextData_; // Данные контекста
+    RouteState* state; // Текущее состояние
 
     QVector<SegmentWidget*> segments; // Логический путь
 
@@ -380,55 +275,5 @@ protected:
     QPointF position;      // Текущая позиция
     QVector<QPointF> path; // Путь пройденный от начала до текущей позиции
     int steps{0};          // TODO: для тестов
-};
-
-class RouteState
-{
-public:
-    virtual void draw(QPainter& painter, RouteWidget* widget) = 0;
-    virtual ~RouteState() = default;
-};
-
-// Без отрисовки nullptr
-class WithOutDrawState : public RouteState
-{
-public:
-    void draw(QPainter& painter, RouteWidget* widget) override
-    {
-    }
-};
-
-class CurrentDrawState : public RouteState
-{
-public:
-    void draw(QPainter& painter, RouteWidget* widget) override
-    {
-        // TODO: Проход по всем отрисовка start->current
-        // Отрисовка только головы
-        // Отрисовка ShipWidgetSegment
-
-        for (size_t i = 0; i < widget->getCurrentIndex(); ++i)
-        {
-            widget->getSegments().at(i)->draw(painter, widget->getColor());
-        }
-
-        widget->getSegments().at(widget->getCurrentIndex())->draw(painter, widget->getColor());
-    }
-};
-
-class FullDrawState : public RouteState
-{
-public:
-    void draw(QPainter& painter, RouteWidget* widget) override
-    {
-        // Отрисовка только головы
-        // TODO: Проход по всем отрисовка start->end
-
-        for (size_t i = 0; i < widget->getSegments().size(); ++i)
-        {
-            // TODO: Отрисовать все со стрелками
-            widget->getSegments().at(i)->draw(painter, widget->getColor());
-        }
-    }
 };
 } // namespace Visual

@@ -18,7 +18,7 @@
 #include "Visual/GridWidget.hpp"
 #include "Visual/ObjectWidget.hpp"
 #include "Visual/PerimeterWidget.hpp"
-#include "Visual/TargetWidget.hpp"
+#include "Visual/RouteWidget.hpp"
 #include "Visual/TimeWidget.hpp"
 
 #include "Visual/Models/Limits.hpp"
@@ -39,7 +39,6 @@ class VisWidget : public QWidget
     using PerimeterWidget = Visual::PerimeterWidget;
     using CoordinateSystem = Visual::CoordinateSystem;
     using GridWidget = Visual::GridWidget;
-    using TargetWidget = Visual::TargetWidget;
     using TimeWidget = Visual::TimeWidget;
 
     using Route = Visual::Models::Route;
@@ -64,7 +63,9 @@ public:
 
         perimeter = new PerimeterWidget(this);
 
-        target = new TargetWidget(this);
+        target = new RouteWidget(this);
+        target->setNullPosition();
+        target->setColor(Qt::black);
 
         grid = new GridWidget(this);
 
@@ -76,34 +77,6 @@ public:
         connect(targetTimer, &QTimer::timeout, this, &VisWidget::updateTarget);
 
         connect(this, &VisWidget::sendMultiplier, time, &TimeWidget::updateTime);
-    }
-
-    std::unique_ptr<Visual::RouteState> state;
-
-    std::unique_ptr<Visual::RouteState> lastState;
-
-    bool inState = false;
-
-    void setState(std::unique_ptr<Visual::RouteState> newState)
-    {
-        // TODO: При повторном нажатии на то же состояние откат к предыдущему
-        // TODO: При нажатии на новое смена на новое
-
-        // Для использования одной кнопкой например
-        if (inState)
-        {
-            state = std::move(lastState);
-
-            inState = false;
-        }
-        else
-        {
-            lastState = std::move(state);
-
-            state = std::move(newState);
-
-            inState = true;
-        }
     }
 
 signals:
@@ -145,10 +118,9 @@ protected:
 
     void drawRoutes(QPainter& painter)
     {
-        for (const auto& route : _routes)
+        for (const auto& route : routes)
         {
-            // route->drawCurrent(painter);
-            route->draw(painter, showLines, showFull);
+            route->draw(painter);
 
             if (!found && isPointInsideEllipse(route->getPosition(), route->getRadius()))
             {
@@ -163,7 +135,7 @@ protected:
         }
     }
 
-    void drawTarget(QPainter& painter)
+    void showFullTargetPath(QPainter& painter) const
     {
         QPen pen = QPen(Qt::darkYellow, 2);
         pen.setStyle(Qt::DotLine);
@@ -171,16 +143,20 @@ protected:
 
         painter.setPen(pen);
 
-        if (showLines)
-            if (!targetPath.isEmpty())
+        if (!targetPath.isEmpty())
+        {
+            for (int i = 0; i < targetPath.size() - 1; ++i)
             {
-                for (int i = 0; i < targetPath.size() - 1; ++i)
-                {
-                    painter.drawLine(targetPath[i], targetPath[i + 1]);
-                }
+                painter.drawLine(targetPath[i], targetPath[i + 1]);
             }
+        }
+    }
 
-        target->draw(painter, showLines);
+    void drawTarget(QPainter& painter)
+    {
+        showFullTargetPath(painter);
+
+        target->draw(painter);
     }
 
     void drawMultiplier(QPainter& painter)
@@ -224,6 +200,12 @@ public:
         // Сброс буфера пути
         resetRoutesToDefault();
 
+        // TODO: Все состояния на отрисовку текущей точки
+        for (const auto route : routes)
+        {
+            route->setState(new Visual::CurrentDrawState());
+        }
+
         // Сброс счетчика времени схемы
         time->reset();
 
@@ -233,17 +215,26 @@ public:
 
         if (!target->getSegments().isEmpty())
         {
-            target->reset();
+            target->clear();
             targetTimer->start(15);
         }
     }
 
-    void full()
+    void showCompletedRoutes()
     {
-        showFull = !showFull;
+        for (const auto route : routes)
+        {
+            if (route->getStateType() == Visual::State::Full)
+            {
+                route->setState(new Visual::CurrentDrawState());
+            }
+            else
+            {
+                route->setState(new Visual::FullDrawState());
+            }
+        }
 
-        if (showFull)
-            update();
+        update();
     }
 
     void pause()
@@ -251,14 +242,12 @@ public:
         if (!paused)
         {
             timer->stop();
-
             targetTimer->stop();
         }
         else
         {
             timer->start(16);
-
-            found = false;
+            found = false; // TODO: Спорный момент
 
             // TODO: Target Pause
             if (!target->getSegments().isEmpty())
@@ -302,7 +291,19 @@ public:
 
     void changeShowLines()
     {
-        showLines = !showLines;
+        for (const auto route : routes)
+        {
+            if (route->getStateType() == Visual::State::Clean)
+            {
+                route->setState(new Visual::CurrentDrawState());
+                target->setState(new Visual::CurrentDrawState());
+            }
+            else
+            {
+                route->setState(new Visual::WithOutDrawState());
+                target->setState(new Visual::WithOutDrawState());
+            }
+        }
 
         update();
     }
@@ -324,7 +325,7 @@ public:
 
     QVector<RouteWidget*> getRoutes() const
     {
-        return _routes;
+        return routes;
     }
 
     PerimeterWidget* getPerimeter() const
@@ -334,7 +335,7 @@ public:
 
     void targetClear()
     {
-        target->clear();
+        target->reset();
 
         targetPath.clear();
 
@@ -343,17 +344,17 @@ public:
         update();
     }
 
-    void setRoutes(const QVector<Route>& routes)
+    void setRoutes(const QVector<Route>& routes_)
     {
-        _routes = QVector<RouteWidget*>();
+        routes = QVector<RouteWidget*>();
 
-        for (const auto& route : routes)
+        for (const auto& route_ : routes_)
         {
-            auto _route = new RouteWidget(this); // TODO
+            auto route = new RouteWidget(this); // TODO
 
-            _route->initialize(route.getSegments(), palette[_routes.size() % palette.size()], shipParameters.getDetectionRange());
+            route->initialize(route_.getSegments(), palette[routes.size() % palette.size()], shipParameters.getDetectionRange());
 
-            _routes.append(_route);
+            this->routes.append(route);
         }
 
         routesLoaded = true;
@@ -367,15 +368,15 @@ public:
 
     void setRoutes(const QVector<QVector<Segment>>& segmentsVector)
     {
-        _routes = QVector<RouteWidget*>();
+        routes = QVector<RouteWidget*>();
 
         for (const auto& segments : segmentsVector)
         {
-            auto _route = new RouteWidget();
+            auto route = new RouteWidget();
 
-            _route->initialize(segments, palette[_routes.size() % palette.size()], 1);
+            route->initialize(segments, palette[routes.size() % palette.size()], 1);
 
-            _routes.append(_route);
+            routes.append(route);
         }
 
         routesLoaded = true;
@@ -440,7 +441,7 @@ public:
     void initLimitsFromRoutes()
     {
         // максимумы из Routes
-        for (const auto& route : _routes)
+        for (const auto& route : routes)
         {
             for (const auto& segment : route->getSegments())
             {
@@ -549,7 +550,8 @@ public:
 
             update();
 
-            target->reset();
+            // TODO:RESET
+            target->clear();
 
             if (!paused)
             {
@@ -574,65 +576,6 @@ public:
         }
     }
 
-protected:
-    // TODO: Оставить для тестов
-    void keyPressEvent(QKeyEvent* event) override
-    {
-        // TODO: Сделать switch
-        // Увеличить скорость
-        if (event->key() == Qt::Key_Equal)
-        {
-            upSpeed(2);
-        }
-        // Сброс скрости к базовой
-        else if (event->key() == Qt::Key_Plus)
-        {
-            resetSpeed();
-        }
-        else if (event->key() == Qt::Key_Minus)
-        // Уменьшить скорость
-        {
-            downSpeed(2);
-        }
-        // Старт движения
-        else if (event->key() == Qt::Key_S)
-        {
-            start();
-        }
-        // Показывать пути БЭНКов
-        else if (event->key() == Qt::Key_L)
-        {
-            changeShowLines();
-        }
-        // Пауза
-        else if (event->key() == Qt::Key_P)
-        {
-            pause();
-        }
-        // Загрузка Периметра
-        else if (event->key() == Qt::Key_F)
-        {
-            setupP();
-        }
-        // Загрузка путей БЭНКов
-        else if (event->key() == Qt::Key_R)
-        {
-            setupR();
-        }
-        // Разрешить отрисовку цели
-        else if (event->key() == Qt::Key_X)
-        {
-            setDrawing(true);
-        }
-        // Очистка путей и точки цели
-        else if (event->key() == Qt::Key_C)
-        {
-            targetClear(); // Tagret clear()
-        }
-
-        update();
-    }
-
 private slots:
     void sendPairPositionSpeed(const QPointF& position, const double& speed)
     {
@@ -645,18 +588,20 @@ private slots:
     // TODO: Управление таймерами должно быть тоже тут
     void updateRoutes()
     {
-        for (auto& route : _routes)
+        for (auto& route : routes)
         {
             // Когда путь заканчивается таймер останавливается
             if (!route->update(speedMultiplier))
             {
+                // TODO: Требуется проверка что все доехали, а не один как сейчас
+                qDebug() << "Stop!";
                 timer->stop();
             }
         }
 
         // TODO: Время только первого маршрута
         // Обновление времени
-        emit sendMultiplier(_routes[0]->getCurrentTime());
+        emit sendMultiplier(routes[0]->getCurrentTime());
 
         update();
     }
@@ -682,13 +627,14 @@ private:
     }
 
     // Расчет свойств для отрисовки путей
+    // TODO: CLEAR
     void resetRoutesToDefault()
     {
-        for (auto& route : _routes)
+        for (auto& route : routes)
         {
             if (!route->getSegments().isEmpty())
             {
-                route->reset();
+                route->clear();
             }
         }
     }
@@ -784,13 +730,13 @@ private:
     GridWidget* grid;
 
     // БЭНКи
-    QVector<RouteWidget*> _routes;
+    QVector<RouteWidget*> routes;
     // QVector<Ship*> ships;
 
     QTimer* timer; // Таймер БЭНКов
 
     // Target
-    TargetWidget* target;
+    RouteWidget* target;
     QVector<QPointF> targetPath; // Экранный путь цели(координаты screen)
     QTimer* targetTimer;         // Таймер цели
     double targetSpeed = 5;      // TODO: Брать из targetParameters
@@ -798,11 +744,10 @@ private:
     // Общие поля
     CoordinateSystem cs;
     PerimeterWidget* perimeter;
+
     int speedMultiplier; // Множитель скорости
 
     Limits limits;
-    // std::pair<double, double> minimums;
-    // std::pair<double, double> maximums;
 
     // Flags
     bool found = false; // Объект найден
@@ -810,11 +755,8 @@ private:
     bool perimeterLoaded = false; // Периметер загружен
     bool routesLoaded = false;    // Пути загружены
 
-    bool drawing = false;  // Разрешить отрисовку цели
-    bool showLines = true; // Показывать линии путей
+    bool drawing = false; // Разрешить отрисовку цели
 
     bool paused = true; // Общая пауза
     bool pausedTarget = false;
-
-    bool showFull = false;
 };
