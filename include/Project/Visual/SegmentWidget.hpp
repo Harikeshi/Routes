@@ -15,112 +15,73 @@ class SegmentWidget : public QWidget
 {
     using Segment = Visual::Models::Segment;
 
-    // TODO: Добавить Segment
-    // TODO: Должен быть сегмент + color, current
-    QPointF start;
-    QPointF end;
+    Segment segment;
 
-    QColor color;
     QPointF current;
-    double baseSpeed;
-
-    // TODO: без булевой как будто не избежать отрисовки последнего сегмента пути
 
 public:
     SegmentWidget(QWidget* parent = nullptr, const Segment& segment = {})
-        : QWidget(parent), start{segment.getStart()}, end{segment.getEnd()}, current{segment.getStart()}, baseSpeed{segment.getSpeed()}
+        : QWidget(parent),
+          segment{segment},
+          current{segment.getStart()}
     {
+        this->segment = segment;
     }
 
     void clear()
     {
-        current = start;
+        current = segment.getStart();
+        current = segment.getStart();
     }
 
     void initialize(const Segment& segment)
     {
-        start = segment.getStart();
-        end = segment.getEnd();
-
+        this->segment = segment;
         current = segment.getStart();
-        baseSpeed = segment.getSpeed();
     }
 
     void drawCurrent(QPainter& painter, const QColor& color) const
     {
         setPen(painter, color);
 
-        painter.drawLine(start, current);
+        painter.drawLine(segment.getStart(), current);
     }
 
     void drawFull(QPainter& painter, const QColor& color) const
     {
         setPen(painter, color);
 
-        painter.drawLine(start, end);
-    }
-
-    // TODO: Переместить в Object
-    void drawArrow(QPainter& painter, const QColor& color, const double size) const
-    {
-        // Отрисовка стрелки
-        double angle = std::atan2(end.y() - start.y(), end.x() - start.x());
-
-        QPolygonF arrow;
-
-        arrow << QPointF(0, 0)
-              << QPointF(-size, size / 2)
-              << QPointF(-size, -size / 2);
-
-        QTransform transform; // перенос в точку
-        transform.translate(current.x(), current.y());
-        transform.rotateRadians(angle); // повернуть на угол
-
-        arrow = transform.map(arrow);
-
-        // Заполнить полигон
-        painter.setBrush(color);
-        painter.drawPolygon(arrow);
-    }
-
-    QColor getColor() const
-    {
-        return color;
-    }
-
-    void setColor(const QColor& color)
-    {
-        this->color = color;
+        painter.drawLine(segment.getStart(), segment.getEnd());
     }
 
     double getSpeed() const
     {
-        return baseSpeed;
+        return segment.getSpeed();
     }
 
     QPointF getEnd() const
     {
-        return end;
+        return segment.getEnd();
     }
 
     QPointF getStart() const
     {
-        return start;
+        return segment.getStart();
     }
 
     void show() const
     {
-        qDebug() << "start: [" << start.x() << ", " << start.y() << "], end: [" << end.x() << ", " << end.y() << "], speed: " << baseSpeed;
+        segment.show();
     }
 
     double length() const
     {
-        return std::hypot(end.x() - start.x(), end.y() - start.y());
+        return segment.length();
     }
 
     double currentLength() const
     {
-        return std::hypot(current.x() - start.x(), current.y() - start.y());
+        return std::hypot(current.x() - segment.getStart().x(), current.y() - segment.getStart().y());
     }
 
     void setCurrentPoint(const QPointF& point)
@@ -135,7 +96,7 @@ public:
 
     double getCurrentTime() const
     {
-        return currentLength() / baseSpeed;
+        return currentLength() / segment.getSpeed();
     }
 
 private:

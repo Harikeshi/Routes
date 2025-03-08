@@ -53,6 +53,11 @@ public:
         start = point;
     }
 
+    double length() const
+    {
+        return std::hypot(end.x() - start.x(), end.y() - start.y());
+    }
+
     void show() const
     {
         qDebug() << "start: [" << start.x() << ", " << start.y() << "], end: [" << end.x() << ", " << end.y() << "], speed: " << baseSpeed;
