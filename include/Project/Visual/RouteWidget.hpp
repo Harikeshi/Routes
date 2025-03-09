@@ -56,7 +56,7 @@ public:
             currentTime += std::hypot(lastCurrentPoint.x() - nextPosition.x(), lastCurrentPoint.y() - nextPosition.y()) / segment->getSpeed();
         }
 
-        path.append(position);
+        // path.append(position);
 
         return true;
     }
@@ -99,7 +99,6 @@ public:
         clear();
 
         segments.clear(); // TODO: это reset
-        setNull(position);
     }
 
     // TODO: Только очистка
@@ -107,9 +106,7 @@ public:
     {
         // Сброс к начальным значениям пути
         currentTime = 0;
-        currentLength = 0;
         currentSegmentIndex = 0; // Выбран первый отрезок
-        path.clear();            // Обнуляем путь
 
         if (!segments.isEmpty())
         {
@@ -117,9 +114,6 @@ public:
             {
                 segment->clear();
             }
-
-            position = segments[0]->getStart(); // Позиция в начальной точке
-            path.append(position);
         }
     }
 
@@ -127,16 +121,6 @@ public:
     size_t getCurrentIndex() const
     {
         return currentSegmentIndex;
-    }
-
-    QPointF getPosition() const
-    {
-        return position;
-    }
-
-    void setPosition(const QPointF& point)
-    {
-        position = point;
     }
 
     void addSegment(QPointF start, QPointF end, double speed)
@@ -162,12 +146,12 @@ public:
 
     double getRadius() const
     {
-        return radius;
+        return head->getRadius();
     }
 
-    void setRadius(const double& r)
+    void setRadius(const double& radius)
     {
-        radius = r;
+        head->setRadius(radius);
     }
 
     bool isEmpty() const
@@ -207,11 +191,6 @@ protected:
     }
 
 public:
-    void setNullPosition()
-    {
-        setNull(position);
-    }
-
     State getStateType() const
     {
         return state->type();
@@ -238,10 +217,6 @@ public:
 
             head->draw(painter, *segments.at(index), color);
         }
-    }
-
-    void updateHead()
-    {
     }
 
     // Сохраняет текущее состояние в Memento
@@ -271,17 +246,10 @@ protected:
     RouteState* state; // Текущее состояние
 
     QVector<SegmentWidget*> segments; // Логический путь
-    ObjectWidget* head;
-    QColor color; // TODO: Перенести в сегмент
+    ObjectWidget* head;               // Головной объект
+    QColor color;                     // TODO: Перенести в сегмент
 
     size_t currentSegmentIndex; // Индекс текущего сегмента
-    double currentLength;       // TODO: не используется. Длина пройденного пути
-
-    // TODO: при инициализации маршрута брать данные о скорости и радиусе ГАС из json
-    double currentTime;    // Прошло времени с начала маршрута
-    double radius = 10;    // Радиус ГАС
-    QPointF position;      // Текущая позиция
-    QVector<QPointF> path; // Путь пройденный от начала до текущей позиции
-    int steps{0};          // TODO: для тестов
+    double currentTime;         // Прошло времени с начала маршрута
 };
 } // namespace Visual

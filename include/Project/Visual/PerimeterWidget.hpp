@@ -101,32 +101,6 @@ public:
         }
     }
 
-    // void initialize(const QVector<Segment>& segments, const QColor& color, const double radius)
-    // {
-    //     this->segments = segments;
-    //     this->setColor(color);
-    //     this->setRadius(radius);
-
-    //     reset();
-    // }
-
-    // void reset()
-    // {
-    //     // Сброс к начальным значениям пути
-    //     if (!segments.isEmpty())
-    //     {
-    //         currentSegmentIndex = 0;
-    //         position = segments[0].start;
-
-    //         path.clear();
-    //         path.append(position);
-    //     }
-    //     else
-    //     {
-    //         throw std::runtime_error("Сброс непроинициализированного пути.");
-    //     }
-    // }
-
     QColor getColor() const
     {
         return color;

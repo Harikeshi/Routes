@@ -63,8 +63,6 @@ public:
         perimeter = new PerimeterWidget(this);
 
         target = new RouteWidget(this);
-
-        target->setNullPosition();
         target->setColor(Qt::black);
 
         grid = new GridWidget(this);
@@ -123,16 +121,16 @@ protected:
         {
             route->draw(painter);
 
-            if (!found && isPointInsideEllipse(route->getPosition(), route->getRadius()))
-            {
-                found = true;
+            // if (!found && isPointInsideEllipse(route->getPosition(), route->getRadius()))
+            // {
+            //     found = true;
 
-                sendIntersectionResult(QString("Target Position: [" + QString("%1, %2").arg(target->getPosition().x()).arg(target->getPosition().y()) + ", Ship[" +
-                                               QString("] position:") + QString("%1, %2").arg(route->getPosition().x()).arg(route->getPosition().y()) +
-                                               QString(", Radius: ") + QString("%1").arg(route->getRadius())));
+            //     sendIntersectionResult(QString("Target Position: [" + QString("%1, %2").arg(target->getPosition().x()).arg(target->getPosition().y()) + ", Ship[" +
+            //                                    QString("] position:") + QString("%1, %2").arg(route->getPosition().x()).arg(route->getPosition().y()) +
+            //                                    QString(", Radius: ") + QString("%1").arg(route->getRadius())));
 
-                pause();
-            }
+            //     pause();
+            // }
         }
     }
 
@@ -489,7 +487,7 @@ public:
 
                 targetPath.append(cs.toLogical(event->pos()));
 
-                target->setPosition(cs.toLogical(event->pos()));
+                // target->setPosition(cs.toLogical(event->pos()));
             }
         }
         else

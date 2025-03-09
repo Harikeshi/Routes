@@ -11,7 +11,6 @@ class CoordinateSystem
     using Limits = Visual::Models::Limits;
 
 public:
-    // QTransform transform;
     CoordinateSystem() = default;
 
     // TODO: 1 какой логический путь пройден за тик -> вернуть из функции апдейт, далее реальный путь разделить на текущую скорость с ускорением и прибавить к общему времени
@@ -39,10 +38,10 @@ public:
         auto scaleX = contentRect.width() / width;   //maxX - minX;
         auto scaleY = contentRect.height() / height; //maxY - minY;
 
-        qDebug() << "------------------------------------------------------------";
-        qDebug() << "Данные ширины: " << contentRect.width() << "(" << width << ")";
-        qDebug() << "Данные высоты: " << contentRect.height() << "(" << height << ")";
-        qDebug() << "Множитель по Х: " << scaleX << ", множитель по Y: " << scaleY;
+        // qDebug() << "------------------------------------------------------------";
+        // qDebug() << "Данные ширины: " << contentRect.width() << "(" << width << ")";
+        // qDebug() << "Данные высоты: " << contentRect.height() << "(" << height << ")";
+        // qDebug() << "Множитель по Х: " << scaleX << ", множитель по Y: " << scaleY;
 
         transform = QTransform().translate(-limits.minX * scaleX, contentRect.height() + limits.minY * scaleY).scale(scaleX, -scaleY);
     }

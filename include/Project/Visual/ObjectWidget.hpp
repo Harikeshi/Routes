@@ -41,6 +41,16 @@ public:
         registerModels();
     }
 
+    double getRadius() const
+    {
+        return radiusHAS;
+    }
+
+    void setRadius(const double radius)
+    {
+        radiusHAS = radius;
+    }
+
     void initialize(const Visual::Models::Object& parameters)
     {
         radiusHAS = parameters.getDetectionRange();
@@ -76,8 +86,6 @@ public:
 
     void draw(QPainter& painter, const Segment& segment, const QColor& color)
     {
-        qDebug() << "Позиция подается в Object: " << segment.getCurrentPoint();
-
         drawHas(painter, segment.getCurrentPoint());
 
         drawModel(painter, segment, color);
@@ -115,9 +123,6 @@ public:
     {
         // // Отрисовка стрелки
         double angle = std::atan2(segment.getEnd().y() - segment.getStart().y(), segment.getEnd().x() - segment.getStart().x());
-
-        qDebug() << "Угол поворота: " << angle;
-        qDebug() << "Позиция подается в drawModel: " << segment.getCurrentPoint();
 
         QTransform transform; // перенос в точку
         transform.translate(segment.getCurrentPoint().x(), segment.getCurrentPoint().y());

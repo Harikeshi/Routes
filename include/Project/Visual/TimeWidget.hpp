@@ -12,7 +12,6 @@ class TimeWidget : public QWidget
 public:
     TimeWidget(QWidget* parent = nullptr)
         : QWidget(parent)
-    // , time{0}
     {
         QVBoxLayout* layout = new QVBoxLayout(this);
 
@@ -28,9 +27,6 @@ public:
 public slots:
     void updateTime(const double time)
     {
-        // time = multiplier;
-        qDebug() << "Пройденное время: " << time;
-
         // qint64 seconds = static_cast<qint64>(time * 60);
 
         // TODO: Можно добавить общее время
@@ -49,14 +45,11 @@ public slots:
 
     void reset()
     {
-        // time = 0;
     }
 
 private:
     QLabel* labelMinutes;
     QLabel* labelHours;
     QLabel* labelDays;
-
-    // double time;
 };
 } // namespace Visual

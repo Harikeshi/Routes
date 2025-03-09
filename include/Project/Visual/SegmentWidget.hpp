@@ -15,10 +15,6 @@ class SegmentWidget : public QWidget
 {
     using Segment = Visual::Models::Segment;
 
-    Segment segment;
-
-    QPointF current;
-
 public:
     SegmentWidget(QWidget* parent = nullptr, const Segment& segment = {})
         : QWidget(parent),
@@ -30,7 +26,6 @@ public:
 
     void clear()
     {
-        current = segment.getStart();
         current = segment.getStart();
     }
 
@@ -107,5 +102,10 @@ private:
 
         painter.setPen(pen);
     }
+
+private:
+    Segment segment;
+
+    QPointF current;
 };
 } // namespace Visual

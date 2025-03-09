@@ -50,7 +50,6 @@ public:
         checkButton = new QPushButton("Set Path", this);
         checkButton->setChecked(false);
         checkButton->setCheckable(true); // Включаем функцию фиксации
-        //checkButton->setStyleSheet("QPushButton { background-color: green; }"); // Цвет по умолчанию
 
         mainLayout->addWidget(checkButton, 6, 0);
 
@@ -60,7 +59,6 @@ public:
         QPushButton* randomButton = new QPushButton("Random", this);
         mainLayout->addWidget(randomButton, 7, 0);
 
-        // connect(randomButton, &QPushButton::clicked, this, &SubmarineWidget::reset);
         connect(resetButton, &QPushButton::clicked, this, &SubmarineWidget::reset);
         connect(resetButton, &QPushButton::clicked, this, &SubmarineWidget::reset);
 

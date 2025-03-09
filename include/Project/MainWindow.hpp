@@ -90,20 +90,16 @@ public:
         connect(openRequest, &QAction::triggered, this, &MainWindow::initPerimeter);
         connect(openResult, &QAction::triggered, this, &MainWindow::initRoutes);
 
-        // connect(visWidget, &, label, &QLabel::setText);
         // SubWidget
         connect(subWidget, &SubmarineWidget::checkBottomChanging, visWidget, &VisWidget::setDrawing);
-        connect(visWidget, &VisWidget::sendChangedDrawing, subWidget, &SubmarineWidget::changeButton);
-
         connect(subWidget, &SubmarineWidget::sendReset, visWidget, &VisWidget::targetClear);
         connect(subWidget, &SubmarineWidget::sendSpeed, visWidget, &VisWidget::setTargetSpeed);
 
+        // VisWidget
+        connect(visWidget, &VisWidget::sendChangedDrawing, subWidget, &SubmarineWidget::changeButton);
         connect(visWidget, &VisWidget::sendTargetPosition, subWidget, &SubmarineWidget::setCurrentPosition);
         connect(visWidget, &VisWidget::sendTargetSpeed, subWidget, &SubmarineWidget::setCurrentSpeed);
-
         connect(visWidget, &VisWidget::sendTargetSpeed, subWidget, &SubmarineWidget::setSpeedInput);
-
-        // InfoWidget
         connect(visWidget, &VisWidget::sendIntersectionResult, this, &MainWindow::setIntersectionInfo);
     }
 
@@ -140,7 +136,6 @@ protected:
         {
             try
             {
-                //visWidget->update();
                 visWidget->start();
             }
             catch (std::runtime_error& ex)
@@ -186,7 +181,6 @@ protected:
         }
         else if (event->key() == Qt::Key_X)
         {
-            // this->changeDrawing();
             visWidget->setDrawing(true);
         }
         // Очистка путей и точки цели
@@ -199,6 +193,7 @@ protected:
     }
 
     // TODO: информация о загрузке файлов
+    // TODO: Вынести в отдельный класс Json
     QByteArray openJsonFile(const QString& title)
     {
         QString fileName = QFileDialog::getOpenFileName(this, title, "", "JSON Files (*.json)");
