@@ -26,8 +26,8 @@ public:
 
     void setTransform(const QRectF& rect, const Limits& limits)
     {
-        double height = std::fabs(limits.maxY - limits.minY);
-        double width = std::fabs(limits.maxX - limits.minX);
+        height = std::fabs(limits.maxY - limits.minY);
+        width = std::fabs(limits.maxX - limits.minX);
 
         //TODO: для реализации отступов margin
         QRectF contentRect = QRectF(
@@ -51,8 +51,20 @@ public:
     {
         return transform;
     }
+    double getHeight() const
+    {
+        return height;
+    }
+
+    double getWidth() const
+    {
+        return width;
+    }
 
 private:
     QTransform transform;
+
+    double height;
+    double width;
 };
 } // namespace Visual

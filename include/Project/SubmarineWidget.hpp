@@ -62,6 +62,8 @@ public:
 
         // connect(randomButton, &QPushButton::clicked, this, &SubmarineWidget::reset);
         connect(resetButton, &QPushButton::clicked, this, &SubmarineWidget::reset);
+        connect(resetButton, &QPushButton::clicked, this, &SubmarineWidget::reset);
+
         connect(checkButton, &QPushButton::toggled, this, &SubmarineWidget::changeCheckButton);
 
         connect(speedInput, &QLineEdit::textChanged, this, &SubmarineWidget::actualSpeed);
@@ -102,13 +104,15 @@ private slots:
 
 public slots:
 
-    void setCurrentPosition(const std::pair<QPointF, double>& pair)
+    void setCurrentPosition(const QPointF position)
     {
-        // currentPositionX->setText(QString("%1, %2").arg(std::round(pair.first.x() * 100.0) / 100.0).arg(std::round(pair.first.y() * 100.0) / 100.0));
-        currentPositionX->setText(QString("%1").arg(pair.first.x()));
-        currentPositionY->setText(QString("%1").arg(pair.first.y()));
+        currentPositionX->setText(QString("%1").arg(position.x()));
+        currentPositionY->setText(QString("%1").arg(position.y()));
+    }
 
-        currentSpeed->setText(QString("%1").arg(pair.second));
+    void setCurrentSpeed(const double speed)
+    {
+        currentSpeed->setText(QString("%1").arg(speed));
     }
 
     void changeButtonColor(const bool checked)
@@ -139,10 +143,14 @@ public slots:
         emit checkBottomChanging(checked);
     }
 
+    void setSpeedInput(const double speed)
+    {
+        speedInput->setText(QString("%1").arg(speed));
+    }
+
     // Сброс
     void reset()
     {
-        speedInput->setText("1");
         currentPositionX->setText("-");
         currentPositionY->setText("-");
         currentSpeed->setText("-");

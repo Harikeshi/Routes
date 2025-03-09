@@ -8,6 +8,11 @@ struct Limits
     double minY;
     double maxX;
     double maxY;
+
+    double getMaxBorderLength() const
+    {
+        return std::max(std::fabs(maxX - minX), std::fabs(maxY - minY));
+    }
 };
 } // namespace Models
 } // namespace Visual

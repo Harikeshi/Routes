@@ -98,7 +98,10 @@ public:
         connect(subWidget, &SubmarineWidget::sendReset, visWidget, &VisWidget::targetClear);
         connect(subWidget, &SubmarineWidget::sendSpeed, visWidget, &VisWidget::setTargetSpeed);
 
-        connect(visWidget, &VisWidget::sendTargetPointSpeed, subWidget, &SubmarineWidget::setCurrentPosition);
+        connect(visWidget, &VisWidget::sendTargetPosition, subWidget, &SubmarineWidget::setCurrentPosition);
+        connect(visWidget, &VisWidget::sendTargetSpeed, subWidget, &SubmarineWidget::setCurrentSpeed);
+
+        connect(visWidget, &VisWidget::sendTargetSpeed, subWidget, &SubmarineWidget::setSpeedInput);
 
         // InfoWidget
         connect(visWidget, &VisWidget::sendIntersectionResult, this, &MainWindow::setIntersectionInfo);

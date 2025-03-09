@@ -82,7 +82,8 @@ public:
 signals:
     void sendMultiplier(double);
     void sendChangedDrawing(bool);
-    void sendTargetPointSpeed(std::pair<QPointF, double>);
+    void sendTargetPosition(QPointF);
+    void sendTargetSpeed(double);
     void sendIntersectionResult(QString);
 
 public:
@@ -355,7 +356,6 @@ public:
             auto route = new RouteWidget(this); // TODO
 
             route->initialize(route_.getSegments(), palette[routes.size() % palette.size()], shipParameters);
-            route->setModel(Visual::Objects::Arrow);
 
             this->routes.append(route);
         }
@@ -366,30 +366,22 @@ public:
 
         initLimitsFromRoutes();
 
+        // Инициализация движущихся Объектов.
+        setRoutesModels(Visual::Objects::Arrow, 0.01 * limits.getMaxBorderLength()); // 1%
+
         loadFirstScreen();
     }
 
-    // void setRoutes(const QVector<QVector<Segment>>& segmentsVector)
-    // {
-    //     routes = QVector<RouteWidget*>();
+    void setRoutesModels(const Visual::Objects model, const double size) const
+    {
+        //
+        for (size_t i = 0; i != routes.size(); ++i)
+        {
+            routes[i]->setModel(model, size);
+        }
 
-    //     for (const auto& segments : segmentsVector)
-    //     {
-    //         auto route = new RouteWidget();
-
-    //         route->initialize(segments, palette[routes.size() % palette.size()], 1);
-
-    //         routes.append(route);
-    //     }
-
-    //     routesLoaded = true;
-
-    //     resetRoutesToDefault();
-
-    //     initLimitsFromRoutes();
-
-    //     loadFirstScreen();
-    // }
+        // ПЛ
+    }
 
     void setPerimeter(const Perimeter& p)
     {
@@ -465,7 +457,7 @@ public:
 
     void setTargetSpeed(const double value)
     {
-        targetSpeed = value;
+        targetParameters.setCurrentVelocity(value);
     }
 
     void resetSpeed()
@@ -541,7 +533,9 @@ public:
             // TODO:RESET
             target->clear();
             target->initHead(targetParameters);
-            target->setModel(Visual::Objects::Enemy);
+            target->setModel(Visual::Objects::Arrow, 0.01 * limits.getMaxBorderLength()); // 1%
+
+            sendTargetInformation();
 
             if (!paused)
             {
@@ -553,24 +547,22 @@ public:
 
     void addTargetSegments()
     {
+        if (targetPath.size() == 1)
+        {
+            target->addSegment(targetPath[0], targetPath[0], targetParameters.getCurrentVelocity()); // Cкорость
+            return;
+        }
+
         for (int i = 0; i < targetPath.size() - 1; ++i)
         {
             if (targetPath[i] == targetPath[i + 1])
                 continue;
 
-            target->addSegment(targetPath[i], targetPath[i + 1], targetSpeed); // Cкорость
+            target->addSegment(targetPath[i], targetPath[i + 1], targetParameters.getCurrentVelocity()); // Cкорость
         }
     }
 
 private slots:
-    void sendPairPositionSpeed(const QPointF& position, const double& speed)
-    {
-        // TODO: пока считаем что скорость одна
-        std::pair<QPointF, double> pointSpeed{position, speed};
-
-        emit sendTargetPointSpeed(pointSpeed);
-    }
-
     // TODO: Управление таймерами должно быть тоже тут
     void updateRoutes()
     {
@@ -591,11 +583,17 @@ private slots:
         update();
     }
 
+    void sendTargetInformation()
+    {
+        emit sendTargetPosition(target->getCurrentPosition());
+        emit sendTargetSpeed(target->getSpeed());
+    }
+
     void updateTarget()
     {
         if (target->update(speedMultiplier))
         {
-            sendPairPositionSpeed(target->getPosition(), target->getSpeed());
+            sendTargetInformation();
         }
         else
         {
@@ -608,7 +606,7 @@ private slots:
 private:
     bool isPointInsideEllipse(const QPointF& center, const double& radius) const
     {
-        return QLineF(target->getPosition(), center).length() <= radius;
+        return QLineF(target->getCurrentPosition(), center).length() <= radius;
     }
 
     // Расчет свойств для отрисовки путей
@@ -702,12 +700,6 @@ private:
     Object targetParameters;
 
     // TODO: Добавить State и Momento
-
-    // Установка: Ship, Target, Route, Segment => Модели
-    //  Одноименные виджеты для использования в программе
-
-    // Установка: Первым проводится инициализация входных данных
-
     // Время
     TimeWidget* time;
 
@@ -723,7 +715,6 @@ private:
     // Target
     QVector<QPointF> targetPath; // Экранный путь цели(координаты screen)
     QTimer* targetTimer;         // Таймер цели
-    double targetSpeed = 5;      // TODO: Брать из targetParameters
 
     // Общие поля
     CoordinateSystem cs;

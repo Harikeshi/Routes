@@ -29,57 +29,32 @@ public:
     // Вычислить текущую точку,
     bool update(const double speedMultiplier)
     {
-        qDebug() << "Текущий индекс: " << currentSegmentIndex;
         if (currentSegmentIndex >= segments.size())
         {
-            steps = 0;
-            qDebug() << "Выход из update()";
             return false;
         }
 
         // Вычисление новой позиции точки
         const SegmentWidget* segment = segments[currentSegmentIndex];
         QVector2D direction(segment->getEnd() - segment->getStart());
+        direction.normalize();
 
         auto lastCurrentPoint = segments[currentSegmentIndex]->getCurrentPoint();
-
-        direction.normalize();
 
         QVector2D step = direction * segment->getSpeed() * speedMultiplier; // за минуту с учетом множителя скорости
         QPointF nextPosition = lastCurrentPoint + step.toPointF();
 
-        if ((lastCurrentPoint == segments.back()->getEnd()) || (QVector2D(nextPosition - segment->getStart()).length() >= QVector2D(segment->getEnd() - segment->getStart()).length()))
+        if (QVector2D(nextPosition - segment->getStart()).length() >= QVector2D(segment->getEnd() - segment->getStart()).length())
         {
-            // position = segment->getEnd();
-
-            segments[currentSegmentIndex]->setCurrentPoint(segment->getEnd()); //*
-
-            qDebug() << "Текущая точка сегмента: " << segments[currentSegmentIndex]->getCurrentPoint();
-
-            currentLength += std::hypot(lastCurrentPoint.x() - segment->getEnd().x(), lastCurrentPoint.y() - segment->getEnd().y());
-            currentSegmentIndex++;
-
-            qDebug() << "Измененный индекс: " << currentSegmentIndex;
+            segments[currentSegmentIndex++]->setCurrentPoint(segment->getEnd()); //*
+            currentTime += std::hypot(lastCurrentPoint.x() - segment->getEnd().x(), lastCurrentPoint.y() - segment->getEnd().y()) / segment->getSpeed();
         }
         else
         {
-            // position = nextPosition;
-            // Расстояние от конца текущего сегмента, до точки position
             segments[currentSegmentIndex]->setCurrentPoint(nextPosition); //*
 
-            currentLength += std::hypot(lastCurrentPoint.x() - nextPosition.x(), lastCurrentPoint.y() - nextPosition.y());
+            currentTime += std::hypot(lastCurrentPoint.x() - nextPosition.x(), lastCurrentPoint.y() - nextPosition.y()) / segment->getSpeed();
         }
-
-        //qDebug() << "Шаг [" << steps++ << "]: начало: " << lastCurrentPoint << ", конец: " << segments[currentSegmentIndex]->getCurrentPoint() << ", скорость: " << segment->getSpeed() * speedMultiplier;
-
-        // TODO: Убрать вычислить из текущего положения segment->current
-        // Кажется будет медленнее
-        // Добавляем время
-        // time = currentLength + std::hypot(position.x() - segments[currentSegmentIndex].getCurrentPoint().x(), position.y() - segments[currentSegmentIndex].getCurrentPoint().y())/ speed
-        currentTime += std::hypot(position.x() - path.back().x(), position.y() - path.back().y()) / segment->getSpeed(); // TODO: Потенциальное деление на 0
-        // qDebug() << "Предыдущая текущая точка: " << lastCurrentPoint << ", Новая текущая точка: " << segments[currentSegmentIndex]->getCurrentPoint();
-
-        qDebug() << "Текущая Длина:" << currentLength;
 
         path.append(position);
 
@@ -90,6 +65,10 @@ public:
     QPointF getCurrentPosition() const
     {
         // Проверку, если путь закончен то последнюю точку, в остальных случаях сегмент[current].getCurrent()
+        if (segments.isEmpty())
+        {
+            return QPointF{-1e30, -1e30};
+        }
 
         if (currentSegmentIndex >= segments.size())
         {
@@ -282,9 +261,9 @@ public:
         head->initialize(parameters);
     }
 
-    bool setModel(const Visual::Objects object)
+    bool setModel(const Visual::Objects object, const double size = 100)
     {
-        return head->setModel(object);
+        return head->setModel(object, size);
     }
 
 protected:
