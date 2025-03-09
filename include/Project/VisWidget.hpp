@@ -18,6 +18,7 @@
 #include "Visual/GridWidget.hpp"
 #include "Visual/ObjectWidget.hpp"
 #include "Visual/PerimeterWidget.hpp"
+#include "Visual/RandomTargetWidget.hpp"
 #include "Visual/RouteWidget.hpp"
 #include "Visual/TimeWidget.hpp"
 
@@ -55,6 +56,12 @@ public:
     VisWidget(QWidget* parent = nullptr)
         : QWidget(parent), speedMultiplier(1.0)
     {
+        // TODO: Для прикола
+        random = new Visual::RandomTargetWidget(this);
+
+        rTimer = new QTimer(this);
+        connect(rTimer, &QTimer::timeout, this, &VisWidget::movePoint);
+
         // TODO: Должен запускаться пустой(чистый)
         // TODO: Добавить Лодку. Для лодки отдельный таймер
         targetTimer = new QTimer(this);
@@ -77,6 +84,7 @@ public:
         connect(this, &VisWidget::sendMultiplier, time, &TimeWidget::updateTime);
     }
 
+    bool rand = false;
 signals:
     void sendMultiplier(double);
     void sendChangedDrawing(bool);
@@ -84,7 +92,33 @@ signals:
     void sendTargetSpeed(double);
     void sendIntersectionResult(QString);
 
-public:
+public slots:
+
+    void movePoint()
+    {
+        random->movePoint(*perimeter, limits, targetParameters.getCurrentVelocity() * speedMultiplier);
+
+        emit sendTargetPosition(random->getCurrentPosition());
+        emit sendTargetSpeed(targetParameters.getCurrentVelocity());
+
+        update();
+    }
+
+    void ResetPoint()
+    {
+        random->reset();
+        rTimer->stop();
+    }
+
+    void startRandomTarget()
+    {
+        if (perimeterLoaded && routesLoaded)
+        {
+            random->setStartPoint(*perimeter, limits);
+            rTimer->start(15);
+        }
+    }
+
     void setDrawing(const bool value)
     {
         drawing = value;
@@ -103,10 +137,15 @@ protected:
         painter.setTransform(cs.getTransform());
 
         // Отрисовка сетки
-        grid->draw(painter, limits);
+        auto lims = limitsWithMargins(5);
+        grid->draw(painter, lims);
 
         // Отрисовка Периметра
         perimeter->draw(painter);
+
+        // TODO: fun
+        // if (rand)
+        random->draw(painter);
 
         drawRoutes(painter);
 
@@ -121,16 +160,16 @@ protected:
         {
             route->draw(painter);
 
-            // if (!found && isPointInsideEllipse(route->getPosition(), route->getRadius()))
-            // {
-            //     found = true;
+            if (!found && isPointInsideEllipse(route->getCurrentPosition(), route->getRadius()))
+            {
+                found = true;
 
-            //     sendIntersectionResult(QString("Target Position: [" + QString("%1, %2").arg(target->getPosition().x()).arg(target->getPosition().y()) + ", Ship[" +
-            //                                    QString("] position:") + QString("%1, %2").arg(route->getPosition().x()).arg(route->getPosition().y()) +
-            //                                    QString(", Radius: ") + QString("%1").arg(route->getRadius())));
+                sendIntersectionResult(QString("Target Position: [" + QString("%1, %2").arg(target->getCurrentPosition().x()).arg(target->getCurrentPosition().y()) + ", Ship[" +
+                                               QString("] position:") + QString("%1, %2").arg(route->getCurrentPosition().x()).arg(route->getCurrentPosition().y()) +
+                                               QString(", Radius: ") + QString("%1").arg(route->getRadius())));
 
-            //     pause();
-            // }
+                pause();
+            }
         }
     }
 
@@ -155,8 +194,6 @@ protected:
     {
         showFullTargetPath(painter);
 
-        // Установить Объект
-        // Установить Has
         target->draw(painter);
     }
 
@@ -172,11 +209,9 @@ private:
     {
         if (perimeterLoaded && routesLoaded)
         {
-            auto limits = limitsWithMargins(5);
+            auto lims = limitsWithMargins(5);
 
-            initCoordinateSystem(limits);
-
-            //grid->initialize(limits);
+            initCoordinateSystem(lims);
 
             update();
         }
@@ -210,7 +245,7 @@ public:
         // Сброс счетчика времени схемы
         time->reset();
 
-        timer->start(16); // Обновление каждые 16 миллисекунд (~60 кадров в секунду)
+        timer->start(16); // Обновление каждые 16 миллисекунд (60 кадров в секунду)
 
         paused = false;
 
@@ -297,13 +332,20 @@ public:
             if (route->getStateType() == Visual::State::Clean)
             {
                 route->setState(new Visual::CurrentDrawState());
-                target->setState(new Visual::CurrentDrawState());
             }
             else
             {
                 route->setState(new Visual::WithOutDrawState());
-                target->setState(new Visual::WithOutDrawState());
             }
+        }
+
+        if (target->getStateType() == Visual::State::Clean)
+        {
+            target->setState(new Visual::CurrentDrawState());
+        }
+        else
+        {
+            target->setState(new Visual::WithOutDrawState());
         }
 
         update();
@@ -336,6 +378,9 @@ public:
 
     void targetClear()
     {
+        //TODO: fun
+        ResetPoint();
+
         target->reset();
 
         targetPath.clear();
@@ -413,11 +458,14 @@ public:
         return {minX, minY, maxX, maxY};
     }
 
-    void initCoordinateSystem(const Limits& limits)
+    void initCoordinateSystem(const Limits& lims)
     {
         cs = CoordinateSystem(/*limits*/);
 
-        cs.setTransform(rect(), limits);
+        qDebug() << "X: " << lims.minX << "-" << lims.maxX << ", Y: " << lims.minY << "-" << lims.maxY;
+        qDebug() << "X: " << limits.minX << "-" << limits.maxX << ", Y: " << limits.minY << "-" << limits.maxY;
+
+        cs.setTransform(rect(), lims);
     }
 
     void initLimitsFromPerimeter()
@@ -467,7 +515,10 @@ public:
     // Controls
     void resizeEvent(QResizeEvent* event) override
     {
-        cs.setTransform(rect(), limits);
+        auto lims = limitsWithMargins(5);
+        // qDebug() << "X: " << lims.minX << "-" << lims.maxX << ", Y: " << lims.minY << "-" << lims.maxY;
+        // qDebug() << "X: " << limits.minX << "-" << limits.maxX << ", Y: " << limits.minY << "-" << limits.maxY;
+        cs.setTransform(rect(), lims);
 
         QWidget::resizeEvent(event);
     }
@@ -483,15 +534,12 @@ public:
 
             if (event->button() == Qt::LeftButton)
             {
-                // cs.setTransform(rect());
-
                 targetPath.append(cs.toLogical(event->pos()));
-
-                // target->setPosition(cs.toLogical(event->pos()));
             }
         }
         else
         {
+            // Отрисовка таблички X, Y.
             if (rect().contains(event->pos()))
             {
                 QPointF pos = cs.toLogical(event->pos());
@@ -511,11 +559,10 @@ public:
         if (drawing)
         {
             // Набор пути цели
-
             if (rect().contains(event->pos()))
                 targetPath.append(cs.toLogical(event->pos()));
 
-            // Отрисовка пути цели
+            // Отрисовка
             update();
         }
     }
@@ -545,6 +592,7 @@ public:
 
     void addTargetSegments()
     {
+        // Если одна точка
         if (targetPath.size() == 1)
         {
             target->addSegment(targetPath[0], targetPath[0], targetParameters.getCurrentVelocity()); // Cкорость
@@ -689,6 +737,10 @@ public:
     }
 
 private:
+    // TODO: Для теста
+
+    Visual::RandomTargetWidget* random;
+    QTimer* rTimer;
     // TODO: при добавлении setColor()
     // Цвета для БЭНКов
     QVector<QColor> palette = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::cyan, Qt::magenta};

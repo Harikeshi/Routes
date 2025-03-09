@@ -48,15 +48,15 @@ public:
         {
             segments[currentSegmentIndex++]->setCurrentPoint(segment->getEnd()); //*
             currentTime += std::hypot(lastCurrentPoint.x() - segment->getEnd().x(), lastCurrentPoint.y() - segment->getEnd().y()) / segment->getSpeed();
+            // currentLength += std::hypot(lastCurrentPoint.x() - segment->getEnd().x(), lastCurrentPoint.y() - segment->getEnd().y());
         }
         else
         {
             segments[currentSegmentIndex]->setCurrentPoint(nextPosition); //*
 
             currentTime += std::hypot(lastCurrentPoint.x() - nextPosition.x(), lastCurrentPoint.y() - nextPosition.y()) / segment->getSpeed();
+            // currentLength += std::hypot(lastCurrentPoint.x() - nextPosition.x(), lastCurrentPoint.y() - nextPosition.y());
         }
-
-        // path.append(position);
 
         return true;
     }
@@ -169,7 +169,6 @@ public:
 
     double getCurrentTime() const
     {
-        // return currentLength / currentSpeed;
         return currentTime;
     }
 
@@ -210,6 +209,8 @@ public:
         if (!segments.isEmpty() && currentSegmentIndex <= segments.size())
         {
             auto index = currentSegmentIndex;
+
+            // Если достигли конечной точки
             if (currentSegmentIndex == segments.size())
             {
                 --index;
@@ -251,5 +252,7 @@ protected:
 
     size_t currentSegmentIndex; // Индекс текущего сегмента
     double currentTime;         // Прошло времени с начала маршрута
+
+    // double currentLength;
 };
 } // namespace Visual

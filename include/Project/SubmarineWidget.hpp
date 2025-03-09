@@ -62,6 +62,8 @@ public:
         connect(resetButton, &QPushButton::clicked, this, &SubmarineWidget::reset);
         connect(resetButton, &QPushButton::clicked, this, &SubmarineWidget::reset);
 
+        connect(randomButton, &QPushButton::clicked, this, &SubmarineWidget::random);
+
         connect(checkButton, &QPushButton::toggled, this, &SubmarineWidget::changeCheckButton);
 
         connect(speedInput, &QLineEdit::textChanged, this, &SubmarineWidget::actualSpeed);
@@ -71,8 +73,14 @@ signals:
     void checkBottomChanging(bool);
     void sendReset();
     void sendSpeed(double);
+    void startRandom();
 
 private slots:
+    void random()
+    {
+        emit startRandom();
+    }
+
     void actualSpeed()
     {
         auto text = speedInput->text();
