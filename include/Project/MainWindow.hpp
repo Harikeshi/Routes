@@ -96,7 +96,6 @@ public:
         connect(subWidget, &SubmarineWidget::checkBottomChanging, visWidget, &VisWidget::setDrawing);
         connect(subWidget, &SubmarineWidget::sendReset, visWidget, &VisWidget::targetClear);
         connect(subWidget, &SubmarineWidget::sendSpeed, visWidget, &VisWidget::setTargetSpeed);
-        // connect(subWidget, &SubmarineWidget::startRandom, visWidget, &VisWidget::startRandomTarget);
 
         // VisWidget
         connect(visWidget, &VisWidget::sendChangedDrawing, subWidget, &SubmarineWidget::changeButton);

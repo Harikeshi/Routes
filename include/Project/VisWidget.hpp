@@ -52,18 +52,9 @@ class VisWidget : public QWidget
     Q_OBJECT
 
 public:
-    // TODO: + const Perimeter или убрать Routes
-    // TODO: Инициализация CoordinateSystem во время загрузки request.json, а установка trans каждый раз когда надо
     VisWidget(QWidget* parent = nullptr)
-        : QWidget(parent), speedMultiplier(1.0)
+        : QWidget(parent), speedMultiplier(0.1)
     {
-        // TODO: Для прикола
-        // random = new Visual::RandomTargetWidget(this);
-
-        // rTimer = new QTimer(this);
-        // connect(rTimer, &QTimer::timeout, this, &VisWidget::movePoint);
-
-        // TODO: Добавить Лодку. Для лодки отдельный таймер
         targetTimer = new QTimer(this);
         timer = new QTimer(this);
 
@@ -72,9 +63,6 @@ public:
         target = new RouteWidget(this);
         target->setColor(Qt::black);
 
-        grid = new GridWidget(this);
-
-        // TODO: Должен запускаться пустой(чистый)
         speed = new SpeedWidget(this);
         speed->move(0, 0);
         speed->show();
@@ -89,7 +77,6 @@ public:
         connect(this, &VisWidget::sendMultiplier, time, &TimeWidget::updateTime);
     }
 
-    // bool rand = false;
 signals:
     void sendMultiplier(double);
     void sendChangedDrawing(bool);
@@ -98,32 +85,6 @@ signals:
     void sendIntersectionResult(QString);
 
 public slots:
-
-    // void movePoint()
-    // {
-    //     random->movePoint(*perimeter, limits, targetParameters.getCurrentVelocity() * speedMultiplier);
-
-    //     emit sendTargetPosition(random->getCurrentPosition());
-    //     emit sendTargetSpeed(targetParameters.getCurrentVelocity());
-
-    //     update();
-    // }
-
-    // void ResetPoint()
-    // {
-    //     random->reset();
-    //     rTimer->stop();
-    // }
-
-    // void startRandomTarget()
-    // {
-    //     if (requestLoaded && reportLoaded)
-    //     {
-    //         random->setStartPoint(*perimeter, limits);
-    //         rTimer->start(15);
-    //     }
-    // }
-
     void setDrawing(const bool value)
     {
         drawing = value;
@@ -132,8 +93,6 @@ public slots:
     }
 
 protected:
-    // TODO: Отрисовка Widget начинается после инициализации всех Loaded
-    // TODO: Скорости свести к множителю по времени, Выводить время поверх
     void paintEvent(QPaintEvent* event) override
     {
         QPainter painter(this);
@@ -143,13 +102,11 @@ protected:
 
         // Отрисовка сетки
         auto lims = limits.limitsWithMargins(5);
+        grid = new GridWidget(this);
         grid->draw(painter, lims);
 
         // Отрисовка Периметра
         perimeter->draw(painter);
-
-        // TODO: fun
-        // random->draw(painter);
 
         drawRoutes(painter);
 
@@ -212,16 +169,14 @@ public:
     }
 
 public:
-    // TODO: прорисовка не должна начинаться без инициализации Perimeter и Routes
     void start()
     {
         found = false;
         numberRoutes = routes.size(); // Количество путей
 
-        // Сброс буфера пути
+        // Сброс буфера путей
         resetRoutesToDefault();
 
-        // TODO: Все состояния на отрисовку текущей точки
         for (const auto route : routes)
         {
             route->setState(new Visual::CurrentDrawState());
@@ -286,6 +241,7 @@ public:
         return speedMultiplier;
     }
 
+    // TODO: При скорости от 0 до 1 уменьшать на 0.1
     double downSpeed(const int multiplier)
     {
         if (speedMultiplier - multiplier > 0)
@@ -369,9 +325,6 @@ public:
 
     void targetClear()
     {
-        //TODO: fun
-        // ResetPoint();
-
         target->reset();
 
         targetPath.clear();
@@ -446,7 +399,7 @@ public:
 
     void initCoordinateSystem(const Limits& lims)
     {
-        cs = CoordinateSystem(/*limits*/);
+        cs = CoordinateSystem();
 
         cs.setTransform(rect(), lims);
     }
@@ -466,8 +419,6 @@ public:
     void resizeEvent(QResizeEvent* event) override
     {
         auto lims = limits.limitsWithMargins(5);
-        // qDebug() << "X: " << lims.minX << "-" << lims.maxX << ", Y: " << lims.minY << "-" << lims.maxY;
-        // qDebug() << "X: " << limits.minX << "-" << limits.maxX << ", Y: " << limits.minY << "-" << limits.maxY;
         cs.setTransform(rect(), lims);
 
         QWidget::resizeEvent(event);
@@ -578,12 +529,15 @@ private slots:
             // Когда путь заканчивается таймер останавливается
             if (!route->update(speedMultiplier))
             {
-                qDebug() << "Общая длина пути: " << route->getCurrentLength();
                 --numberRoutes;
                 // TODO: Требуется проверка что все доехали, а не один как сейчас
                 // TODO: Добавить счетчик
                 if (numberRoutes == 0)
+                {
+                    qDebug() << "Общая длина пути: " << route->getCurrentLength() << " метров.";
+                    qDebug() << "Время в пути: " << route->getCurrentTime() << " минут.";
                     timer->stop();
+                }
             }
         }
         // Обновление времени
@@ -648,10 +602,6 @@ public:
     }
 
 private:
-    // TODO: for fun
-    // Visual::RandomTargetWidget* random;
-    // QTimer* rTimer;
-    // TODO: при добавлении setColor()
     // Цвета для БЭНКов
     QVector<QColor> palette = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::cyan, Qt::magenta};
 

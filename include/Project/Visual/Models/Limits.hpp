@@ -66,7 +66,6 @@ struct Limits
 
     void reset()
     {
-        qDebug() << "Limits.reset()";
         // Максисум на минимальную, минимум на максимальную
         minX = 1e13;
         minY = 1e13;
