@@ -216,6 +216,7 @@ public:
     void start()
     {
         found = false;
+        numberRoutes = routes.size(); // Количество путей
 
         // Сброс буфера пути
         resetRoutesToDefault();
@@ -577,13 +578,14 @@ private slots:
             // Когда путь заканчивается таймер останавливается
             if (!route->update(speedMultiplier))
             {
-                // TODO: Требуется проверка что все доехали, а не один как сейчас
                 qDebug() << "Общая длина пути: " << route->getCurrentLength();
-                timer->stop();
+                --numberRoutes;
+                // TODO: Требуется проверка что все доехали, а не один как сейчас
+                // TODO: Добавить счетчик
+                if (numberRoutes == 0)
+                    timer->stop();
             }
         }
-
-        // TODO: Время только первого маршрута
         // Обновление времени
         emit sendMultiplier(routes[0]->getCurrentTime());
 
@@ -684,6 +686,7 @@ private:
     Limits limits;
 
     // Flags
+    size_t numberRoutes;
     bool found = false; // Объект найден
     bool loaded = false;
 
