@@ -94,6 +94,11 @@ public:
         return currentLength() / segment.getSpeed();
     }
 
+    Segment getSegment() const
+    {
+        return segment;
+    }
+
 private:
     void setPen(QPainter& painter, const QColor& color) const
     {

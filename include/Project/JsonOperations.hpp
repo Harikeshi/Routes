@@ -15,7 +15,7 @@ class JsonHelpers
     using Perimeter = Visual::Models::Perimeter;
 
 public:
-    static QJsonObject jsonFromFile(const QString& path = "/home/harikeshi/work/new/example/routes/request.json")
+    static QJsonObject jsonFromFile(const QString& path)
     {
         QByteArray barray;
 
@@ -36,6 +36,48 @@ public:
         QJsonDocument doc = QJsonDocument::fromJson(barray);
 
         return doc.object();
+    }
+
+    QByteArray getByteArray(const QString& fileName)
+    {
+        QFile file(fileName);
+
+        // Проверка
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            file.close();
+            throw std::runtime_error("Не удалось открыть файл.");
+        }
+
+        QByteArray barray;
+        barray = file.readAll();
+
+        file.close();
+
+        return barray;
+    }
+
+    // TODO: to JsonOper
+    QJsonObject byteArrayToJson(const QByteArray& array)
+    {
+        QJsonDocument doc = QJsonDocument::fromJson(array);
+
+        if (doc.isNull() || !doc.isObject())
+        {
+            throw std::runtime_error("Файл не удалось открыть.");
+        }
+
+        QJsonObject obj;
+        try
+        {
+            obj = doc.object();
+        }
+        catch (std::runtime_error& ex)
+        {
+            throw ex;
+        }
+
+        return obj;
     }
 
     static QVector<QVector<Segment>> parseToSegments(const QJsonObject& obj)
@@ -83,6 +125,7 @@ public:
             QJsonArray points = route["points"].toArray();
             QJsonArray velocities = route["velocities"].toArray();
 
+            //
             if (points.size() != velocities.size())
             {
                 throw std::runtime_error("Длина \"points\" не совпадает с длиной \"velocities\".");
@@ -111,9 +154,20 @@ public:
                     throw std::runtime_error("Длина массива точки != 2.");
                 }
 
-                Segment segment(QPointF(start[0].toDouble(), start[1].toDouble()), QPointF(end[0].toDouble(), end[1].toDouble()), speed);
+                double x1 = start[0].toDouble();
+                double x2 = end[0].toDouble();
+                double y1 = start[1].toDouble();
+                double y2 = end[1].toDouble();
 
-                path.push_back(segment);
+                if (x1 >= -1e12 && x1 <= 1e12 && x2 >= -1e12 && x2 <= 1e12 && y1 >= -1e12 && y1 <= 1e12 && y2 >= -1e12 && y2 <= 1e12)
+                {
+                    Segment segment(QPointF(x1, y1), QPointF(x2, y2), speed);
+                    path.push_back(segment);
+                }
+                else
+                {
+                    throw std::runtime_error("Точка пути не в интервале от -1e12 до +1e12.");
+                }
             }
 
             result.push_back(path);
@@ -195,10 +249,21 @@ public:
                     throw std::runtime_error("Длина массива точки != 2.");
                 }
 
-                Segment segment(QPointF(start[0].toDouble(), start[1].toDouble()), QPointF(end[0].toDouble(), end[1].toDouble()), speed);
+                double x1 = start[0].toDouble();
+                double x2 = end[0].toDouble();
+                double y1 = start[1].toDouble();
+                double y2 = end[1].toDouble();
 
-                path.addSegment(segment);
+                if (x1 >= -1e12 && x1 <= 1e12 && x2 >= -1e12 && x2 <= 1e12 && y1 >= -1e12 && y1 <= 1e12 && y2 >= -1e12 && y2 <= 1e12)
+                {
+                    Segment segment(QPointF(x1, y1), QPointF(x2, y2), speed);
 
+                    path.addSegment(segment);
+                }
+                else
+                {
+                    throw std::runtime_error("Точка пути не в интервале от -1e12 до +1e12.");
+                }
                 // Для первого сегмента
                 if (i == 0)
                 {
@@ -325,7 +390,17 @@ public:
                     throw std::runtime_error("Данные в массиве точки не являются числом.");
                 }
 
-                inner.push_back(QPointF{point[0].toDouble(), point[1].toDouble()});
+                double x = point[0].toDouble();
+                double y = point[1].toDouble();
+
+                if (x >= -1e12 && x <= 1e12 && y >= -1e12 && y <= 1e12)
+                {
+                    inner.push_back(QPointF{x, y});
+                }
+                else
+                {
+                    throw std::runtime_error("Точка Периметра не в интервале от -1e12 до +1e12.");
+                }
             }
 
             result.addInner(inner);

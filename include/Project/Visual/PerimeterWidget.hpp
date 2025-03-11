@@ -7,6 +7,8 @@
 #include <QVector2D>
 #include <QWidget>
 
+#include "Models/Perimeter.hpp"
+
 namespace Visual {
 class PerimeterWidget : public QWidget
 {
@@ -18,87 +20,10 @@ public:
     }
 
 public:
-    void setOuter(const QVector<QPointF>& points)
-    {
-        setLimits(points);
-
-        if (inners.size() != 0)
-            inners[0] = points;
-        else
-        {
-            inners.push_back(points);
-        }
-    }
-
-    void addInner(const QVector<QPointF>& points)
-    {
-        setLimits(points);
-
-        inners.push_back(points);
-    }
-
-    void draw(QPainter& painter) const
-    {
-        QPen pen(color, 5);
-        pen.setCosmetic(true);
-
-        painter.setPen(pen);
-
-        for (const auto& inner : inners)
-        {
-            painter.drawPolygon(inner);
-        }
-    }
-
-    QVector<QPolygonF> getInners() const
-    {
-        return inners;
-    }
-
-    double getMinX() const
-    {
-        return minX;
-    }
-
-    double getMinY() const
-    {
-        return minY;
-    }
-
-    double getMaxX() const
-    {
-        return maxX;
-    }
-
-    double getMaxY() const
-    {
-        return maxY;
-    }
-
-private:
-    void setLimits(const QVector<QPointF> points)
-    {
-        for (const auto& point : points)
-        {
-            minX = std::min(minX, point.x());
-            minY = std::min(minY, point.y());
-            maxX = std::max(maxX, point.x());
-            maxY = std::max(maxY, point.y());
-        }
-    }
-
 public:
     void show() const
     {
-        for (const auto& inner : inners)
-        {
-            qDebug() << "[";
-            for (const auto& point : inner)
-            {
-                qDebug() << "[" << point << "]";
-            }
-            qDebug() << "]";
-        }
+        perimeter.show();
     }
 
     QColor getColor() const
@@ -111,12 +36,37 @@ public:
         color = c;
     }
 
-private:
-    double minX, minY, maxX, maxY;
+    QVector<QPolygonF> getInners() const
+    {
+        return perimeter.getInners();
+    }
 
+    void setPerimeter(const Visual::Models::Perimeter& perimeter)
+    {
+        this->perimeter = perimeter;
+    }
+
+    Visual::Models::Perimeter getPerimeter() const
+    {
+        return perimeter;
+    }
+
+    void draw(QPainter& painter) const
+    {
+        QPen pen(color, 5); // Толщина
+        pen.setCosmetic(true);
+
+        painter.setPen(pen);
+
+        for (const auto& inner : perimeter.getInners())
+        {
+            painter.drawPolygon(inner);
+        }
+    }
+
+private:
     QColor color{Qt::blue};
 
-    // TODO: Outer = inners[0]
-    QVector<QPolygonF> inners;
+    Visual::Models::Perimeter perimeter;
 };
 } // namespace Visual

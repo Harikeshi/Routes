@@ -12,6 +12,8 @@ class Perimeter
 public:
     void setOuter(const QVector<QPointF>& points)
     {
+        setLimits(points);
+
         if (inners.size() != 0)
             inners[0] = points;
         else
@@ -22,12 +24,50 @@ public:
 
     void addInner(const QVector<QPointF>& points)
     {
+        setLimits(points);
+
         inners.push_back(points);
     }
 
     QVector<QPolygonF> getInners() const
     {
         return inners;
+    }
+
+    double getMinX() const
+    {
+        return minX;
+    }
+
+    double getMinY() const
+    {
+        return minY;
+    }
+
+    double getMaxX() const
+    {
+        return maxX;
+    }
+
+    double getMaxY() const
+    {
+        return maxY;
+    }
+
+private:
+    void setLimits(const QVector<QPointF> points)
+    {
+        for (const auto& point : points)
+        {
+            minX = std::min(minX, point.x());
+            minY = std::min(minY, point.y());
+            maxX = std::max(maxX, point.x());
+            maxY = std::max(maxY, point.y());
+        }
+    }
+
+    void getLimites() const
+    {
     }
 
 public:
@@ -45,6 +85,7 @@ public:
     }
 
 private:
+    double minX, minY, maxX, maxY;
     QVector<QPolygonF> inners;
 };
 } // namespace Models

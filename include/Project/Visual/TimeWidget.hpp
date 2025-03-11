@@ -15,9 +15,12 @@ public:
     {
         QVBoxLayout* layout = new QVBoxLayout(this);
 
-        labelMinutes = new QLabel("min: 0", this);
-        labelHours = new QLabel("hours: 0", this);
-        labelDays = new QLabel("days: 0", this);
+        labelMinutes = new QLabel("", this);
+        labelMinutes->setMinimumWidth(100);
+        labelHours = new QLabel("", this);
+        labelHours->setMinimumWidth(100);
+        labelDays = new QLabel("", this);
+        labelDays->setMinimumWidth(100);
 
         layout->addWidget(labelMinutes);
         layout->addWidget(labelHours);

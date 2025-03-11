@@ -20,6 +20,7 @@
 #include "Visual/PerimeterWidget.hpp"
 #include "Visual/RandomTargetWidget.hpp"
 #include "Visual/RouteWidget.hpp"
+#include "Visual/SpeedWidget.hpp"
 #include "Visual/TimeWidget.hpp"
 
 #include "Visual/Models/Limits.hpp"
@@ -57,12 +58,11 @@ public:
         : QWidget(parent), speedMultiplier(1.0)
     {
         // TODO: Для прикола
-        random = new Visual::RandomTargetWidget(this);
+        // random = new Visual::RandomTargetWidget(this);
 
-        rTimer = new QTimer(this);
-        connect(rTimer, &QTimer::timeout, this, &VisWidget::movePoint);
+        // rTimer = new QTimer(this);
+        // connect(rTimer, &QTimer::timeout, this, &VisWidget::movePoint);
 
-        // TODO: Должен запускаться пустой(чистый)
         // TODO: Добавить Лодку. Для лодки отдельный таймер
         targetTimer = new QTimer(this);
         timer = new QTimer(this);
@@ -74,6 +74,11 @@ public:
 
         grid = new GridWidget(this);
 
+        // TODO: Должен запускаться пустой(чистый)
+        speed = new SpeedWidget(this);
+        speed->move(0, 0);
+        speed->show();
+
         time = new TimeWidget(this);
         time->move(0, 20);
         time->show();
@@ -84,7 +89,7 @@ public:
         connect(this, &VisWidget::sendMultiplier, time, &TimeWidget::updateTime);
     }
 
-    bool rand = false;
+    // bool rand = false;
 signals:
     void sendMultiplier(double);
     void sendChangedDrawing(bool);
@@ -94,30 +99,30 @@ signals:
 
 public slots:
 
-    void movePoint()
-    {
-        random->movePoint(*perimeter, limits, targetParameters.getCurrentVelocity() * speedMultiplier);
+    // void movePoint()
+    // {
+    //     random->movePoint(*perimeter, limits, targetParameters.getCurrentVelocity() * speedMultiplier);
 
-        emit sendTargetPosition(random->getCurrentPosition());
-        emit sendTargetSpeed(targetParameters.getCurrentVelocity());
+    //     emit sendTargetPosition(random->getCurrentPosition());
+    //     emit sendTargetSpeed(targetParameters.getCurrentVelocity());
 
-        update();
-    }
+    //     update();
+    // }
 
-    void ResetPoint()
-    {
-        random->reset();
-        rTimer->stop();
-    }
+    // void ResetPoint()
+    // {
+    //     random->reset();
+    //     rTimer->stop();
+    // }
 
-    void startRandomTarget()
-    {
-        if (perimeterLoaded && routesLoaded)
-        {
-            random->setStartPoint(*perimeter, limits);
-            rTimer->start(15);
-        }
-    }
+    // void startRandomTarget()
+    // {
+    //     if (requestLoaded && reportLoaded)
+    //     {
+    //         random->setStartPoint(*perimeter, limits);
+    //         rTimer->start(15);
+    //     }
+    // }
 
     void setDrawing(const bool value)
     {
@@ -137,21 +142,18 @@ protected:
         painter.setTransform(cs.getTransform());
 
         // Отрисовка сетки
-        auto lims = limitsWithMargins(5);
+        auto lims = limits.limitsWithMargins(5);
         grid->draw(painter, lims);
 
         // Отрисовка Периметра
         perimeter->draw(painter);
 
         // TODO: fun
-        // if (rand)
-        random->draw(painter);
+        // random->draw(painter);
 
         drawRoutes(painter);
 
         drawTarget(painter);
-
-        drawMultiplier(painter);
     }
 
     void drawRoutes(QPainter& painter)
@@ -197,24 +199,16 @@ protected:
         target->draw(painter);
     }
 
-    void drawMultiplier(QPainter& painter)
-    {
-        painter.resetTransform();
-        painter.setPen(Qt::black);
-        painter.drawText(10, 20, QString("Speed Multiplier: %1x").arg(speedMultiplier));
-    }
-
-private:
+public:
     void loadFirstScreen()
     {
-        if (perimeterLoaded && routesLoaded)
-        {
-            auto lims = limitsWithMargins(5);
+        loaded = true;
 
-            initCoordinateSystem(lims);
+        auto lims = limits.limitsWithMargins(5);
 
-            update();
-        }
+        initCoordinateSystem(lims);
+
+        update();
     }
 
 public:
@@ -222,16 +216,6 @@ public:
     void start()
     {
         found = false;
-
-        // Сброс путей и начинаем отрисовку сначала
-        if (!perimeterLoaded)
-        {
-            throw std::runtime_error("Периметер не загружен.");
-        }
-        if (!routesLoaded)
-        {
-            throw std::runtime_error("Пути не загружены.");
-        }
 
         // Сброс буфера пути
         resetRoutesToDefault();
@@ -254,23 +238,6 @@ public:
             target->clear();
             targetTimer->start(15);
         }
-    }
-
-    void showCompletedRoutes()
-    {
-        for (const auto route : routes)
-        {
-            if (route->getStateType() == Visual::State::Full)
-            {
-                route->setState(new Visual::CurrentDrawState());
-            }
-            else
-            {
-                route->setState(new Visual::FullDrawState());
-            }
-        }
-
-        update();
     }
 
     void pause()
@@ -313,6 +280,7 @@ public:
     double upSpeed(const int multiplier)
     {
         speedMultiplier += multiplier;
+        speed->update(speedMultiplier);
 
         return speedMultiplier;
     }
@@ -322,9 +290,30 @@ public:
         if (speedMultiplier - multiplier > 0)
             speedMultiplier -= multiplier;
 
+        speed->update(speedMultiplier);
+
         return speedMultiplier;
     }
 
+    // Отрисовка полных путей
+    void setShowFull()
+    {
+        for (const auto route : routes)
+        {
+            if (route->getStateType() == Visual::State::Full)
+            {
+                route->setState(new Visual::CurrentDrawState());
+            }
+            else
+            {
+                route->setState(new Visual::FullDrawState());
+            }
+        }
+
+        update();
+    }
+
+    // Показывать/не показывать пути
     void changeShowLines()
     {
         for (const auto route : routes)
@@ -363,6 +352,7 @@ public:
 
     void setMultiplier(const double multi)
     {
+        speed->update(multi);
         speedMultiplier = multi;
     }
 
@@ -379,7 +369,7 @@ public:
     void targetClear()
     {
         //TODO: fun
-        ResetPoint();
+        // ResetPoint();
 
         target->reset();
 
@@ -390,29 +380,47 @@ public:
         update();
     }
 
+    void setPerimeter(const Perimeter& p)
+    {
+        // TODO: Инициализируем
+        perimeter = new PerimeterWidget(this);
+
+        perimeter->setPerimeter(p);
+    }
+
     void setRoutes(const QVector<Route>& routes_)
     {
         routes = QVector<RouteWidget*>();
 
         for (const auto& route_ : routes_)
         {
-            auto route = new RouteWidget(this); // TODO
+            auto route = new RouteWidget(this);
 
             route->initialize(route_.getSegments(), palette[routes.size() % palette.size()], shipParameters);
 
             this->routes.append(route);
         }
 
-        routesLoaded = true;
+        resetRoutesToDefault(); // После загрузки обновляем
+    }
 
-        resetRoutesToDefault();
+    Limits getLimits() const
+    {
+        return limits;
+    }
 
-        initLimitsFromRoutes();
+    void initLimitsFromRoutes()
+    {
+        for (const auto& route : routes)
+        {
+            for (const auto& segment : route->getSegments())
+                limits.initFromSegment(segment->getSegment());
+        }
+    }
 
-        // Инициализация движущихся Объектов.
-        setRoutesModels(Visual::Objects::Arrow, 0.01 * limits.getMaxBorderLength()); // 1%
-
-        loadFirstScreen();
+    void initLimitsFromPerimeter()
+    {
+        limits.initFromPerimeter(perimeter->getPerimeter());
     }
 
     void setRoutesModels(const Visual::Objects model, const double size) const
@@ -422,83 +430,13 @@ public:
         {
             routes[i]->setModel(model, size);
         }
-
-        // ПЛ
-    }
-
-    void setPerimeter(const Perimeter& p)
-    {
-        // TODO: Инициализируем
-        perimeter = new PerimeterWidget(this);
-
-        for (auto inner : p.getInners())
-        {
-            this->perimeter->addInner(inner);
-        }
-
-        perimeterLoaded = true;
-
-        initLimitsFromPerimeter();
-
-        loadFirstScreen();
-    }
-
-    Limits limitsWithMargins(const double percent)
-    {
-        // Отступы по сторонам
-        // TODO: Брать процентное отношение от ширины и длины
-        double height = std::fabs(limits.maxY - limits.minY) * percent / 100;
-        double width = std::fabs(limits.maxX - limits.minX) * percent / 100;
-
-        auto minX = limits.minX - width;  // minX
-        auto minY = limits.minY - height; // minY
-        auto maxX = limits.maxX + width;  // maxX
-        auto maxY = limits.maxY + height; // maxY
-
-        return {minX, minY, maxX, maxY};
     }
 
     void initCoordinateSystem(const Limits& lims)
     {
         cs = CoordinateSystem(/*limits*/);
 
-        qDebug() << "X: " << lims.minX << "-" << lims.maxX << ", Y: " << lims.minY << "-" << lims.maxY;
-        qDebug() << "X: " << limits.minX << "-" << limits.maxX << ", Y: " << limits.minY << "-" << limits.maxY;
-
         cs.setTransform(rect(), lims);
-    }
-
-    void initLimitsFromPerimeter()
-    {
-        limits.minX = std::min(limits.minX, perimeter->getMinX());
-
-        limits.minY = std::min(limits.minY, perimeter->getMinY());
-
-        limits.maxX = std::max(limits.maxX, perimeter->getMaxX());
-
-        limits.maxY = std::max(limits.maxY, perimeter->getMaxY());
-    }
-
-    void initLimitsFromRoutes()
-    {
-        // максимумы из Routes
-        for (const auto& route : routes)
-        {
-            for (const auto& segment : route->getSegments())
-            {
-                limits.minX = std::min(limits.minX, segment->getStart().x());
-                limits.minX = std::min(limits.minX, segment->getEnd().x());
-
-                limits.minY = std::min(limits.minY, segment->getStart().y());
-                limits.minY = std::min(limits.minY, segment->getEnd().y());
-
-                limits.maxX = std::max(limits.maxX, segment->getStart().x());
-                limits.maxX = std::max(limits.maxX, segment->getEnd().x());
-
-                limits.maxY = std::max(limits.maxY, segment->getStart().y());
-                limits.maxY = std::max(limits.maxY, segment->getEnd().y());
-            }
-        }
     }
 
     void setTargetSpeed(const double value)
@@ -508,14 +446,14 @@ public:
 
     void resetSpeed()
     {
-        speedMultiplier = 1.0;
+        setMultiplier(1.);
     }
 
 public:
     // Controls
     void resizeEvent(QResizeEvent* event) override
     {
-        auto lims = limitsWithMargins(5);
+        auto lims = limits.limitsWithMargins(5);
         // qDebug() << "X: " << lims.minX << "-" << lims.maxX << ", Y: " << lims.minY << "-" << lims.maxY;
         // qDebug() << "X: " << limits.minX << "-" << limits.maxX << ", Y: " << limits.minY << "-" << limits.maxY;
         cs.setTransform(rect(), lims);
@@ -525,7 +463,7 @@ public:
 
     void mousePressEvent(QMouseEvent* event) override
     {
-        if (!perimeterLoaded || !routesLoaded)
+        if (!loaded)
             return;
 
         if (drawing)
@@ -549,9 +487,15 @@ public:
         }
     }
 
+public:
+    void setLoaded(const bool value)
+    {
+        loaded = value;
+    }
+
     void mouseMoveEvent(QMouseEvent* event) override
     {
-        if (!perimeterLoaded || !routesLoaded)
+        if (!loaded)
         {
             return;
         }
@@ -569,6 +513,11 @@ public:
 
     void mouseReleaseEvent(QMouseEvent* event) override
     {
+        if (!loaded)
+        {
+            return;
+        }
+
         if (event->button() == Qt::LeftButton && drawing)
         {
             addTargetSegments();
@@ -669,78 +618,20 @@ private:
     }
 
 public:
-    void setupS()
+    void setShipParameters(const Object& obj)
     {
+        shipParameters = obj;
     }
 
-    void setupR(const QString path = "/home/harikeshi/work/routes/tresult.json")
+    void setTargetParameters(const Object& obj)
     {
-        if (!perimeterLoaded)
-            throw std::runtime_error("Периметер не загружен!");
-
-        QByteArray barray;
-
-        if (!path.isEmpty())
-        {
-            QFile file(path);
-
-            // Проверка
-            if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-            {
-                throw std::runtime_error("Не удалось открыть файл");
-            }
-
-            barray = file.readAll();
-
-            file.close();
-        }
-
-        QJsonDocument doc = QJsonDocument::fromJson(barray);
-
-        auto obj = doc.object();
-
-        // Routes<Segment>
-        auto routes = JsonHelpers::parseToRoutes(obj);
-
-        setRoutes(routes);
-    }
-
-    void setupP(const QString& path = "/home/harikeshi/work/routes/trequest.json")
-    {
-        QByteArray barray;
-        if (!path.isEmpty())
-        {
-            QFile file(path);
-
-            // Проверка
-            if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-            {
-                throw std::runtime_error("Не удалось открыть файл");
-            }
-
-            barray = file.readAll();
-
-            file.close();
-        }
-
-        QJsonDocument doc = QJsonDocument::fromJson(barray);
-
-        QJsonObject obj = doc.object();
-
-        auto perimeter = JsonHelpers::parseToPolygon(obj);
-
-        shipParameters = JsonHelpers::parseShip(obj);
-
-        targetParameters = JsonHelpers::parseTarget(obj);
-
-        setPerimeter(perimeter);
+        targetParameters = obj;
     }
 
 private:
-    // TODO: Для теста
-
-    Visual::RandomTargetWidget* random;
-    QTimer* rTimer;
+    // TODO: for fun
+    // Visual::RandomTargetWidget* random;
+    // QTimer* rTimer;
     // TODO: при добавлении setColor()
     // Цвета для БЭНКов
     QVector<QColor> palette = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::cyan, Qt::magenta};
@@ -752,6 +643,7 @@ private:
     // TODO: Добавить State и Momento
     // Время
     TimeWidget* time;
+    SpeedWidget* speed;
 
     // Сетка  TODO: перевести в QImage
     GridWidget* grid;
@@ -776,9 +668,7 @@ private:
 
     // Flags
     bool found = false; // Объект найден
-
-    bool perimeterLoaded = false; // Периметер загружен
-    bool routesLoaded = false;    // Пути загружены
+    bool loaded = false;
 
     bool drawing = false; // Разрешить отрисовку цели
 

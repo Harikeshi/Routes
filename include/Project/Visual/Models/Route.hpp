@@ -22,6 +22,10 @@ public:
         this->segments = segments;
     }
 
+    void getLimits()
+    {
+    }
+
 private:
     QVector<Segment> segments;
 };

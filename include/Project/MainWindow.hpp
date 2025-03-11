@@ -48,6 +48,8 @@ public:
         // Левый виджет
         visWidget = new VisWidget(this);
         visWidget->resize(800, 800);
+        visWidget->setMouseTracking(false); // Отключить трекинг мыши
+
         QVBoxLayout* leftLayout = new QVBoxLayout(visWidget);
         visWidget->setLayout(leftLayout);
 
@@ -87,14 +89,14 @@ public:
         mainSplitter->setStretchFactor(2, 3);  // Левый виджет занимает 2/3 пространства
         rightSplitter->setStretchFactor(1, 1); // Правый splitter занимает 1/3 пространства
 
-        connect(openRequest, &QAction::triggered, this, &MainWindow::initPerimeter);
-        connect(openResult, &QAction::triggered, this, &MainWindow::initRoutes);
+        connect(openRequest, &QAction::triggered, this, &MainWindow::initFromRequest);
+        connect(openResult, &QAction::triggered, this, &MainWindow::initFromReport);
 
         // SubWidget
         connect(subWidget, &SubmarineWidget::checkBottomChanging, visWidget, &VisWidget::setDrawing);
         connect(subWidget, &SubmarineWidget::sendReset, visWidget, &VisWidget::targetClear);
         connect(subWidget, &SubmarineWidget::sendSpeed, visWidget, &VisWidget::setTargetSpeed);
-        connect(subWidget, &SubmarineWidget::startRandom, visWidget, &VisWidget::startRandomTarget);
+        // connect(subWidget, &SubmarineWidget::startRandom, visWidget, &VisWidget::startRandomTarget);
 
         // VisWidget
         connect(visWidget, &VisWidget::sendChangedDrawing, subWidget, &SubmarineWidget::changeButton);
@@ -111,182 +113,112 @@ private slots:
     }
 
 protected:
-    void mousePressEvent(QMouseEvent* event) override
-    {
-        QMainWindow::mousePressEvent(event);
-    }
-
     void keyPressEvent(QKeyEvent* event) override
     {
-        // TODO: Сделать switch
-        if (event->key() == Qt::Key_Equal)
+        switch (event->key())
         {
+        case Qt::Key_Equal:
             visWidget->upSpeed(1);
-        }
-        // Сброс скрости к базовой
-        else if (event->key() == Qt::Key_Plus)
-        {
+            break;
+        case Qt::Key_Plus:
             visWidget->resetSpeed();
-        }
-        else if (event->key() == Qt::Key_Minus)
-        // Уменьшить скорость
-        {
+            break;
+        case Qt::Key_Minus:
+            // Уменьшить скорость
             visWidget->downSpeed(2);
-        }
-        else if (event->key() == Qt::Key_S)
-        {
+            break;
+        case Qt::Key_S:
             try
             {
-                visWidget->start();
+                this->start();
             }
             catch (std::runtime_error& ex)
             {
                 infoWidget->addMessage(ex.what(), InformationWidget::MessageType::Error);
             }
-        }
-        else if (event->key() == Qt::Key_L)
-        {
+            break;
+        case Qt::Key_L:
             visWidget->changeShowLines();
-        }
-        else if (event->key() == Qt::Key_B)
-        {
-            visWidget->showCompletedRoutes();
-        }
-        else if (event->key() == Qt::Key_P)
-        {
+            break;
+        case Qt::Key_B:
+            visWidget->setShowFull();
+            break;
+        case Qt::Key_P:
             visWidget->pause();
-        }
-        else if (event->key() == Qt::Key_F)
-        {
+            break;
+        case Qt::Key_F:
             try
             {
-                visWidget->setupP();
-                infoWidget->addMessage("Периметер загружен.", InformationWidget::MessageType::Info);
+                // initFromRequest
+                this->loadRequest();
+                infoWidget->addMessage("Request загружен.", InformationWidget::MessageType::Info);
             }
             catch (const std::runtime_error& ex)
             {
                 infoWidget->addMessage(ex.what(), InformationWidget::MessageType::Error);
             }
-        }
-        else if (event->key() == Qt::Key_R)
-        {
+            break;
+        case Qt::Key_R:
             try
             {
-                visWidget->setupR();
-                infoWidget->addMessage("Пути загружены.", InformationWidget::MessageType::Info);
+                // initFromReport
+                this->loadReport();
+                infoWidget->addMessage("Report загружен.", InformationWidget::MessageType::Info);
             }
             catch (const std::runtime_error& ex)
             {
                 infoWidget->addMessage(ex.what(), InformationWidget::MessageType::Error);
             }
-        }
-        else if (event->key() == Qt::Key_X)
-        {
+            break;
+        case Qt::Key_X:
             visWidget->setDrawing(true);
-        }
+            break;
         // Очистка путей и точки цели
-        else if (event->key() == Qt::Key_C)
-        {
+        case Qt::Key_C:
             visWidget->targetClear(); // Tagret clear()
+            break;
         }
-
-        visWidget->update();
     }
 
-    // TODO: информация о загрузке файлов
-    // TODO: Вынести в отдельный класс Json
-    QByteArray openJsonFile(const QString& title)
+    QString openJsonFile(const QString& title)
     {
-        QString fileName = QFileDialog::getOpenFileName(this, title, "", "JSON Files (*.json)");
-
-        QByteArray barray;
+        auto fileName = QFileDialog::getOpenFileName(this, title, "", "JSON Files (*.json)");
 
         if (fileName.isEmpty())
         {
             throw std::runtime_error("Не удалось открыть файл. Операция отменена пользователем.");
         }
 
-        QFile file(fileName);
-
-        // Проверка
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            file.close();
-            throw std::runtime_error("Не удалось открыть файл.");
-        }
-
-        barray = file.readAll();
-
-        file.close();
-
-        return barray;
+        return fileName;
     }
-    // TODO: to JsonOper
-    QJsonObject byteArrayToJson(const QByteArray& array)
-    {
-        QJsonDocument doc = QJsonDocument::fromJson(array);
 
-        if (doc.isNull() || !doc.isObject())
-        {
-            throw std::runtime_error("Файл не удалось открыть.");
-        }
-
-        QJsonObject obj;
-        try
-        {
-            obj = doc.object();
-        }
-        catch (std::runtime_error& ex)
-        {
-            throw ex;
-        }
-
-        return obj;
-    }
 private slots:
 
-    void initRoutes() // TODO:
+    void initFromReport()
     {
-        QJsonObject json;
-
-        std::string fileName;
         try
         {
-            auto array = openJsonFile("Открыть result.json файл(Выходные данные).");
-            json = byteArrayToJson(array);
+            auto path = openJsonFile("Открыть result.json файл(Выходные данные).");
+            this->loadReport(path);
         }
         catch (std::runtime_error& ex)
         {
             infoWidget->addMessage(ex.what(), InformationWidget::MessageType::Error);
-            return;
-        }
-
-        try
-        {
-            QVector<Route> routes = JsonHelpers::parseToRoutes(json);
-
-            visWidget->setRoutes(routes);
-
-            //  visWidget->update();
-        }
-        catch (std::runtime_error& ex)
-        {
-            // TODO: Обработка ошибки
-            infoWidget->addMessage(ex.what(), InformationWidget::MessageType::Error);
-
             return;
         }
 
         infoWidget->addMessage("Пути успешно загружены.", InformationWidget::MessageType::Success);
     }
 
-    void initPerimeter() // TODO:
+    // TODO: Добавить любую загрузку request.json
+    void initFromRequest() // TODO:
     {
         QJsonObject json;
+
         try
         {
-            auto array = openJsonFile("Открыть request.json файл(Входные данные).");
-            json = byteArrayToJson(array);
+            auto path = openJsonFile("Открыть request.json файл(Входные данные).");
+            json = this->loadRequest(path);
         }
         catch (std::runtime_error& ex)
         {
@@ -295,24 +227,84 @@ private slots:
             return;
         }
 
-        try
-        {
-            Perimeter perimeter = JsonHelpers::parseToPolygon(json);
-
-            visWidget->setPerimeter(perimeter);
-
-            dataWidget->clear();
-            dataWidget->initialize(json);
-
-            visWidget->update();
-        }
-        catch (std::runtime_error& ex)
-        {
-            infoWidget->addMessage(ex.what(), InformationWidget::MessageType::Error);
-            return;
-        }
+        // Инициализация дерева request.json
+        dataWidget->initialize(json);
 
         infoWidget->addMessage("Периметр успешно загружен.", InformationWidget::MessageType::Success);
+    }
+
+protected:
+    QJsonObject loadReport(const QString path = "/home/harikeshi/work/routes/tresult.json")
+    {
+        if (!requestLoaded_)
+            throw std::runtime_error("Периметер не загружен!");
+
+        QJsonObject obj = JsonHelpers::jsonFromFile(path);
+
+        visWidget->setRoutes(JsonHelpers::parseToRoutes(obj));
+
+        reportLoaded_ = true;
+
+        // Проверка если загрузка происходила не в начале
+        if (requestLoaded_)
+        {
+            // Обнуляем пределы и еще раз вычисляем
+            visWidget->getLimits().reset();
+            visWidget->initLimitsFromPerimeter();
+        }
+        // Инициализация пределов
+        visWidget->initLimitsFromRoutes();
+
+        // Инициализация движущихся Объектов.
+        visWidget->setRoutesModels(Visual::Objects::Arrow, 0.01 * visWidget->getLimits().getMaxBorderLength()); // 1%
+
+        // Запустить Начальную сцену
+        if (requestLoaded_ && reportLoaded_)
+            visWidget->loadFirstScreen();
+
+        return obj;
+    }
+
+    QJsonObject loadRequest(const QString& path = "/home/harikeshi/work/routes/trequest.json")
+    {
+        QJsonObject obj = JsonHelpers::jsonFromFile(path);
+
+        // TODO: Если не загрузили возможно надо откатить
+        visWidget->setPerimeter(JsonHelpers::parseToPolygon(obj));
+
+        visWidget->setShipParameters(JsonHelpers::parseShip(obj));
+
+        visWidget->setTargetParameters(JsonHelpers::parseTarget(obj));
+
+        requestLoaded_ = true;
+
+        if (reportLoaded_)
+        {
+            visWidget->getLimits().reset();
+            visWidget->initLimitsFromRoutes();
+        }
+
+        visWidget->initLimitsFromPerimeter();
+
+        // Запустить начальную сцену
+        if (requestLoaded_ && reportLoaded_)
+            visWidget->loadFirstScreen();
+
+        return obj;
+    }
+
+    void start()
+    {
+        if (!requestLoaded_)
+        {
+            throw std::runtime_error("Request не загружен.");
+        }
+        if (!reportLoaded_)
+        {
+            throw std::runtime_error("Report не загружен.");
+        }
+
+        visWidget->start();
     }
 
 private:
@@ -323,4 +315,7 @@ private:
     DataWidget* dataWidget;
     InformationWidget* infoWidget;
     SubmarineWidget* subWidget;
+
+    bool requestLoaded_ = false;
+    bool reportLoaded_ = false;
 };
