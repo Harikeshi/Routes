@@ -88,6 +88,11 @@ struct Limits
 
         return {miX, miY, maX, maY};
     }
+
+    void show() const
+    {
+        qDebug() << "MinX: " << minX << "MinY: " << minY << "MaxX: " << maxX << "MaxY: " << maxY;
+    }
 };
 } // namespace Models
 } // namespace Visual

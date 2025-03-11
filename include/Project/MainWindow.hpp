@@ -138,7 +138,7 @@ protected:
             }
             break;
         case Qt::Key_L:
-            visWidget->changeShowLines();
+            visWidget->setShowLines();
             break;
         case Qt::Key_B:
             visWidget->setShowFull();
@@ -236,6 +236,7 @@ private slots:
 protected:
     QJsonObject loadReport(const QString path = "/home/harikeshi/work/routes/tresult.json")
     {
+        // TODO: логически можно убрать
         if (!requestLoaded_)
             throw std::runtime_error("Периметер не загружен!");
 
@@ -249,8 +250,9 @@ protected:
         if (requestLoaded_)
         {
             // Обнуляем пределы и еще раз вычисляем
-            visWidget->getLimits().reset();
+            visWidget->resetLimits();
             visWidget->initLimitsFromPerimeter();
+            visWidget->setRoutesRadius();
         }
         // Инициализация пределов
         visWidget->initLimitsFromRoutes();
@@ -280,7 +282,7 @@ protected:
 
         if (reportLoaded_)
         {
-            visWidget->getLimits().reset();
+            visWidget->resetLimits();
             visWidget->initLimitsFromRoutes();
         }
 

@@ -314,7 +314,7 @@ public:
     }
 
     // Показывать/не показывать пути
-    void changeShowLines()
+    void setShowLines()
     {
         for (const auto route : routes)
         {
@@ -404,6 +404,14 @@ public:
         resetRoutesToDefault(); // После загрузки обновляем
     }
 
+    void setRoutesRadius()
+    {
+        for (const auto route : routes)
+        {
+            route->setRadius(shipParameters.getDetectionRange());
+        }
+    }
+
     Limits getLimits() const
     {
         return limits;
@@ -416,11 +424,14 @@ public:
             for (const auto& segment : route->getSegments())
                 limits.initFromSegment(segment->getSegment());
         }
+
+        limits.show();
     }
 
     void initLimitsFromPerimeter()
     {
         limits.initFromPerimeter(perimeter->getPerimeter());
+        limits.show();
     }
 
     void setRoutesModels(const Visual::Objects model, const double size) const
@@ -628,6 +639,11 @@ public:
         targetParameters = obj;
     }
 
+    void resetLimits()
+    {
+        limits.reset();
+    }
+
 private:
     // TODO: for fun
     // Visual::RandomTargetWidget* random;
@@ -662,7 +678,7 @@ private:
     CoordinateSystem cs;
     PerimeterWidget* perimeter;
 
-    int speedMultiplier; // Множитель скорости
+    double speedMultiplier; // Множитель скорости
 
     Limits limits;
 
