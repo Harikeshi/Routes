@@ -48,14 +48,14 @@ public:
         {
             segments[currentSegmentIndex++]->setCurrentPoint(segment->getEnd()); //*
             currentTime += std::hypot(lastCurrentPoint.x() - segment->getEnd().x(), lastCurrentPoint.y() - segment->getEnd().y()) / segment->getSpeed();
-            // currentLength += std::hypot(lastCurrentPoint.x() - segment->getEnd().x(), lastCurrentPoint.y() - segment->getEnd().y());
+            currentLength += std::hypot(lastCurrentPoint.x() - segment->getEnd().x(), lastCurrentPoint.y() - segment->getEnd().y());
         }
         else
         {
             segments[currentSegmentIndex]->setCurrentPoint(nextPosition); //*
 
             currentTime += std::hypot(lastCurrentPoint.x() - nextPosition.x(), lastCurrentPoint.y() - nextPosition.y()) / segment->getSpeed();
-            // currentLength += std::hypot(lastCurrentPoint.x() - nextPosition.x(), lastCurrentPoint.y() - nextPosition.y());
+            currentLength += std::hypot(lastCurrentPoint.x() - nextPosition.x(), lastCurrentPoint.y() - nextPosition.y());
         }
 
         return true;
@@ -106,6 +106,7 @@ public:
     {
         // Сброс к начальным значениям пути
         currentTime = 0;
+        currentLength = 0;
         currentSegmentIndex = 0; // Выбран первый отрезок
 
         if (!segments.isEmpty())
@@ -170,6 +171,11 @@ public:
     double getCurrentTime() const
     {
         return currentTime;
+    }
+
+    double getCurrentLength() const
+    {
+        return currentLength;
     }
 
     double getSpeed() const
@@ -253,6 +259,6 @@ protected:
     size_t currentSegmentIndex; // Индекс текущего сегмента
     double currentTime;         // Прошло времени с начала маршрута
 
-    // double currentLength;
+    double currentLength;
 };
 } // namespace Visual

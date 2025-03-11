@@ -578,6 +578,7 @@ private slots:
             if (!route->update(speedMultiplier))
             {
                 // TODO: Требуется проверка что все доехали, а не один как сейчас
+                qDebug() << "Общая длина пути: " << route->getCurrentLength();
                 timer->stop();
             }
         }
