@@ -342,11 +342,14 @@ private:
     void updateDrawing()
     {
         routes_->move(speedMultiplier);
-        targets->move(speedMultiplier);
 
-        emit sendTargetPosition(targets->getCurrentPosition());
-        emit sendTargetSpeed(targets->getSpeed());
-
+        if(!targets->isEmpty())
+        {
+            targets->move(speedMultiplier);
+            emit sendTargetPosition(targets->getCurrentPosition());
+            emit sendTargetSpeed(targets->getSpeed());
+        }
+        
         update();
     }
 
