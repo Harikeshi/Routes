@@ -267,9 +267,21 @@ public:
         }
     }
 
+    void reset()
+    {
+        hoveredPoint = -1;
+        radius = 0; // Радиус точки.
+
+        path.clear();
+
+        drawing = true;
+        drawing_lines = true;
+        drawing_points = true;
+    }
+
     void clear()
     {
-        path = QVector<QPointF>{};
+        path.clear();
         //
         //        drawing = true;
         //        drawing_lines = true;

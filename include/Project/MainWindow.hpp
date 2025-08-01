@@ -175,6 +175,11 @@ public:
         connect(manage, &ManageWidget::sendMinusButtonClicked, this, &MainWindow::downSpeed);
         connect(manage, &ManageWidget::sendPlusButtonClicked, this, &MainWindow::upSpeed);
         connect(manage, &ManageWidget::clickVisionButton, scene, &SceneWidget::changeShowRoutesPoints);
+
+        connect(manage, &ManageWidget::pushReset, scene, &SceneWidget::reset);
+
+        connect(scene, &SceneWidget::sceneReseted, this, &MainWindow::sceneReset);
+
         // Table
         //connect(scene, &SceneWidget::sendTargetCurrentPositionSpeed, table, &CustomTable::updateSubmarine);
         connect(scene, &SceneWidget::sendIndexCurrentPositionSpeed, table, &CustomTable::updateOrAddRow);
@@ -226,6 +231,24 @@ private slots:
         }
     }
 
+    void sceneReset()
+    {
+        // scene->reset();
+
+        // initializer->reset();
+
+        reportLoaded = false;
+        requestLoaded = false;
+
+        setEnabled(false);
+
+        progress->reset();
+        table->reset();
+
+        infoWidget->addMessage("Был Произведен сброс.", MessageType::Warning);
+        infoWidget->addMessage("Требуется загрузка  данных(json).", MessageType::Info);
+    }
+
     void addInformation(int speed)
     {
         infoWidget->addMessage(QString::number(speed) + " м/c новая скорость ПЛ.", MessageType::Info);
@@ -272,7 +295,7 @@ public:
 
         table->setEnabled(value);
 
-        scene->setEnabled(value);
+        // scene->setEnabled(value);
 
         progress->setEnabled(value);
     }
@@ -304,15 +327,26 @@ private slots:
         initializer->loadFromJson(obj);
 
         //// Инициализация дерева request.json
-        //dataWidget->clear();
+        dataWidget->clear();
 
-        //dataWidget->initialize(obj);
+        dataWidget->initializeRequest(obj);
     }
 
     //void setIntersectionInfo(const QString& str)
     //{
     //    infoWidget->addMessage(str, InformationWidget::MessageType::Success);
     //}
+public:
+    void calculate()
+    {
+        // Нажатие Calc:
+        // вызов ActorType getSchemeType() из scene
+        // SearchTask(request);
+        // Вызов SearchTask.calculate(ActorType);
+        // Обработать полученный json.
+        // Выгрузить в scene.
+        // Получить из сцены название
+    }
 
 protected:
     void keyPressEvent(QKeyEvent* event) override
@@ -401,8 +435,8 @@ private:
         {
             //        QJsonObject obj = Operations::jsonFromFile("d:\\test\\request.json");
             //            QJsonObject obj = Operations::jsonFromFile("/home/harikeshi/ajson/request.json");
-            QJsonObject obj = Operations::jsonFromFile("e:\\visualization\\jsons\\request.json");
-            //QJsonObject obj = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\request.json");
+            //            QJsonObject obj = Operations::jsonFromFile("e:\\visualization\\jsons\\request.json");
+            QJsonObject obj = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\request.json");
             // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
             initializer->loadFromJson(obj);
 
@@ -410,8 +444,8 @@ private:
 
             //        obj = Operations::jsonFromFile("d:\\test\\result.json");
             //             obj = Operations::jsonFromFile("/home/harikeshi/ajson/result.json");
-            obj = Operations::jsonFromFile("e:\\visualization\\jsons\\result.json");
-            // obj = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\result.json");
+            //            obj = Operations::jsonFromFile("e:\\visualization\\jsons\\result.json");
+            obj = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\result.json");
             // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
             initializer->loadFromJson(obj);
 
@@ -491,7 +525,6 @@ private:
 
     void mouseMoveEvent(QMouseEvent* event) override
     {
-        qDebug() << event->pos().x() << " " << event->pos().y();
     }
 
 private:

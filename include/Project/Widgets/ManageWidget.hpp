@@ -42,9 +42,10 @@ public:
         layout->addWidget(pauseButton);
 
         // [ reset ]
-        // refreshButton = new QPushButton(this);
-        // refreshButton->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
-        // layout->addWidget(refreshButton);
+        resetButton = new QPushButton("Reset", this);
+        //        resetButton->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
+        connect(resetButton, &QPushButton::clicked, this, &ManageWidget::sendReset);
+        layout->addWidget(resetButton);
 
         // speed up / speed down
         QHBoxLayout* speedLayout = new QHBoxLayout();
@@ -70,13 +71,18 @@ public:
         // });
         visHasLayout->addWidget(visionButton);
 
-        hasButton = new QPushButton("ГАС", this);
-        hasButton->setCheckable(true);
-        // connect(hasButton, &QPushButton::toggled, this, [this](bool checked) {
-        //     hasButton->setText(checked ? "Г̶А̶С̶" : "ГАС");
-        // });
-        hasButton->setEnabled(false);
-        visHasLayout->addWidget(hasButton);
+        //        hasButton = new QPushButton("ГАС", this);
+        //        hasButton->setCheckable(true);
+        //        // connect(hasButton, &QPushButton::toggled, this, [this](bool checked) {
+        //        //     hasButton->setText(checked ? "Г̶А̶С̶" : "ГАС");
+        //        // });
+        //        hasButton->setEnabled(false);
+        //        visHasLayout->addWidget(hasButton);
+        calcButton = new QPushButton("Calc", this);
+        calcButton->setCheckable(true);
+       
+        calcButton->setEnabled(false);
+        visHasLayout->addWidget(calcButton);
         layout->addLayout(visHasLayout);
 
         setLayout(layout);
@@ -90,19 +96,27 @@ signals:
     void sendPlusButtonClicked();
     void clickVisionButton();
 
+    void pushReset();
+
+protected:
+    void sendReset()
+    {
+        emit pushReset();
+    }
+
 public:
     void visionButtonClicked()
     {
         emit clickVisionButton();
     }
 
-    void setPauseButtomImage(bool checked)
+    void setPauseButtonImage(bool checked)
     {
         pauseButton->setIcon(style()->standardIcon(checked ? QStyle::SP_MediaPlay : QStyle::SP_MediaPause));
         playStopButton->setIcon(style()->standardIcon(checked ? QStyle::SP_MediaStop : QStyle::SP_MediaPlay));
     }
 
-    void setPlayButtomImage(bool checked)
+    void setPlayButtonImage(bool checked)
     {
         playStopButton->setIcon(style()->standardIcon(checked ? QStyle::SP_MediaStop : QStyle::SP_MediaPlay));
         pauseButton->setIcon(style()->standardIcon(checked ? QStyle::SP_MediaPlay : QStyle::SP_MediaPause));
@@ -111,10 +125,10 @@ public:
 private:
     QPushButton* playStopButton;
     QPushButton* pauseButton;
-    QPushButton* refreshButton;
+    QPushButton* resetButton;
     QPushButton* minusButton;
     QPushButton* plusButton;
     QPushButton* visionButton;
-    QPushButton* hasButton;
+    QPushButton* calcButton;
 };
 } // namespace Widgets

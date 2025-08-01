@@ -54,15 +54,19 @@ public:
      */
     int findPointAt(const QPointF& pos, double radius)
     {
-        for (int i = 0; i < pointsWidgetSize(); ++i)
+        for (int i = 0; i < numberPointsForDisplay(); ++i)
         {
-            qDebug() << pos << " - " << pointsWidget.at(i)->x() << "," << pointsWidget.at(i)->y();
+            // Расстояние от центра должно быть не больше радиуса + 5%
 
             int dx = pos.x() - pointsWidget.at(i)->x();
             int dy = pos.y() - pointsWidget.at(i)->y();
 
-            if (dx * dx + dy * dy <= (radius + radius * 0.05) * (radius + radius * 0.05))
+            // if (dx * dx + dy * dy <= (radius + radius * 0.05) * (radius + radius * 0.05))
+            if (std::hypot(dx, dy) <= (radius + radius * 0.05))
             {
+                qDebug() << "pos: " << pos << ", point: " << pointsWidget.at(i)->getPoint();
+                qDebug() << i << ":, hypot: " << std::hypot(dx, dy) << "dx: " << dx << ", dy: " << dy << radius;
+
                 return i;
             }
         }
@@ -158,9 +162,19 @@ public:
 
     void reset()
     {
-        clear();
+        length = 0;
+        currentSegmentIndex = 0; // Выбран первый отрезок
+        segments.clear();        // TODO: это reset
 
-        segments.clear(); // TODO: это reset
+        state = new CurrentDrawState(); // Текущее состояние
+
+        head = new ModelObject(); // Головной объект
+
+        color = Qt::red;
+
+        pointsWidget.clear();
+
+        showPoints = true;
     }
 
     /*!
@@ -242,7 +256,7 @@ public:
     }
 
 protected:
-    void setNull(QPointF& position)
+    static void setNull(QPointF& position)
     {
         position.setX(-1e30);
         position.setY(-1e30);
@@ -259,7 +273,7 @@ public:
         this->state = state;
     }
 
-    size_t pointsWidgetSize() const
+    size_t numberPointsForDisplay() const
     {
         auto type = getStateType();
 
@@ -304,7 +318,7 @@ public:
             pointsWidget.at(0)->draw(painter, 1);
         }
 
-        for (size_t i = 1; i != pointsWidgetSize(); ++i)
+        for (size_t i = 1; i != numberPointsForDisplay(); ++i)
         {
             pointsWidget.at(i)->draw(painter, i + 1);
         }

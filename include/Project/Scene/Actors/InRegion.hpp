@@ -37,6 +37,11 @@ public:
         perimeter->setPerimeter(request.getPerimeter());
     }
 
+    virtual void reset() override
+    {
+        perimeter = new PerimeterObject(this);
+    }
+
 private:
     PerimeterObject* perimeter;
 };

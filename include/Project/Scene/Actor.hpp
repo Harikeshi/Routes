@@ -19,5 +19,6 @@ public:
     virtual void draw(QPainter& painter) = 0;
     virtual void reload(const Request& request) = 0;
     virtual void swapCoordinates() = 0;
+    virtual void reset() = 0;
 };
 } // namespace Scene

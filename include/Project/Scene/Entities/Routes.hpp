@@ -46,9 +46,15 @@ public:
         : QWidget(parent)
     {
         routes = QVector<RouteObject*>();
-        // setMouseTracking(true);
+        numberRoutes = 0;
+    }
+
+    void reset()
+    {
+        routes.clear();
 
         numberRoutes = 0;
+        parameters.reset();
     }
 
     void changeShowPoints()
@@ -141,9 +147,9 @@ public:
 
     void setModel(const Objects model, const double size)
     {
-        for (size_t i = 0; i != routes.size(); ++i)
+        for (const auto& route : routes)
         {
-            routes[i]->setModel(model, parameters.detectionRange, size);
+            route->setModel(model, parameters.detectionRange, size);
         }
     }
 

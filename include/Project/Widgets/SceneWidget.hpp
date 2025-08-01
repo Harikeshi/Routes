@@ -9,6 +9,7 @@
 
 #include "Project/Models/Report.hpp"
 #include "Project/Models/Request.hpp"
+#include "Project/Scene/ActorType.hpp"
 
 #include "../Scene/Entities/CoordinateSystem.hpp"
 #include "../Scene/Entities/Limits.hpp"
@@ -48,6 +49,27 @@ class SceneWidget final : public QWidget
 
     Q_OBJECT
 
+    enum ActorType
+    {
+        Zigzag,
+        Shift,
+
+        Straight,
+        Spiral
+    };
+
+    const std::map<ActorType, QString> ActorTypeName{
+        {ActorType::Zigzag, "Зигзаг"},
+        {ActorType::Shift, "Сдвиг"},
+        {ActorType::Straight, "Гребенка"},
+        {ActorType::Spiral, "Спираль"}};
+
+    std::map<ActorType, std::function<Scene::Actor*()>> actors{
+        {ActorType::Zigzag, []() { return new Scene::Actors::InRegionScene(); }},
+        {ActorType::Shift, []() { return new Scene::Actors::InRegionScene(); }},
+        {ActorType::Straight, []() { return new Scene::Actors::InRegionScene(); }},
+        {ActorType::Spiral, []() { return new Scene::Actors::InRegionScene(); }}};
+
 protected:
     // TODO: Добавляем    comboBox = new QComboBox(this);
     //         comboBox->addItem("Scheme 1");
@@ -77,15 +99,16 @@ protected:
     bool drawing; // Разрешить отрисовку цели
 
     double speedMultiplier{1}; // Множитель скорости
-    double margin;             // Отступы от каждой стороны в процентах
 
     // time block
-    double fullTime;
-    double timeStep{0};
+    double fullTime{0}; //! Общее время схемы. Принимается максимальное время из маршрутов.
     double currentTime{0};
+    double targetStartTime{0};
+
     QTimer* timer;
 
-    double pointPercent = 0.005;
+    const double margin = 5.; // Отступы от каждой стороны в процентах
+    const double pointPercent = 0.005;
 
     // Расположение осей
     // TODO: Оси будут меняться (X-Y), (Ш-Д)
@@ -112,14 +135,25 @@ public:
         // Добавляем растягивающееся пространство слева
         topLayout->addStretch();
 
-        // TODO: Всеже отдельный виджет
+        // TODO: Все же отдельный виджет
         actorChoose = new QComboBox(topWidget);
-        actorChoose->addItem("In Region");
-        actorChoose->addItem("By Call");
+
+        for (const auto& act : ActorTypeName)
+            actorChoose->addItem(act.second, static_cast<int>(act.first));
+
+        connect(actorChoose, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int type) {
+            qDebug() << "Выбран: " << type;
+            changeActor(static_cast<ActorType>(type));
+        });
+        // [this]() {
+        //            ActorType type = static_cast<ActorType>(actorChoose->currentData().toInt());
+        //            changeActor(type);
+        //        });
 
         actorChoose->setFixedSize(80, 30);
 
-        actorChoose->setEnabled(false);
+        // actorChoose->setEnabled(false);
+
         topLayout->addWidget(actorChoose);
 
         mainLayout->addWidget(topWidget);
@@ -158,7 +192,6 @@ public:
 
         drawing = false;
         speedMultiplier = 1;
-        margin = 5.;
 
         this->resize(800, 800);
 
@@ -214,8 +247,56 @@ signals:
     void sceneStarted();
     void sceneStopped();
     void scenePaused();
+    void sceneReseted();
 
-public slots:
+public:
+    void changeActor(ActorType type)
+    {
+        // 1. Сброс сцены.
+        // 2. Назначение актера.
+        this->reset();
+
+        actor = actors[type]();
+    }
+
+public:
+    /*!
+     * Метод сброса сцены к стартовому состоянию.
+     */
+    void reset()
+    {
+        //!
+        //! Обнулить все динамические объекты.
+        timeWidget->reset();
+
+        //! Прогрузятся после загрузки Report.
+        //! Сетка Остается.
+        //! Система координат Остается.
+        //! Крайние значения по осям Остается.
+        //! Расположение Осей Остается.
+
+        routes_->reset();
+        targets->reset();
+
+        targetPath->reset();
+        actor->reset();
+
+        drawing = false; // Разрешить отрисовку цели
+
+        speedMultiplier = 1; // Множитель скорости
+
+        // time block
+        fullTime = 0; //! Общее время схемы. Принимается максимальное время из маршрутов.
+        currentTime = 0;
+        targetStartTime = 0;
+
+        timer->stop();
+
+        update();
+
+        emit sceneReseted();
+    };
+
     void sendObjectInformation(size_t index, const QPointF& position, double speed)
     {
         emit sendIndexCurrentPositionSpeed(index, position, speed);
@@ -275,7 +356,7 @@ public:
 
     void setFullTime()
     {
-        fullTime = std::max(routes_->getMaximumTime(), targets->getFullTime());
+        fullTime = std::max(routes_->getMaximumTime(), targetStartTime + targets->getFullTime()); // TODO: Время цели можно не учитывать
 
         setCurrentTime(0);
 
@@ -546,8 +627,6 @@ protected:
      *
      * @param event
      */
-    double targetStartTime = 0;
-
     void mousePressEvent(QMouseEvent* event) override
     {
         if (drawing)

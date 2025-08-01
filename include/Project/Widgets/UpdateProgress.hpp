@@ -42,6 +42,13 @@ public slots:
 
         update();
     }
+    void reset()
+    {
+        m_totalSeconds = 7200;
+        m_currentSeconds = 1800;
+        
+        update();
+    }
 
 signals:
     void timeChanged(double newTime);

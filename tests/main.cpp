@@ -22,6 +22,7 @@ int main(int argc, char* argv[])
     // layout->addWidget(pb);
 
     window.resize(800, 800);
+    std::map<int, int> i{{1, 1}, {2, 2}};
 
     window.show();
     return app.exec();

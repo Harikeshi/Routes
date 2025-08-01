@@ -34,7 +34,13 @@ public:
         this->setMaximumHeight(70);
     }
 
-public:
+    void reset()
+    {
+        labelTime->setText(QString("Time: 0:0:0"));
+        multiplier->setText(QString("Multiplier: x1"));
+        defaultNumber = 1;
+    }
+
     void updateTime(double time)
     {
         // qint64 seconds = static_cast<qint64>(time * 60);

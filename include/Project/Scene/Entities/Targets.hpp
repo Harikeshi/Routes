@@ -18,9 +18,6 @@ class Targets final : public RouteObject
     TargetParameters targetParameters;
     bool modelLoaded = false;
 
-    // double currentTime = 0;
-    // double startTime = 0;
-    // double endTime = 0;
     //! 1. После нажатия принимаем старт тайм.
     //! Если пустая то Добавляем первую точку и старт = финишу,
     //! Далее всегда прибавляем пока не нажали Reset.
@@ -69,6 +66,7 @@ public:
     void reset()
     {
         modelLoaded = false;
+
         RouteObject::reset();
     }
 

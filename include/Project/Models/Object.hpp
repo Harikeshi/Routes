@@ -19,6 +19,19 @@ struct Object : public Input
     double min_lenght_section = 2;
 
 public:
+    void reset()
+    {
+        detectionRange = 0;
+        maxVelocity = 0;
+        currentVelocity = 0;
+
+        detection_range = 0;
+        max_velocity = 0;
+        search_velocity = 0;
+        turning_radius = 0;
+        min_lenght_section = 0;
+    }
+
     Object()
     {
         addValidator("detection_range", [](const QJsonObject& json) { validateDigit(json["detection_range"], "detection_range"); });
