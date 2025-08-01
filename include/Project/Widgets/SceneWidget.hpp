@@ -57,15 +57,17 @@ protected:
     // Widgets
     // TODO: Вверху Справа
     QComboBox* actorChoose;
+
     // TODO: Внизу справа
     QPushButton* metricChoose;
     TimeWidget* timeWidget;
 
-    Grid* grid;          // Сетка
+    Grid* grid; // Сетка
+
     CoordinateSystem cs; // Система координат
     Limits limits;       // Крайние значения по осям
 
-    // Элементы отрисовки
+    // Элементы отрисовки цели.
     Routes* routes_;
     Targets* targets;
 
@@ -471,7 +473,7 @@ public slots:
         targets->reset();
 
         // Инициализация routes
-        routes_->setRoutes(report.routes(), 0.01 * limits.diagonal()); // Радиус точки 1% диагонали
+        routes_->setRoutes(report.routes(), pointPercent * limits.diagonal()); // Радиус точки 1% диагонали
 
         setFullTime();
 

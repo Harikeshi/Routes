@@ -93,6 +93,7 @@ public:
 
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setRenderHint(QPainter::TextAntialiasing);
+        painter.setRenderHint(QPainter::TextAntialiasing);
 
         // Установка шрифта для подписей
         QFont font("Arial", 8);
@@ -102,6 +103,7 @@ public:
         // Отступы
         const int topMargin = 15;
         const int rightMargin = 10;
+
         // TODO: Привязать отступы слева и справа к высоте цифр заданного шрифта
         const int bottomMargin = fm.height();
         const int leftMargin = fm.height();
@@ -133,7 +135,7 @@ public:
 
         auto beginY = std::fabs(mainLimints.maxY - limits.maxY) / hPixel;
         auto availableHeight = mainLimints.getYDifference() / hPixel; // в пикселях
-
+        qDebug() << beginY;
         auto yLogicalStep = mainLimints.getYDifference() / steps;
         auto yScreenStep = availableHeight / steps;
 
@@ -151,26 +153,28 @@ public:
             int x = beginX + i * xScreenStep;
             painter.drawLine(x, minY, x, maxY);
 
-            QString label = QString::number(mainLimints.minX + i * xLogicalStep); // X
+            QString label = QString::number(+mainLimints.minX + i * xLogicalStep); // X
             int labelWidth = fm.horizontalAdvance(label);
 
             // if (i != 0 && i != steps)
             painter.drawText(x - labelWidth / 2, rect.height() - bottomMargin / 2, label);
         }
 
+        qDebug() << "beginY: " << beginY;
         // Горизонтальные линии
         for (int i = 0; i <= steps; ++i)
         {
             int y = beginY + i * yScreenStep;
+
             painter.drawLine(minX, y, maxX, y);
 
             // Подписи по оси Y (левая ось)
-            QString label = QString::number(mainLimints.maxY - i * yLogicalStep); // максимум -
+            QString label = QString::number(+mainLimints.maxY - i * yLogicalStep); // максимум -
             int labelWidth = fm.horizontalAdvance(label);
 
             drawCenteredRotatedText(painter, leftMargin / 2, y, -90, label); // поворот 90 влево
         }
-
+        qDebug() << "yLogicalStep: " << yLogicalStep;
         // Рисование осей
         painter.setPen(QPen(Qt::black, 2));
 
@@ -193,8 +197,7 @@ public:
     }
 
 private:
-    void
-    drawCenteredRotatedText(QPainter& painter, qreal centerX, qreal centerY, qreal angle, const QString& text)
+    void drawCenteredRotatedText(QPainter& painter, qreal centerX, qreal centerY, qreal angle, const QString& text)
     {
         painter.save();
 

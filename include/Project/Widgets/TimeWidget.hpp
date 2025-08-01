@@ -45,7 +45,7 @@ public:
         QDateTime dateTime; // = QDateTime::currentDateTime();
 
         int seconds = t % 60;
-        int minutes = (t / 60);
+        int minutes = (t / 60) % 60;
         int hours = t / (60 * 60);
 
         labelTime->setText(QString("Time: %1:%2:%3").arg(hours).arg(minutes).arg(seconds));

@@ -56,6 +56,8 @@ public:
     {
         for (int i = 0; i < pointsWidgetSize(); ++i)
         {
+            qDebug() << pos << " - " << pointsWidget.at(i)->x() << "," << pointsWidget.at(i)->y();
+
             int dx = pos.x() - pointsWidget.at(i)->x();
             int dy = pos.y() - pointsWidget.at(i)->y();
 
