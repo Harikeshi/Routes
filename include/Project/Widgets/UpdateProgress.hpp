@@ -46,7 +46,7 @@ public slots:
     {
         m_totalSeconds = 7200;
         m_currentSeconds = 1800;
-        
+
         update();
     }
 
@@ -77,29 +77,29 @@ protected:
         painter.setPen(QPen(QColor(0, 150, 200), 3));
         painter.drawLine(scaleRect.left(), scaleRect.center().y(), scaleRect.left() + progressWidth, scaleRect.center().y());
 
-        // Временные метки
-        // TODO: Делить по минутам.
-        painter.setPen(Qt::white);
-        QFont font = painter.font();
-        font.setPixelSize(9);
-        painter.setFont(font);
-
-        int totalMinutes = m_totalSeconds / 60;
-        int step = (totalMinutes > 120) ? 30 : 15;
-
-        for (int minutes = 0; minutes <= totalMinutes; minutes += step)
-        {
-            int x = margin + (width() - 2 * margin) * minutes / totalMinutes;
-            // Вертикальная линия метки
-            painter.drawLine(x, scaleRect.top() - 5, x, scaleRect.bottom());
-
-            // Текст времени
-            QString timeText = QString("%1:%2")
-                                   .arg(minutes / 60)
-                                   .arg(minutes % 60, 2, 10, QChar('0'));
-            QRect textRect(x - 20, scaleRect.bottom() + 2, 40, 12);
-            painter.drawText(textRect, Qt::AlignCenter, timeText);
-        }
+        //        // Временные метки
+        //        // TODO: Делить по минутам.
+        //        painter.setPen(Qt::white);
+        //        QFont font = painter.font();
+        //        font.setPixelSize(9);
+        //        painter.setFont(font);
+        //
+        //        int totalMinutes = m_totalSeconds / 60;
+        //        int step = (totalMinutes > 120) ? 30 : 15;
+        //
+        //        for (int minutes = 0; minutes <= totalMinutes; minutes += step)
+        //        {
+        //            int x = margin + (width() - 2 * margin) * minutes / totalMinutes;
+        //            // Вертикальная линия метки
+        //            painter.drawLine(x, scaleRect.top() - 5, x, scaleRect.bottom());
+        //
+        //            // Текст времени
+        //            QString timeText = QString("%1:%2")
+        //                                   .arg(minutes / 60)
+        //                                   .arg(minutes % 60, 2, 10, QChar('0'));
+        //            QRect textRect(x - 20, scaleRect.bottom() + 2, 40, 12);
+        //            painter.drawText(textRect, Qt::AlignCenter, timeText);
+        //        }
 
         // Ползунок
         int currentX = margin + (width() - 2 * margin) * m_currentSeconds / m_totalSeconds;

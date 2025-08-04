@@ -21,6 +21,7 @@
 #include "../Scene/Objects/RouteState.hpp"
 
 #include "../Scene/Actors/InRegion.hpp"
+#include "../Scene/Actors/Spiral.hpp"
 
 #include "Project/Widgets/TimeWidget.hpp"
 
@@ -68,7 +69,7 @@ class SceneWidget final : public QWidget
         {ActorType::Zigzag, []() { return new Scene::Actors::InRegionScene(); }},
         {ActorType::Shift, []() { return new Scene::Actors::InRegionScene(); }},
         {ActorType::Straight, []() { return new Scene::Actors::InRegionScene(); }},
-        {ActorType::Spiral, []() { return new Scene::Actors::InRegionScene(); }}};
+        {ActorType::Spiral, []() { return new Scene::Actors::Spiral(); }}};
 
 protected:
     // TODO: Добавляем    comboBox = new QComboBox(this);
@@ -505,8 +506,14 @@ public slots:
         // Установка Пределов
         limits.reset();
 
+        qDebug() << 1;
+        limits.show();
+
         // Собрать из Путей
         limits.initFromRoutes(this->routes_->getRoutes());
+
+        qDebug() << 2;
+        limits.show();
 
         this->limits.compareLimits(actor->getLimits());
 
@@ -563,12 +570,14 @@ public slots:
         // В MainWindow гарантируем, что файл request уже был загружен
         targets->reset();
 
+        qDebug() << report.routes().size();
+
         // Инициализация routes
         routes_->setRoutes(report.routes(), pointPercent * limits.diagonal()); // Радиус точки 1% диагонали
 
-        setFullTime();
-
         this->setLimits();
+
+        setFullTime();
 
         // TODO: Возможно требуется пересчет модели цели
         if (axies.first > axies.second)

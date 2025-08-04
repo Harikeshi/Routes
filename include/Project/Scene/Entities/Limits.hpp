@@ -118,6 +118,17 @@ struct Limits
         }
     }
 
+    void fromPoint(const QPointF& point)
+    {
+        minX = qMin(minX, point.x());
+
+        minY = qMin(minY, point.y());
+
+        maxX = qMax(maxX, point.x());
+
+        maxY = qMax(maxY, point.y());
+    }
+
     // TODO : Ошибка требуется реализация в соответствующих классах setLimits()
     void initFromRoutes(const QVector<Scene::Objects::RouteObject*>& routes)
     {

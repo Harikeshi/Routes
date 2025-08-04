@@ -23,7 +23,7 @@ signals:
     void reportLoaded();
     void requestLoaded();
 
-    void sendLimits(Limits);
+    //    void sendLimits(Limits);
 
     void sendRequestJson(QJsonObject);
     void sendReportJson(QJsonObject);
@@ -161,7 +161,7 @@ public:
             emit requestLoaded();
             emit sendRequestJson(json); // Для инициализации dataWidget
 
-            setLimits(); // Рассчитать лимиты и отправить
+            //            setLimits(); // Рассчитать лимиты и отправить
         }
         catch (std::runtime_error& ex)
         {
@@ -185,7 +185,7 @@ public:
             // emit sendReport(report);
             emit sendReportJson(json); // Для инициализации dataWidget
 
-            setLimits();
+            //            setLimits();
         }
         catch (std::runtime_error& ex)
         {
@@ -203,10 +203,12 @@ public:
 
         if (isRequest(json, message))
         {
+            request_json = json;
             loadRequest(json, message, type);
         }
         else if (isReport(json, message))
         {
+            report_json = json;
             loadReport(json, message, type);
         }
         else
@@ -219,22 +221,22 @@ public:
         emit sendMessage(message, type);
     }
 
-    void setLimits()
-    {
-        limits.reset();
-
-        if (report.isLoaded())
-        {
-            limits.initFromRoutes(report.routes());
-        }
-
-        if (request.isLoaded())
-        {
-            limits.initFromPerimeter(request.getPerimeter());
-        }
-
-        emit sendLimits(limits);
-    }
+    //    void setLimits()
+    //    {
+    //        limits.reset();
+    //
+    //        if (report.isLoaded())
+    //        {
+    //            limits.initFromRoutes(report.routes());
+    //        }
+    //
+    //        if (request.isLoaded())
+    //        {
+    //            limits.initFromPerimeter(request.getPerimeter());
+    //        }
+    //
+    //        emit sendLimits(limits);
+    //    }
 
     Models::Request getRequest() const
     {
@@ -246,18 +248,31 @@ public:
         return report;
     }
 
-    Limits getLimits() const
-    {
-        return limits;
-    }
+    //    Limits getLimits() const
+    //    {
+    //        return limits;
+    //    }
 
     QVector<Models::Message> getMessages() const
     {
         return report._messages;
     }
 
+    QJsonObject getRequestJson() const
+    {
+        return request_json;
+    }
+
+    QJsonObject getReportJson() const
+    {
+        return report_json;
+    }
+
 private:
-    Limits limits;
+    //    Limits limits;
+
+    QJsonObject request_json;
+    QJsonObject report_json;
 
     Models::Request request;
     Models::Report report;

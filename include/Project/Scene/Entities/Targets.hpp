@@ -42,6 +42,11 @@ public:
         return RouteObject::getFullTime();
     }
 
+    QPair<double, double> getCourses() const
+    {
+        return qMakePair(targetParameters.courses.first, targetParameters.courses.second);
+    }
+
     void setRoute(const QVector<QPointF>& positions)
     {
         RouteObject::reset();
@@ -102,6 +107,10 @@ public:
     void setSpeed(double speed)
     {
         targetParameters.currentVelocity = speed;
+    }
+
+    void setDistance(double distance)
+    {
     }
 
     void swapCoordinates()

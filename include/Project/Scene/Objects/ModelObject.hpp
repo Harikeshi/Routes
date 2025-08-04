@@ -33,8 +33,8 @@ class ModelObject final : public QObject
 
     double radiusHAS; // Радиус ГАС
 
-    double currentVelocity;
-    double maxVelocity;
+    double currentVelocity{0};
+    double maxVelocity{0};
 
 public:
     ModelObject(QObject* parent = nullptr)
@@ -67,14 +67,14 @@ public:
     {
         radiusHAS = parameters.detectionRange;
         currentVelocity = parameters.currentVelocity;
-        currentVelocity = parameters.maxVelocity;
+        maxVelocity = parameters.maxVelocity;
     }
 
     void initialize(const Models::Target& target)
     {
         radiusHAS = target.maxNoiseReduced; // detectionRange;
         currentVelocity = target.currentVelocity;
-        currentVelocity = target.maxVelocity;
+        maxVelocity = target.maxVelocity;
     }
 
     void registerModels()

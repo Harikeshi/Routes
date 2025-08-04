@@ -196,11 +196,11 @@ signals:
     // Отсылаем значения для инициализации в определенной последовательности
     //    void sendValidateRequest(Request);
 
-    void sendValidateReport(Report);
-
-    void speedUp(const double&);
-
-    void speedDown(const int&);
+    //    void sendValidateReport(Report);
+    //
+    //    void speedUp(const double&);
+    //
+    //    void speedDown(const int&);
 
 private slots:
     void setSpeedLabel(const Request& request)
@@ -211,7 +211,7 @@ private slots:
     void getInitializerMessage(const QString& message, const MessageType type) const
     {
         infoWidget->addMessage(message, type);
-        qDebug() << message;
+        // qDebug() << message;
     }
 
     // Отправка данных request в Scene
@@ -226,6 +226,10 @@ private slots:
 
             scene->reloadRequest(initializer->getRequest());
             //            emit sendValidateRequest(request);
+            //// Инициализация дерева request.json
+            dataWidget->clear();
+
+            dataWidget->initializeRequest(initializer->getRequestJson());
 
             infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
         }
@@ -304,17 +308,17 @@ public:
     }
 
     // Получаем строку к файлу json из меню
-    QString getPathFromMenu(const QString& title)
-    {
-        auto fileName = QFileDialog::getOpenFileName(this, title, "", "JSON Files (*.json)");
-
-        if (fileName.isEmpty())
-        {
-            throw std::runtime_error("Не удалось открыть файл. Операция отменена пользователем.");
-        }
-
-        return fileName;
-    }
+    //    QString getPathFromMenu(const QString& title)
+    //    {
+    //        auto fileName = QFileDialog::getOpenFileName(this, title, "", "JSON Files (*.json)");
+    //
+    //        if (fileName.isEmpty())
+    //        {
+    //            throw std::runtime_error("Не удалось открыть файл. Операция отменена пользователем.");
+    //        }
+    //
+    //        return fileName;
+    //    }
 
     // TODO:: соединить  DatabaseInitializer reloadRequest(request) и virtual bool reloadRequest(const Request& , const bool&)
 
@@ -328,11 +332,6 @@ private slots:
 
         // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
         initializer->loadFromJson(obj);
-
-        //// Инициализация дерева request.json
-        dataWidget->clear();
-
-        dataWidget->initializeRequest(obj);
     }
 
     //void setIntersectionInfo(const QString& str)
@@ -395,41 +394,41 @@ protected:
 
 private slots:
 
-    void initReportFromMenu()
-    {
-        QString path;
-
-        try
-        {
-            path = getPathFromMenu("Открыть report.json файл(Входные данные).");
-        }
-        catch (std::runtime_error& ex)
-        {
-            infoWidget->addMessage(ex.what(), MessageType::Error);
-
-            return;
-        }
-
-        this->loadJson(path);
-    }
-
-    void initRequestFromMenu() // TODO:
-    {
-        QString path;
-
-        try
-        {
-            path = getPathFromMenu("Открыть request.json файл(Входные данные).");
-        }
-        catch (std::runtime_error& ex)
-        {
-            infoWidget->addMessage(ex.what(), MessageType::Error);
-
-            return;
-        }
-
-        this->loadJson(path);
-    }
+    //    void initReportFromMenu()
+    //    {
+    //        QString path;
+    //
+    //        try
+    //        {
+    //            path = getPathFromMenu("Открыть report.json файл(Входные данные).");
+    //        }
+    //        catch (std::runtime_error& ex)
+    //        {
+    //            infoWidget->addMessage(ex.what(), MessageType::Error);
+    //
+    //            return;
+    //        }
+    //
+    //        this->loadJson(path);
+    //    }
+    //
+    //    void initRequestFromMenu() // TODO:
+    //    {
+    //        QString path;
+    //
+    //        try
+    //        {
+    //            path = getPathFromMenu("Открыть request.json файл(Входные данные).");
+    //        }
+    //        catch (std::runtime_error& ex)
+    //        {
+    //            infoWidget->addMessage(ex.what(), MessageType::Error);
+    //
+    //            return;
+    //        }
+    //
+    //        this->loadJson(path);
+    //    }
 
 private:
     void setup()
@@ -443,7 +442,7 @@ private:
             // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
             initializer->loadFromJson(obj);
 
-            bool requestLoaded = true;
+            requestLoaded = true;
 
             //        obj = Operations::jsonFromFile("d:\\test\\result.json");
             //             obj = Operations::jsonFromFile("/home/harikeshi/ajson/result.json");
@@ -452,7 +451,7 @@ private:
             // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
             initializer->loadFromJson(obj);
 
-            bool reportLoaded = true;
+            reportLoaded = true;
         }
         catch (...)
         {
