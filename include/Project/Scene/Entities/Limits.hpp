@@ -1,8 +1,11 @@
 #pragma once
 
 #include "Project/Models/Perimeter.hpp"
+#include "Project/Models/Report.hpp"
+#include "Project/Models/Request.hpp"
 #include "Project/Models/Route.hpp"
 #include "Project/Models/Segment.hpp"
+#include "Project/Scene/Objects/RouteObject.hpp"
 
 #include <cmath>
 namespace Scene::Entities {
@@ -94,6 +97,17 @@ struct Limits
         maxY = qMax(maxY, perimeter.getMaxY());
     }
 
+    Entities::Limits compareLimits(const Entities::Limits& source)
+    {
+        this->maxX = qMax(source.maxX, this->maxX);
+        this->minX = qMin(source.minX, this->minX);
+
+        this->maxY = qMax(source.maxY, this->maxY);
+        this->minY = qMin(source.minY, this->minY);
+
+        return *this;
+    }
+
     // TODO : Ошибка требуется реализация в соответствующих классах setLimits()
     void initFromRoutes(const QVector<Route>& routes)
     {
@@ -105,6 +119,25 @@ struct Limits
     }
 
     // TODO : Ошибка требуется реализация в соответствующих классах setLimits()
+    void initFromRoutes(const QVector<Scene::Objects::RouteObject*>& routes)
+    {
+        // максимумы из Routes
+        for (const auto& route : routes)
+        {
+            this->initFromRoute(route);
+        }
+    }
+
+    void initFromRoute(const Scene::Objects::RouteObject* route)
+    {
+        // максимумы из Route
+        for (const auto& segment : route->getSegments())
+        {
+            this->initFromSegment(segment);
+        }
+    }
+
+    // TODO : Ошибка требуется реализация в соответствующих классах setLimits()
     void initFromRoute(const Route& route)
     {
         // максимумы из Route
@@ -112,6 +145,22 @@ struct Limits
         {
             this->initFromSegment(segment);
         }
+    }
+
+    void initFromSegment(const Scene::Objects::SegmentObject* segment)
+    {
+        // максимумы из Routes
+        minX = qMin(minX, segment->getStart().x());
+        minX = qMin(minX, segment->getEnd().x());
+
+        minY = qMin(minY, segment->getStart().y());
+        minY = qMin(minY, segment->getEnd().y());
+
+        maxX = qMax(maxX, segment->getStart().x());
+        maxX = qMax(maxX, segment->getEnd().x());
+
+        maxY = qMax(maxY, segment->getStart().y());
+        maxY = qMax(maxY, segment->getEnd().y());
     }
 
     // TODO : Ошибка требуется реализация в соответствующих классах setLimits()

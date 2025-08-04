@@ -18,6 +18,7 @@ public:
 
     virtual void draw(QPainter& painter) = 0;
     virtual void reload(const Request& request) = 0;
+    virtual Entities::Limits getLimits() const = 0;
     virtual void swapCoordinates() = 0;
     virtual void reset() = 0;
 };

@@ -16,9 +16,12 @@ class Initializer : public QObject
     using Limits = Scene::Entities::Limits;
     Q_OBJECT
 signals:
-    void sendRequest(Models::Request);
-    void sendReport(Models::Report);
+    //    void sendRequest(Models::Request);
+    //    void sendReport(Models::Report);
     void sendMessage(QString, MessageType);
+
+    void reportLoaded();
+    void requestLoaded();
 
     void sendLimits(Limits);
 
@@ -154,8 +157,8 @@ public:
 
             message += "Файл request загружен в базу!";
 
-            emit sendRequest(request); // Отослать Request
-
+            // emit sendRequest(request); // Отослать Request
+            emit requestLoaded();
             emit sendRequestJson(json); // Для инициализации dataWidget
 
             setLimits(); // Рассчитать лимиты и отправить
@@ -178,7 +181,8 @@ public:
             message += "Файл report загружен в базу!";
             // TODO: Какое-то костыльное решение
 
-            emit sendReport(report);
+            emit reportLoaded();
+            // emit sendReport(report);
             emit sendReportJson(json); // Для инициализации dataWidget
 
             setLimits();
@@ -223,6 +227,7 @@ public:
         {
             limits.initFromRoutes(report.routes());
         }
+
         if (request.isLoaded())
         {
             limits.initFromPerimeter(request.getPerimeter());
@@ -231,9 +236,24 @@ public:
         emit sendLimits(limits);
     }
 
+    Models::Request getRequest() const
+    {
+        return request;
+    }
+
+    Models::Report getReport() const
+    {
+        return report;
+    }
+
     Limits getLimits() const
     {
         return limits;
+    }
+
+    QVector<Models::Message> getMessages() const
+    {
+        return report._messages;
     }
 
 private:

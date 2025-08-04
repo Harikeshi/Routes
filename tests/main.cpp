@@ -6,26 +6,25 @@
 #include <Project/Scene/Objects/PathWidget.hpp>
 #include <Project/Scene/Objects/PointWidget.hpp>
 
+#include <iostream>
+
 #include <cmath>
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
 
-    // RuledProgressBar window;
-
     MainWindow window;
+    window.resize(800, 800);
+    std::map<int, int> i{{1, 1}, {2, 2}};
+
+    window.show();
+    return app.exec();
 
     // QWidget window;
     // QVBoxLayout* layout = new QVBoxLayout(&window);
     //
     // Scene::Objects::PointWidget* pb = new Scene::Objects::PointWidget(QPointF(100, 100), 10);
     // layout->addWidget(pb);
-
-    window.resize(800, 800);
-    std::map<int, int> i{{1, 1}, {2, 2}};
-
-    window.show();
-    return app.exec();
 
     // QApplication app(argc, argv);
     //

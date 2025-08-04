@@ -144,12 +144,15 @@ public:
         // Initializer <-> Main
         connect(initializer, &Initializer::sendRequestJson, dataWidget, &DataWidget::initializeRequest);
         connect(initializer, &Initializer::sendMessage, this, &MainWindow::getInitializerMessage);
-        connect(initializer, &Initializer::sendRequest, this, &MainWindow::receiveRequest);
-        connect(initializer, &Initializer::sendReport, this, &MainWindow::receiveReport);
+        //        connect(initializer, &Initializer::sendRequest, this, &MainWindow::receiveRequest);
+        //        connect(initializer, &Initializer::sendReport, this, &MainWindow::receiveReport);
 
         // Scene
-        connect(initializer, &Initializer::sendLimits, scene, &SceneWidget::setLimits);
-        connect(initializer, &Initializer::sendRequest, this, &MainWindow::setSpeedLabel);
+        //        connect(initializer, &Initializer::sendLimits, scene, &SceneWidget::setLimits);
+        //        connect(initializer, &Initializer::sendRequest, this, &MainWindow::setSpeedLabel);
+
+        connect(initializer, &Initializer::requestLoaded, this, &MainWindow::receiveRequest);
+        connect(initializer, &Initializer::reportLoaded, this, &MainWindow::receiveReport);
 
         // ProgressBar <-> Scene
         connect(scene, &SceneWidget::sendFullTime, progress, &UpdateProgressBar::setTotalTime);
@@ -191,7 +194,7 @@ public:
 signals:
 
     // Отсылаем значения для инициализации в определенной последовательности
-    void sendValidateRequest(Request);
+    //    void sendValidateRequest(Request);
 
     void sendValidateReport(Report);
 
@@ -212,16 +215,17 @@ private slots:
     }
 
     // Отправка данных request в Scene
-    void receiveRequest(const Request& request)
+    //    void receiveRequest(const Request& request)
+    void receiveRequest()
     {
-        if (request.isLoaded())
+        if (initializer->getRequest().isLoaded())
         {
             requestLoaded = true;
 
             checkLoad();
 
-            scene->reloadRequest(request);
-            emit sendValidateRequest(request);
+            scene->reloadRequest(initializer->getRequest());
+            //            emit sendValidateRequest(request);
 
             infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
         }
@@ -255,7 +259,7 @@ private slots:
     }
 
     // Отправка данных report в Scene
-    void receiveReport(const Report& report)
+    void receiveReport()
     {
         if (!requestLoaded)
         {
@@ -263,17 +267,16 @@ private slots:
             return;
         }
 
-        if (report.isLoaded())
+        if (initializer->getRequest().isLoaded())
         {
             reportLoaded = true;
 
             checkLoad();
 
-            scene->reloadReport(report);
+            scene->reloadReport(initializer->getReport());
 
-            emit sendValidateReport(report);
-
-            for (const auto& message : report._messages)
+            // Вывод сообщений
+            for (const auto& message : initializer->getMessages())
             {
                 infoWidget->addMessage(QString("%1").arg(message.code) + ":" + message.type + ": " + message.text);
             }

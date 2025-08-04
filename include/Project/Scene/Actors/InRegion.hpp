@@ -21,6 +21,15 @@ public:
     }
 
 public:
+    Entities::Limits getLimits() const override
+    {
+        Entities::Limits limits;
+
+        limits.initFromPerimeter(perimeter->getPerimeter());
+
+        return limits;
+    }
+
     virtual void draw(QPainter& painter) override
     {
         perimeter->draw(painter);
@@ -35,6 +44,11 @@ public:
     virtual void reload(const Request& request) override
     {
         perimeter->setPerimeter(request.getPerimeter());
+
+        //        Entities::Limits limits;
+        //        limits.initFromPerimeter(request.getPerimeter());
+        //
+        //        return limits;
     }
 
     virtual void reset() override

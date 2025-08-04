@@ -1,6 +1,8 @@
 #pragma once
 
+#include <QMouseEvent>
 #include <QStack>
+#include <QToolTip>
 #include <QWidget>
 
 #include "./ModelObject.hpp"

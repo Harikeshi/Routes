@@ -498,9 +498,17 @@ public slots:
      * Метод определяет какие настройки устанавливаются при изменении Limits.
      * @param limits
      */
-    void setLimits(const Limits& limits)
+    //    void setLimits(const Limits& limits)
+    void setLimits()
     {
-        this->limits = limits;
+        // Получаем из Actor и инициализируем
+        // Установка Пределов
+        limits.reset();
+
+        // Собрать из Путей
+        limits.initFromRoutes(this->routes_->getRoutes());
+
+        this->limits.compareLimits(actor->getLimits());
 
         if (axies.first > axies.second)
             this->limits.swap();
@@ -531,10 +539,12 @@ public slots:
     {
         targets->reset();
 
-        // Гарантированно получаем полностью инициализированный request, Проверяется в mainWindow
+        // Гарантированно получаем полностью инициализированный request. Проверяется в mainWindow
         targets->setParameters(request.getTarget()); // Инициализация данных цели
 
         actor->reload(request);
+
+        this->setLimits();
 
         if (axies.first > axies.second)
         {
@@ -557,6 +567,8 @@ public slots:
         routes_->setRoutes(report.routes(), pointPercent * limits.diagonal()); // Радиус точки 1% диагонали
 
         setFullTime();
+
+        this->setLimits();
 
         // TODO: Возможно требуется пересчет модели цели
         if (axies.first > axies.second)
