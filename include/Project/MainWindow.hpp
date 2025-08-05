@@ -25,12 +25,7 @@
 
 class MainWindow : public QMainWindow
 {
-    using Route = Models::Route;
-    using Perimeter = Models::Perimeter;
-    using CoordinateSystem = Scene::Entities::CoordinateSystem;
-
     using SceneWidget = Widgets::SceneWidget;
-
     using DataWidget = Widgets::DataWidget;
     using CustomTable = Widgets::CustomTable;
     using ManageWidget = Widgets::ManageWidget;
@@ -163,6 +158,8 @@ public:
         // Submarine <-> Scene
         connect(sub, &SubWidget::resetButtomPushed, scene, &SceneWidget ::resetTarget);
         connect(sub, &SubWidget::sendSpeedChanged, scene, &SceneWidget::setTargetSpeed);
+
+        connect(scene, &SceneWidget::sendTargetSpeed, sub, &SubWidget::setSpeedInput);
 
         // [ Set ]
         connect(scene, &SceneWidget::sendDrawing, sub, &SubWidget::changeButtonColor);
@@ -357,6 +354,7 @@ protected:
         {
         case Qt::Key_U:
             scene->targetsShow();
+            break;
         case Qt::Key_Q:
             scene->change();
             break;

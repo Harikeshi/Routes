@@ -31,7 +31,7 @@ public:
 
 public:
     // TODO: Пересмотреть Инициализация только Цели начальной позицией.
-    void initialize(const Models::Target& parameters, double pointSize, const QColor& color = Qt::blue)
+    void initialize(const Models::Target& parameters, double pointSize, const QColor& color = Qt::black)
     {
         //! Установить Первую точку
         pointsWidget.clear();
@@ -44,8 +44,6 @@ public:
         this->setRadius(parameters.avoidanceDistance);
 
         this->head->initialize(parameters);
-
-        setState(new Scene::Objects::WithOutDrawState());
 
         currentSegmentIndex = 0;
         // clear();

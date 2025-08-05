@@ -50,13 +50,12 @@ public:
 
         double maxLength = 500;
 
-        QPen pen(Qt::black, 5); // Толщина
+        QPen pen(Qt::black, 1); // Толщина
         pen.setCosmetic(true);
+        painter.setPen(pen);
 
         // Отрисовать ПЛ
         painter.drawEllipse(start, target->getRootMeanSquareError(), target->getRootMeanSquareError());
-
-        painter.setPen(pen);
 
         // Линия 1
         QPointF end = Operations::getPointAtAngleDistance(start, target->getCourses().first, maxLength);
@@ -76,20 +75,20 @@ public:
         //! Увеличение происходит по времени.
         if (currentTime != 0)
         {
-            //            pen = QPen(Qt::green, 4);
-            //            pen.setStyle(Qt::DotLine);
-            //            pen.setCosmetic(true);
+            pen = QPen(Qt::darkGreen, 4);
+            pen.setStyle(Qt::DotLine);
+            pen.setCosmetic(true);
 
-            //            painter.setPen(pen);
+            painter.setPen(pen);
             painter.drawEllipse(start, currentTime * target->getParameters().currentVelocity, currentTime * target->getParameters().currentVelocity);
         }
 
         // Средняя линия, линия движения
-        //        pen = QPen(Qt::darkYellow, 4);
-        //        pen.setStyle(Qt::DotLine);
-        //        pen.setCosmetic(true);
+        pen = QPen(Qt::darkYellow, 4);
+        pen.setStyle(Qt::DotLine);
+        pen.setCosmetic(true);
 
-        //        painter.setPen(pen);
+        painter.setPen(pen);
         painter.drawLine(start, end);
     }
 
@@ -100,6 +99,7 @@ public:
 
     virtual void swapCoordinates() override
     {
+        target->swapCoordinates();
     }
 
     virtual void reload(const Request& request) override
@@ -118,17 +118,10 @@ public:
 
 private:
     bool loaded = false;
-    //! Модель Head
 
+    //! Модель Head
     Scene::Objects::TargetObject* target;
 
-    //! Окружность пунктирная
-    Scene::Objects::SegmentObject* line0;
-    Scene::Objects::SegmentObject* line1;
-
-    Scene::Objects::SegmentObject* midLine;
-
     double currentTime{0};
-    double currentSpeed{0};
 };
 } // namespace Scene::Actors

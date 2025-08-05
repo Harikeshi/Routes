@@ -317,12 +317,19 @@ public:
         if (pointsWidget.isEmpty())
             return;
 
+        if (currentSegmentIndex == 0)
+            return;
+
         if (currentSegmentIndex > 0)
         {
             pointsWidget.at(0)->draw(painter, 1);
         }
 
-        for (size_t i = 1; i != numberPointsForDisplay(); ++i)
+        if (pointsWidget.size() == 1)
+            return;
+
+        qDebug() << pointsWidget.size() << " > " << numberPointsForDisplay();
+        for (size_t i = 1; i < numberPointsForDisplay(); ++i)
         {
             pointsWidget.at(i)->draw(painter, i + 1);
         }
@@ -342,6 +349,15 @@ public:
             drawPoints(painter);
 
         // Отрисовка Объекта
+        if (state->type() != StateType::Clean)
+        {
+            drawHead(painter);
+        }
+    }
+
+    void drawHead(QPainter& painter)
+    {
+        // Отрисовка Объекта
         if (!segments.isEmpty() && currentSegmentIndex <= segments.size())
         {
             auto index = currentSegmentIndex;
@@ -352,7 +368,7 @@ public:
                 --index;
             }
 
-            //            head->draw(painter, *segments.at(index), color);
+            head->draw(painter, *segments.at(index), color);
         }
     }
 

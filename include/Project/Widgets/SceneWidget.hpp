@@ -65,10 +65,10 @@ class SceneWidget final : public QWidget
         {ActorType::Spiral, "Спираль"}};
 
     std::map<ActorType, std::function<Scene::Actor*()>> actors{
-        {ActorType::Zigzag, []() { return new Scene::Actors::InRegionScene(); }},
+        {ActorType::Zigzag, [this]() { target->setState(new Scene::Objects::WithOutDrawState());return new Scene::Actors::InRegionScene(); }},
         {ActorType::Shift, []() { return new Scene::Actors::InRegionScene(); }},
         {ActorType::Straight, []() { return new Scene::Actors::InRegionScene(); }},
-        {ActorType::Spiral, [this]() { targets->setState(new Scene::Objects::CurrentDrawState());return new Scene::Actors::Spiral(); }}};
+        {ActorType::Spiral, [this]() { target->setState(new Scene::Objects::CurrentDrawState());return new Scene::Actors::Spiral(); }}};
 
 protected:
     // TODO: Добавляем    comboBox = new QComboBox(this);
@@ -91,7 +91,7 @@ protected:
 
     // Элементы отрисовки цели.
     Routes* routes_;
-    Targets* targets;
+    Targets* target;
 
     PathWidget* targetPath;
     Actor* actor;
@@ -180,7 +180,8 @@ public:
         mainLayout->addWidget(bottomWidget);
 
         routes_ = new Routes(this);
-        targets = new Targets(this);
+        target = new Targets(this);
+        target->setState(new Scene::Objects::WithOutDrawState());
 
         grid = new Grid(this);
         timer = new QTimer(this);
@@ -238,7 +239,7 @@ signals:
 
     void sendIndexCurrentPositionSpeed(size_t, const QPointF&, double);
 
-    // void sendTargetCurrentPositionSpeed(const QPointF&, double);
+    void sendTargetSpeed(double); // При изменения значения скорости.
 
     void sendCurrentTime(double time);
 
@@ -276,7 +277,8 @@ public:
         //! Расположение Осей Остается.
 
         routes_->reset();
-        targets->reset();
+        target->reset();
+        target->setState(new Scene::Objects::WithOutDrawState());
 
         targetPath->reset();
         actor->reset();
@@ -359,7 +361,7 @@ public:
 
     void setFullTime()
     {
-        fullTime = std::max(routes_->getMaximumTime(), targetStartTime + targets->getFullTime()); // TODO: Время цели можно не учитывать
+        fullTime = std::max(routes_->getMaximumTime(), targetStartTime + target->getFullTime()); // TODO: Время цели можно не учитывать
 
         setCurrentTime(0);
 
@@ -373,7 +375,7 @@ public:
 
         // Сброс буфера путей
         routes_->clear();
-        targets->clear();
+        target->clear();
 
         // Установить состояние движения до Текущего
         routes_->setStateType(new Scene::Objects::CurrentDrawState());
@@ -446,7 +448,7 @@ public:
         // TODO: Где-то уменьшается Или не меняется
         actor->swapCoordinates();
         routes_->swapCoordinates();
-        targets->swapCoordinates();
+        target->swapCoordinates();
         targetPath->swapCoordinates();
 
         initCoordinateSystem(); // percent
@@ -480,7 +482,7 @@ public slots:
      */
     void setTargetSpeed(double speed)
     {
-        targets->setSpeed(speed);
+        target->setSpeed(speed);
     }
 
     /*!
@@ -494,7 +496,7 @@ public slots:
         emit sceneStopped();
 
         routes_->clear();
-        targets->clear();
+        target->clear();
 
         update();
     }
@@ -535,7 +537,7 @@ public slots:
     void setModels(Objects type, double size)
     {
         routes_->setModel(type, size); //getMaxDifference()); // 1%
-        targets->setModel(type, size); // getMaxDifference());
+        target->setModel(type, size);  // getMaxDifference());
     }
 
     /*!
@@ -544,11 +546,12 @@ public slots:
      */
     void reloadRequest(const Request& request)
     {
-        targets->reset();
+        target->reset();
 
         // Гарантированно получаем полностью инициализированный request. Проверяется в mainWindow
-        //        targets->setParameters(request.getTarget()); // Инициализация данных цели
-        targets->initialize(request.getTarget(), 10);
+        // targets->setParameters(request.getTarget()); // Инициализация данных цели
+        target->initialize(request.getTarget(), 10);
+        emit sendTargetSpeed(target->getSpeed());
 
         actor->reload(request);
 
@@ -560,14 +563,14 @@ public slots:
         }
 
         routes_->setParameters(request.getShip());
-        qDebug() << "target point: " << targets->getCurrentPosition();
+        qDebug() << "target point: " << target->getCurrentPosition();
     }
 
     void targetsShow() const
     {
-        targets->show();
-        qDebug() << "target point: " << targets->getCurrentPosition();
-        qDebug() << "target state: " << targets->getStateType();
+        target->show();
+        qDebug() << "target point: " << target->getCurrentPosition();
+        qDebug() << "target state: " << target->getStateType();
     }
     /*!
      * Действия при обновлении Report.
@@ -576,14 +579,14 @@ public slots:
     void reloadReport(const Report& report)
     {
         // В MainWindow гарантируем, что файл request уже был загружен
-        targets->reset();
+        // targets->reset();
 
         // Инициализация routes
         routes_->setRoutes(report.routes(), pointPercent * limits.diagonal()); // Радиус точки 1% диагонали
 
         this->setLimits();
 
-        targets->show();
+        target->show();
 
         setFullTime();
 
@@ -593,8 +596,8 @@ public slots:
             routes_->swapCoordinates();
         }
 
-        targets->show();
-        qDebug() << "target point: " << targets->getCurrentPosition();
+        target->show();
+        qDebug() << "target point: " << target->getCurrentPosition();
     }
 
     /*!
@@ -614,7 +617,7 @@ public slots:
      */
     void resetTarget()
     {
-        targets->reset();
+        target->reset();
         targetPath->clear();
         targetStartTime = 0;
 
@@ -639,7 +642,7 @@ protected:
 
         routes_->draw(painter);
 
-        targets->draw(painter);
+        target->draw(painter);
 
         targetPath->draw(painter);
     }
@@ -664,9 +667,8 @@ protected:
 
         targetPath->addPoint(cs.toLogical(screenPosition));
 
-        targets->setRoute(targetPath->getPath());
-        targets->setModel(Objects::Arrow, 0.01 * limits.diagonal());
-        qDebug() << "Скорость ПЛ." << targets->getSpeed();
+        target->setRoute(targetPath->getPath());
+        target->setModel(Objects::Arrow, 0.01 * limits.diagonal());
     }
 
     /*!
@@ -677,6 +679,10 @@ protected:
     {
         if (drawing)
         {
+            // TODO: Включение отображения ПЛ.
+            if (targetPath->isEmpty())
+                target->setState(new Scene::Objects::CurrentDrawState());
+
             addPointToTargetPathInitTargets(event->pos());
         }
         else
@@ -758,13 +764,13 @@ public:
         routes_->move(time);
 
         //! Расчет позиции ПЛ.
-        if (!targets->isEmpty())
+        if (!target->isEmpty())
         {
             if (targetStartTime <= currentTime)
-                targets->move(time - targetStartTime);
+                target->move(time - targetStartTime);
 
             //! Текущие данные о цели.
-            emit sendIndexCurrentPositionSpeed(0, targets->getCurrentPosition(), targets->getSpeed());
+            emit sendIndexCurrentPositionSpeed(0, target->getCurrentPosition(), target->getSpeed());
         }
 
         update();
