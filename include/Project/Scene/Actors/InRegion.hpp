@@ -51,6 +51,10 @@ public:
         //        return limits;
     }
 
+    void setCurrentTime(double time) override
+    {
+    }
+
     virtual void reset() override
     {
         perimeter = new PerimeterObject(this);

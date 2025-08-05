@@ -22,6 +22,11 @@ public:
     {
         this->segment = segment;
     }
+    explicit SegmentObject(const QPointF& start, const QPointF& end, double speed, QObject* parent = nullptr)
+        : segment{start, end, speed},
+          current{start}, QObject(parent)
+    {
+    }
 
     void clear()
     {

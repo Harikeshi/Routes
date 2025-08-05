@@ -355,6 +355,8 @@ protected:
     {
         switch (event->key())
         {
+        case Qt::Key_U:
+            scene->targetsShow();
         case Qt::Key_Q:
             scene->change();
             break;

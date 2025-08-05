@@ -168,11 +168,11 @@ public:
         currentSegmentIndex = 0; // Выбран первый отрезок
         segments.clear();        // TODO: это reset
 
-        state = new CurrentDrawState(); // Текущее состояние
+        // state = new CurrentDrawState(); // Текущее состояние
 
         head = new ModelObject(); // Головной объект
 
-        color = Qt::red;
+        // color = Qt::black;
 
         pointsWidget.clear();
 
@@ -241,6 +241,8 @@ public:
 
     void show() const
     {
+        head->show();
+
         for (const auto& segment : segments)
         {
             segment->show();
@@ -350,7 +352,7 @@ public:
                 --index;
             }
 
-            head->draw(painter, *segments.at(index), color);
+            //            head->draw(painter, *segments.at(index), color);
         }
     }
 
@@ -429,7 +431,7 @@ protected:
 
     QVector<PointWidget*> pointsWidget;
 
-    double length;
+    double length{0};
 
     bool showPoints = true;
 };

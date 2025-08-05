@@ -10,20 +10,19 @@
 #include "Project/Models/Report.hpp"
 #include "Project/Models/Request.hpp"
 #include "Project/Scene/ActorType.hpp"
+#include "TimeWidget.hpp"
 
 #include "../Scene/Entities/CoordinateSystem.hpp"
 #include "../Scene/Entities/Limits.hpp"
 #include "../Scene/Entities/Routes.hpp"
-#include "../Scene/Entities/Targets.hpp"
 
 #include "../Scene/Objects/GridObject.hpp"
 #include "../Scene/Objects/PathWidget.hpp"
 #include "../Scene/Objects/RouteState.hpp"
+#include "../Scene/Objects/TargetObject.hpp"
 
 #include "../Scene/Actors/InRegion.hpp"
 #include "../Scene/Actors/Spiral.hpp"
-
-#include "Project/Widgets/TimeWidget.hpp"
 
 namespace Widgets {
 /*!
@@ -34,7 +33,7 @@ class SceneWidget final : public QWidget
     using CoordinateSystem = Scene::Entities::CoordinateSystem;
     using Limits = Scene::Entities::Limits;
     using Routes = Scene::Entities::Routes;
-    using Targets = Scene::Entities::Targets;
+    using Targets = Scene::Objects::TargetObject;
     using PathWidget = Scene::Objects::PathWidget;
 
     using TimeWidget = Widgets::TimeWidget; // Перевести в QObject
@@ -69,7 +68,7 @@ class SceneWidget final : public QWidget
         {ActorType::Zigzag, []() { return new Scene::Actors::InRegionScene(); }},
         {ActorType::Shift, []() { return new Scene::Actors::InRegionScene(); }},
         {ActorType::Straight, []() { return new Scene::Actors::InRegionScene(); }},
-        {ActorType::Spiral, []() { return new Scene::Actors::Spiral(); }}};
+        {ActorType::Spiral, [this]() { targets->setState(new Scene::Objects::CurrentDrawState());return new Scene::Actors::Spiral(); }}};
 
 protected:
     // TODO: Добавляем    comboBox = new QComboBox(this);
@@ -282,7 +281,7 @@ public:
         targetPath->reset();
         actor->reset();
 
-        drawing = false; // Разрешить отрисовку цели
+        setDrawing(false); // Запретить
 
         speedMultiplier = 1; // Множитель скорости
 
@@ -337,6 +336,9 @@ public:
     void setCurrentTime(double time)
     {
         currentTime = time;
+
+        actor->setCurrentTime(time);
+
         emit sendCurrentTime(time);
     }
 
@@ -448,6 +450,8 @@ public:
         targetPath->swapCoordinates();
 
         initCoordinateSystem(); // percent
+
+        update();
     }
 
 public slots:
@@ -506,14 +510,8 @@ public slots:
         // Установка Пределов
         limits.reset();
 
-        qDebug() << 1;
-        limits.show();
-
         // Собрать из Путей
         limits.initFromRoutes(this->routes_->getRoutes());
-
-        qDebug() << 2;
-        limits.show();
 
         this->limits.compareLimits(actor->getLimits());
 
@@ -525,6 +523,8 @@ public slots:
         initCoordinateSystem();
 
         setModels(Objects::Arrow, 0.01 * limits.diagonal());
+
+        update();
     }
 
     /*!
@@ -547,7 +547,8 @@ public slots:
         targets->reset();
 
         // Гарантированно получаем полностью инициализированный request. Проверяется в mainWindow
-        targets->setParameters(request.getTarget()); // Инициализация данных цели
+        //        targets->setParameters(request.getTarget()); // Инициализация данных цели
+        targets->initialize(request.getTarget(), 10);
 
         actor->reload(request);
 
@@ -559,8 +560,15 @@ public slots:
         }
 
         routes_->setParameters(request.getShip());
+        qDebug() << "target point: " << targets->getCurrentPosition();
     }
 
+    void targetsShow() const
+    {
+        targets->show();
+        qDebug() << "target point: " << targets->getCurrentPosition();
+        qDebug() << "target state: " << targets->getStateType();
+    }
     /*!
      * Действия при обновлении Report.
      * @param report
@@ -570,12 +578,12 @@ public slots:
         // В MainWindow гарантируем, что файл request уже был загружен
         targets->reset();
 
-        qDebug() << report.routes().size();
-
         // Инициализация routes
         routes_->setRoutes(report.routes(), pointPercent * limits.diagonal()); // Радиус точки 1% диагонали
 
         this->setLimits();
+
+        targets->show();
 
         setFullTime();
 
@@ -584,6 +592,9 @@ public slots:
         {
             routes_->swapCoordinates();
         }
+
+        targets->show();
+        qDebug() << "target point: " << targets->getCurrentPosition();
     }
 
     /*!
@@ -641,7 +652,21 @@ protected:
     {
         initCoordinateSystem();
 
+        update();
+
         QWidget::resizeEvent(event);
+    }
+
+    void addPointToTargetPathInitTargets(const QPoint& screenPosition)
+    {
+        if (targetPath->isEmpty())
+            targetStartTime = currentTime;
+
+        targetPath->addPoint(cs.toLogical(screenPosition));
+
+        targets->setRoute(targetPath->getPath());
+        targets->setModel(Objects::Arrow, 0.01 * limits.diagonal());
+        qDebug() << "Скорость ПЛ." << targets->getSpeed();
     }
 
     /*!
@@ -652,21 +677,21 @@ protected:
     {
         if (drawing)
         {
-            if (targetPath->isEmpty())
-                targetStartTime = currentTime;
-            targetPath->addPoint(cs.toLogical(event->pos()));
-            targets->setRoute(targetPath->getPath());
+            addPointToTargetPathInitTargets(event->pos());
         }
         else
         {
             this->showPosition(event);
         }
 
-        //! Обработка событий для targetPath
+        //! Обработка события pressMouse для targetPath.
         if (targetPath->hasDrawingPoints())
             targetPath->mousePress(event, cs.toLogical(event->pos()));
-        //!
+
+        //! Обработка события pressMouse для Routes.
         routes_->mousePressEvent(event, cs.toLogical(event->pos()));
+
+        update();
     }
 
 public:
@@ -681,12 +706,7 @@ public:
             //! При рисовании добавляем точки движения.
             if (rect().contains(event->pos()))
             {
-                if (targetPath->isEmpty())
-                    targetStartTime = currentTime;
-
-                targetPath->addPoint(cs.toLogical(event->pos()));
-
-                targets->setRoute(targetPath->getPath());
+                addPointToTargetPathInitTargets(event->pos());
             }
 
             // Отрисовка
@@ -706,31 +726,32 @@ public:
     *
     * @param event
     */
-    void mouseReleaseEvent(QMouseEvent* event) override
-    {
-        if (event->button() == Qt::LeftButton)
-        {
-            if (drawing)
-            {
-                targets->setRoute(targetPath->getPath());
-
-                update();
-
-                // TODO:RESET
-                // targets->clear();
-                // targets->setModel(limits);
-
-                emit sendIndexCurrentPositionSpeed(0, targets->getCurrentPosition(), targets->getSpeed());
-            }
-        }
-
-        update();
-    }
+    //    void mouseReleaseEvent(QMouseEvent* event) override
+    //    {
+    //        if (event->button() == Qt::LeftButton)
+    //        {
+    //            if (drawing)
+    //            {
+    //                targets->setRoute(targetPath->getPath());
+    //                targets->setModel(Objects::Arrow, 0.01 * limits.diagonal());
+    //                update();
+    //
+    //                // TODO:RESET
+    //                // targets->clear();
+    //                // targets->setModel(limits);
+    //
+    //                //! Отправить значения после того как отпустили кнопку мыши.
+    //                emit sendIndexCurrentPositionSpeed(0, targets->getCurrentPosition(), targets->getSpeed());
+    //            }
+    //        }
+    //
+    //        update();
+    //    }
 
 public:
     /*!
      * Метод расчета новых позиций перемещения для всех объектов.
-     * @param time
+     * @param time Текущее время.
      */
     void move(double time)
     {
@@ -742,6 +763,7 @@ public:
             if (targetStartTime <= currentTime)
                 targets->move(time - targetStartTime);
 
+            //! Текущие данные о цели.
             emit sendIndexCurrentPositionSpeed(0, targets->getCurrentPosition(), targets->getSpeed());
         }
 
@@ -758,10 +780,10 @@ public:
 
         cs.setTransform(rect(), hightLimits);
 
+        //! Перерисовать изображение сетки Image.
         grid->draw(this->limits, rect(), axies.first, axies.second);
 
         // emit sendCoordinateSystem(cs);
-        update();
     }
 
     /*!

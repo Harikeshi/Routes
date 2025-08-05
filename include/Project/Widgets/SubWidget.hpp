@@ -127,7 +127,7 @@ public slots:
     // setButtonColor
     void changeButtonColor(const bool checked)
     {
-        if (checkButton->isChecked())
+        if (checked)
         {
             checkButton->setStyleSheet("QPushButton { background-color: red; }");
         }

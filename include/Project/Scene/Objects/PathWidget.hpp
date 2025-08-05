@@ -378,6 +378,7 @@ public:
     // }
 
 private:
+    // TODO: Сделать как в RouteObject
     int findPointAt(const QPointF& pos)
     {
         for (int i = 0; i < path.size(); ++i)

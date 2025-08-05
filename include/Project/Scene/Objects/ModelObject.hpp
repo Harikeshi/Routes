@@ -43,6 +43,12 @@ public:
         registerModels();
     }
 
+    void show() const
+    {
+        qDebug() << "Model: QPolygonF:" << model;
+        qDebug() << "Model: Radius: " << radiusHAS;
+    }
+
     void swapCoordinates()
     {
         for (size_t i = 0; i != model.size(); ++i)

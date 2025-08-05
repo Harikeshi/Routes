@@ -42,5 +42,11 @@ public:
      * Сброс Actor к нулевым значениям.
      */
     virtual void reset() = 0;
+
+    /*!
+     * Передача текущего времени.
+     * @param time
+     */
+    virtual void setCurrentTime(double time) = 0;
 };
 } // namespace Scene

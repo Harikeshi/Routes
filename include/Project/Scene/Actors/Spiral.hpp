@@ -5,8 +5,8 @@
 #include "../Actor.hpp"
 #include "Project/Operations/GeometryOperations.hpp"
 #include "Project/Scene/Entities/Limits.hpp"
-#include "Project/Scene/Entities/Targets.hpp"
 #include "Project/Scene/Objects/ModelObject.hpp"
+#include "Project/Scene/Objects/TargetObject.hpp"
 
 #include <iostream>
 
@@ -19,7 +19,7 @@ public:
     explicit Spiral(QObject* parent = nullptr)
         : Actor(parent)
     {
-        target = new Entities::Targets();
+        target = new Objects::TargetObject();
         loaded = false;
     }
 
@@ -43,22 +43,27 @@ public:
 
     virtual void draw(QPainter& painter) override
     {
-        if (!loaded)
+        if (!loaded || !target->isLoaded())
             return;
-        QPen pen(Qt::black, 5); // Толщина
-        pen.setCosmetic(true);
 
         const auto& start = target->getCurrentPosition();
 
+        double maxLength = 500;
+
+        QPen pen(Qt::black, 5); // Толщина
+        pen.setCosmetic(true);
+
+        // Отрисовать ПЛ
+        painter.drawEllipse(start, target->getRootMeanSquareError(), target->getRootMeanSquareError());
+
         painter.setPen(pen);
-        painter.drawEllipse(start, 5, 5);
-        painter.drawEllipse(start, 10, 10);
+
         // Линия 1
-        QPointF end = Operations::getPointAtAngleDistance(start, target->getCourses().first, 1e10);
+        QPointF end = Operations::getPointAtAngleDistance(start, target->getCourses().first, maxLength);
         painter.drawLine(start, end);
 
         // Линия 2
-        end = Operations::getPointAtAngleDistance(start, target->getCourses().second, 1e10);
+        end = Operations::getPointAtAngleDistance(start, target->getCourses().second, maxLength);
         painter.drawLine(start, end);
 
         //  Острый угол??
@@ -66,12 +71,31 @@ public:
 
         auto angle = (temp > 180) ? target->getCourses().first + (360 - temp) / 2 : (target->getCourses().first) + temp / 2;
 
-        end = Operations::getPointAtAngleDistance(start, angle, 1e10);
+        end = Operations::getPointAtAngleDistance(start, angle, maxLength);
+
+        //! Увеличение происходит по времени.
+        if (currentTime != 0)
+        {
+            //            pen = QPen(Qt::green, 4);
+            //            pen.setStyle(Qt::DotLine);
+            //            pen.setCosmetic(true);
+
+            //            painter.setPen(pen);
+            painter.drawEllipse(start, currentTime * target->getParameters().currentVelocity, currentTime * target->getParameters().currentVelocity);
+        }
 
         // Средняя линия, линия движения
-        pen.setStyle(Qt::DotLine);
-        painter.setPen(pen);
+        //        pen = QPen(Qt::darkYellow, 4);
+        //        pen.setStyle(Qt::DotLine);
+        //        pen.setCosmetic(true);
+
+        //        painter.setPen(pen);
         painter.drawLine(start, end);
+    }
+
+    void setCurrentTime(double time) override
+    {
+        currentTime = time;
     }
 
     virtual void swapCoordinates() override
@@ -88,18 +112,23 @@ public:
 
     virtual void reset() override
     {
+        loaded = false;
+        currentTime = 0;
     }
 
 private:
     bool loaded = false;
     //! Модель Head
 
-    Scene::Entities::Targets* target;
+    Scene::Objects::TargetObject* target;
 
     //! Окружность пунктирная
     Scene::Objects::SegmentObject* line0;
     Scene::Objects::SegmentObject* line1;
 
     Scene::Objects::SegmentObject* midLine;
+
+    double currentTime{0};
+    double currentSpeed{0};
 };
 } // namespace Scene::Actors
