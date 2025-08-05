@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
-
+find_package(Git)
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
 
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -24,13 +24,15 @@ target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/i
 add_subdirectory(tests/)
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Widgets Qt5::Core Qt5::Gui)
+target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Widgets Qt5::Core Qt5::Gui Task)
 
 find_package(libpqxx CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx::pqxx)
 
 find_package(PostgreSQL REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
+
+add_subdirectory(dependencies)
 # MINGW ---------------------------------------------------------------------------------
 #find_package(nlohmann_json REQUIRED)
 #target_link_libraries(${PROJECT_NAME} PUBLIC nlohmann_json)
