@@ -17,7 +17,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
 find_package(Git)
-find_package(nlohmann_json REQUIRED)
+
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
 
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
