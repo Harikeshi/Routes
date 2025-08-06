@@ -23,14 +23,3 @@ if (LIBQXX_FOUND)
 
     mark_as_advanced(LIBPQXX_INCLUDE_DIR LIBPQXX_LIBRARY)
 endif ()
-
-
-find_package(libpqxx REQUIRED)
-
-if (_WIN32)
-    target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx::pqxx)
-else ()
-    target_include_directories(${PROJECT_NAME} PUBLIC ${LIBPQXX_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBPQXX_LIBRARIES})
-#    target_link_libraries(${PROJECT_NAME} PUBLIC pqxx)
-endif ()

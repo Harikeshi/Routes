@@ -12,9 +12,10 @@ set(CMAKE_AUTORCC ON)
 # Для Astra C++17
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+#set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
+add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES}
+        include/Project/MainWindow.hpp)
 find_package(Git)
 
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
@@ -34,7 +35,26 @@ target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
 
 target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
-target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/libTask.so)
+
+if (UNIX)
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/libTask.so)
+else ()
+    #    target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/Task.dll)
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/Task.lib)
+endif ()
+
+
+#
+#find_package(libpqxx REQUIRED)
+#
+#if (_WIN32)
+#    target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx::pqxx)
+#else ()
+#    target_include_directories(${PROJECT_NAME} PUBLIC ${LIBPQXX_INCLUDE_DIRS})
+#    target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBPQXX_LIBRARIES})
+#    #    target_link_libraries(${PROJECT_NAME} PUBLIC pqxx)
+#endif ()
+
 
 # Подключение Tasks
 #add_subdirectory(dependencies)

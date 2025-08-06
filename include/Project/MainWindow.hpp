@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef _WIN32
+#define MYLIB_API __declspec(dllimport)
+#endif
+
 #include <QAction>
 #include <QApplication>
 #include <QFileDialog>
@@ -40,6 +44,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
     SearchTask task;
+
 public:
     MainWindow(QWidget* parent = nullptr)
         : QMainWindow(parent)
