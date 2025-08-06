@@ -27,12 +27,15 @@ target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/t
 
 target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Widgets Qt5::Core Qt5::Gui)
 
-find_package(libpqxx CONFIG REQUIRED)
+find_package(libpqxx REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx::pqxx)
 
 find_package(PostgreSQL REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
 
+target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/libTask.so)
 
 # Подключение Tasks
 #add_subdirectory(dependencies)
@@ -42,9 +45,9 @@ target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
 #elseif (WIN32)
 #    set(TASKS_PATH "${CMAKE_SOURCE_DIR}/dependencies/tasks/Task.lib")
 #endif ()
-#
+
 #add_library(Task STATIC IMPORTED)
-#
+
 #set_target_properties(Task PROPERTIES
 #        IMPORTED_LOCATION "${TASKS_PATH}"
 #        INTERFACE_INCLUDE_DIRECTORIES

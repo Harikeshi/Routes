@@ -22,6 +22,7 @@
 #include "Project/Widgets/UpdateProgress.hpp"
 
 #include "Initializer.hpp"
+#include "search_task.hpp"
 
 class MainWindow : public QMainWindow
 {
@@ -38,6 +39,7 @@ class MainWindow : public QMainWindow
 
     Q_OBJECT
 
+    SearchTask task;
 public:
     MainWindow(QWidget* parent = nullptr)
         : QMainWindow(parent)
