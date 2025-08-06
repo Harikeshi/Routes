@@ -17,6 +17,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
 find_package(Git)
+find_package(nlohmann_json REQUIRED)
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
 
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -24,7 +25,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/i
 add_subdirectory(tests/)
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Widgets Qt5::Core Qt5::Gui Task)
+target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Widgets Qt5::Core Qt5::Gui)
 
 find_package(libpqxx CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx::pqxx)
@@ -32,7 +33,25 @@ target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx::pqxx)
 find_package(PostgreSQL REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
 
-add_subdirectory(dependencies)
+
+# Подключение Tasks
+#add_subdirectory(dependencies)
+#include_directories(dependencies/tasks)
+#if (UNIX)
+#    set(TASKS_PATH "${CMAKE_SOURCE_DIR}/dependencies/tasks/..")
+#elseif (WIN32)
+#    set(TASKS_PATH "${CMAKE_SOURCE_DIR}/dependencies/tasks/Task.lib")
+#endif ()
+#
+#add_library(Task STATIC IMPORTED)
+#
+#set_target_properties(Task PROPERTIES
+#        IMPORTED_LOCATION "${TASKS_PATH}"
+#        INTERFACE_INCLUDE_DIRECTORIES
+#        "${CMAKE_SOURCE_DIR}/dependencies/tasks"
+#)
+#target_link_libraries(${PROJECT_NAME} PUBLIC Task)
+
 # MINGW ---------------------------------------------------------------------------------
 #find_package(nlohmann_json REQUIRED)
 #target_link_libraries(${PROJECT_NAME} PUBLIC nlohmann_json)

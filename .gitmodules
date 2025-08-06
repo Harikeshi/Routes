@@ -1,3 +1,0 @@
-[submodule "dependencies/taskso"]
-	path = dependencies/taskso
-	url = ssh://git@bitbucket.01050-1.ru:7999/pike/tasks.git

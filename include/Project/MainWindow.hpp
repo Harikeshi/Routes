@@ -23,6 +23,8 @@
 
 #include "Initializer.hpp"
 
+#include "../dependencies/tasks/header.hpp"
+
 class MainWindow : public QMainWindow
 {
     using SceneWidget = Widgets::SceneWidget;
