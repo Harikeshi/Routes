@@ -272,13 +272,14 @@ private slots:
 
                 auto nloh = Operations::convertToNlohmann(json);
 
-                Operations::printJson(nloh);
+//                Operations::printJson(nloh);
                 //Operations::printJson(json);
 
-                task = SearchTask(nloh);
+//                task = SearchTask(nloh);
+                task.setTask(nloh);
 
-                //                auto report = task.computeRoute(SearchScheme::Zigzag);
-                //                initializer->loadFromJson(Operations::convertToQJsonObject(report));
+                auto report = task.computeRoute(static_cast<SearchScheme>(scene->getActorType()));
+                initializer->loadFromJson(Operations::convertToQJsonObject(report));
             }
             catch (...)
             {

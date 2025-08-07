@@ -33,7 +33,6 @@ public:
     {
         Entities::Limits limits;
 
-        qDebug() << target->getCurrentPosition();
         limits.fromPoint(target->getCurrentPosition());
 
         limits.show();

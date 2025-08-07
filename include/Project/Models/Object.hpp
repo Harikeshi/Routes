@@ -43,8 +43,6 @@ public:
 
     void initializeProperties(const QJsonObject& json) override
     {
-        // QJsonDocument doc(json);
-        // qDebug() << doc.toJson(QJsonDocument::Compact);
         detection_range = json["detection_range"].toDouble();
         detectionRange = detection_range;
         max_velocity = json["max_velocity"].toDouble();

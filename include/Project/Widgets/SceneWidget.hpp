@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QToolTip>
 #include <QWidget>
+#include <QStackedLayout>
 
 #include "Project/Models/Report.hpp"
 #include "Project/Models/Request.hpp"
@@ -251,6 +252,10 @@ signals:
     void sceneReseted();
 
 public:
+    int getActorType()const{
+        return actorChoose->currentIndex();
+    }
+
     void changeActor(ActorType type)
     {
         // 1. Сброс сцены.
@@ -563,14 +568,11 @@ public slots:
         }
 
         routes_->setParameters(request.getShip());
-        qDebug() << "target point: " << target->getCurrentPosition();
     }
 
     void targetsShow() const
     {
         target->show();
-        qDebug() << "target point: " << target->getCurrentPosition();
-        qDebug() << "target state: " << target->getStateType();
     }
     /*!
      * Действия при обновлении Report.
@@ -586,8 +588,6 @@ public slots:
 
         this->setLimits();
 
-        target->show();
-
         setFullTime();
 
         // TODO: Возможно требуется пересчет модели цели
@@ -595,9 +595,6 @@ public slots:
         {
             routes_->swapCoordinates();
         }
-
-        target->show();
-        qDebug() << "target point: " << target->getCurrentPosition();
     }
 
     /*!

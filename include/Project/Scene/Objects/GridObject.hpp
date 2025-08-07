@@ -135,7 +135,7 @@ public:
 
         auto beginY = std::fabs(mainLimints.maxY - limits.maxY) / hPixel;
         auto availableHeight = mainLimints.getYDifference() / hPixel; // в пикселях
-        qDebug() << beginY;
+
         auto yLogicalStep = mainLimints.getYDifference() / steps;
         auto yScreenStep = availableHeight / steps;
 
@@ -160,7 +160,6 @@ public:
             painter.drawText(x - labelWidth / 2, rect.height() - bottomMargin / 2, label);
         }
 
-        qDebug() << "beginY: " << beginY;
         // Горизонтальные линии
         for (int i = 0; i <= steps; ++i)
         {
@@ -174,7 +173,6 @@ public:
 
             drawCenteredRotatedText(painter, leftMargin / 2, y, -90, label); // поворот 90 влево
         }
-        qDebug() << "yLogicalStep: " << yLogicalStep;
         // Рисование осей
         painter.setPen(QPen(Qt::black, 2));
 

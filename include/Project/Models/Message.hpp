@@ -24,7 +24,6 @@ public:
 
     void initializeProperties(const QJsonObject& json) override
     {
-        qDebug() << json;
         code = json["code"].toDouble();
         text = json["text"].toString();
         type = json["type"].toString();

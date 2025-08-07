@@ -328,7 +328,6 @@ public:
         if (pointsWidget.size() == 1)
             return;
 
-        qDebug() << pointsWidget.size() << " > " << numberPointsForDisplay();
         for (size_t i = 1; i < numberPointsForDisplay(); ++i)
         {
             pointsWidget.at(i)->draw(painter, i + 1);
