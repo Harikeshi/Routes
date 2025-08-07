@@ -32,6 +32,11 @@ public:
         min_lenght_section = 0;
     }
 
+    size_t getId() const override
+    {
+        return id;
+    }
+
     Object()
     {
         addValidator("detection_range", [](const QJsonObject& json) { validateDigit(json["detection_range"], "detection_range"); });
@@ -43,6 +48,8 @@ public:
 
     void initializeProperties(const QJsonObject& json) override
     {
+        id = json["id"].toInt();
+
         detection_range = json["detection_range"].toDouble();
         detectionRange = detection_range;
         max_velocity = json["max_velocity"].toDouble();
@@ -51,6 +58,23 @@ public:
         currentVelocity = search_velocity;
         turning_radius = json["turning_radius"].toDouble();
         min_lenght_section = json["min_lenght_section"].toDouble();
+    }
+
+    QJsonObject toJson() const override
+    {
+        QJsonObject obj;
+
+        obj["id"] = static_cast<qint64>(id);
+        obj["detectionRange"] = detectionRange;
+        obj["maxVelocity"] = maxVelocity;
+        obj["currentVelocity"] = currentVelocity;
+        obj["detection_range"] = detection_range;
+        obj["max_velocity"] = max_velocity;
+        obj["search_velocity"] = search_velocity;
+        obj["turning_radius"] = turning_radius;
+        obj["min_lenght_section"] = min_lenght_section;
+        
+        return obj;
     }
 };
 } // namespace Models

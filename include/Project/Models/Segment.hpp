@@ -20,6 +20,48 @@ public:
     {
     }
 
+    size_t getId() const
+    {
+        return id;
+    }
+
+    void fromJson(const QJsonObject& json)
+    {
+        id = json["id"].toInt();
+
+        // Read start point
+        QJsonObject startObj = json["start"].toObject();
+        start = QPointF(startObj["x"].toDouble(), startObj["y"].toDouble());
+
+        // Read end point
+        QJsonObject endObj = json["end"].toObject();
+        end = QPointF(endObj["x"].toDouble(), endObj["y"].toDouble());
+
+        baseSpeed = json["baseSpeed"].toDouble();
+    }
+
+    QJsonObject toJson() const
+    {
+        QJsonObject obj;
+        obj["id"] = static_cast<qint64>(id);
+
+        // Write start point
+        QJsonObject startObj;
+        startObj["x"] = start.x();
+        startObj["y"] = start.y();
+        obj["start"] = startObj;
+
+        // Write end point
+        QJsonObject endObj;
+        endObj["x"] = end.x();
+        endObj["y"] = end.y();
+        obj["end"] = endObj;
+
+        obj["baseSpeed"] = baseSpeed;
+
+        return obj;
+    }
+
     double getSpeed() const
     {
         return baseSpeed;

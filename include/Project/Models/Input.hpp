@@ -7,13 +7,14 @@ class Input
 {
 public:
     virtual ~Input() = default;
-
     void fromJson(const QJsonObject& json)
     {
         validate(json);
 
         initializeProperties(json);
     }
+    virtual size_t getId() const = 0;
+    virtual QJsonObject toJson() const = 0;
 
 protected:
     // TODO: Использовать JsonValue

@@ -22,6 +22,23 @@ public:
         addValidator("type", [](const QJsonObject& json) { validateString(json, "type"); });
     }
 
+    size_t getId() const override
+    {
+        return id;
+    }
+
+    QJsonObject toJson() const override
+    {
+        QJsonObject obj;
+
+        obj["id"] = static_cast<qint64>(id);
+        obj["code"] = code;
+        obj["text"] = text;
+        obj["type"] = type;
+
+        return obj;
+    }
+
     void initializeProperties(const QJsonObject& json) override
     {
         code = json["code"].toDouble();
