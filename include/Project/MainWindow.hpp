@@ -182,7 +182,7 @@ public:
         connect(manage, &ManageWidget::sendMinusButtonClicked, this, &MainWindow::downSpeed);
         connect(manage, &ManageWidget::sendPlusButtonClicked, this, &MainWindow::upSpeed);
         connect(manage, &ManageWidget::clickVisionButton, scene, &SceneWidget::changeShowRoutesPoints);
-
+        connect(manage, &ManageWidget::clickedCalculate, this, &MainWindow::clickedCalc);
         connect(manage, &ManageWidget::pushReset, scene, &SceneWidget::reset);
 
         connect(scene, &SceneWidget::sceneReseted, this, &MainWindow::sceneReset);
@@ -262,16 +262,27 @@ private slots:
         infoWidget->addMessage("Требуется загрузка  данных(json).", MessageType::Info);
     }
 
-    void pushedCalc()
+    void clickedCalc()
     {
         if (requestLoaded)
         {
             try
             {
-                // task.setTask(initializer->getRequestJson());
+                auto json = initializer->getRequestJson();
+
+                auto nloh = Operations::convertToNlohmann(json);
+
+                Operations::printJson(nloh);
+                //Operations::printJson(json);
+
+                task = SearchTask(nloh);
+
+                //                auto report = task.computeRoute(SearchScheme::Zigzag);
+                //                initializer->loadFromJson(Operations::convertToQJsonObject(report));
             }
             catch (...)
             {
+                infoWidget->addMessage("Неизвестная ошибка.", MessageType::Error);
             }
         }
         else
@@ -319,7 +330,7 @@ private slots:
 public:
     void setEnabled(bool value)
     {
-        manage->setEnabled(value);
+        // manage->setEnabled(value);
 
         sub->setEnabled(value);
 

@@ -79,9 +79,10 @@ public:
         //        hasButton->setEnabled(false);
         //        visHasLayout->addWidget(hasButton);
         calcButton = new QPushButton("Calc", this);
-        calcButton->setCheckable(true);
-       
-        calcButton->setEnabled(false);
+        connect(calcButton, &QPushButton::clicked, this, &ManageWidget::calculateClicked);
+        //        calcButton->setCheckable(true);
+
+        //        calcButton->setEnabled(false);
         visHasLayout->addWidget(calcButton);
         layout->addLayout(visHasLayout);
 
@@ -97,8 +98,14 @@ signals:
     void clickVisionButton();
 
     void pushReset();
+    void clickedCalculate();
 
 protected:
+    void calculateClicked()
+    {
+        emit clickedCalculate();
+    }
+
     void sendReset()
     {
         emit pushReset();

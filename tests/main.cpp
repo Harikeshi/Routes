@@ -14,17 +14,17 @@
 
 int main(int argc, char* argv[])
 {
-    auto json = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\result.json");
-
-    Operations::printJson(json);
-
-    auto nloh = Operations::convertToNlohmann(json);
-
-    json = Operations::convertToQJsonObject(nloh);
-
-    Operations::printJson(json);
-
-    return 0;
+    //    auto json = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\result.json");
+    //
+    //    Operations::printJson(json);
+    //
+    //    auto nloh = Operations::convertToNlohmann(json);
+    //
+    //    json = Operations::convertToQJsonObject(nloh);
+    //
+    //    Operations::printJson(json);
+    //
+    //    return 0;
 
     QApplication app(argc, argv);
 
