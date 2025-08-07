@@ -32,11 +32,6 @@ public:
         min_lenght_section = 0;
     }
 
-    size_t getId() const override
-    {
-        return id;
-    }
-
     Object()
     {
         addValidator("detection_range", [](const QJsonObject& json) { validateDigit(json["detection_range"], "detection_range"); });
@@ -46,10 +41,16 @@ public:
         addValidator("min_lenght_section", [](const QJsonObject& json) { validateDigit(json["min_lenght_section"], "min_lenght_section"); });
     }
 
+    size_t getId() const override
+    {
+        return id;
+    }
+
     void initializeProperties(const QJsonObject& json) override
     {
-        id = json["id"].toInt();
-
+        if (json.contains("id"))
+            id = json["id"].toInt();
+        
         detection_range = json["detection_range"].toDouble();
         detectionRange = detection_range;
         max_velocity = json["max_velocity"].toDouble();
@@ -73,7 +74,7 @@ public:
         obj["search_velocity"] = search_velocity;
         obj["turning_radius"] = turning_radius;
         obj["min_lenght_section"] = min_lenght_section;
-        
+
         return obj;
     }
 };

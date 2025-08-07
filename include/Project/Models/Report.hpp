@@ -7,7 +7,7 @@
 
 //TODO: Проверка есть сообщения и Пути
 namespace Models {
-struct Report
+struct Report : public Input
 {
     size_t id{0};
     // TODO: Чтобы поддержать концепцию реализовать Route в validate
@@ -16,20 +16,18 @@ struct Report
 
     bool loaded = false;
 
-    bool isLoaded() const
-    {
-        return loaded;
-    }
-
 public:
-    QVector<Route> routes() const
+    size_t getId() const override
     {
-        return _routes;
+        return id;
     }
 
     // Перенести в Route
-    void fromJson(const QJsonObject& json)
+    void initializeProperties(const QJsonObject& json) override
     {
+        if (json.contains("id"))
+            id = json["id"].toInt();
+
         for (const auto& message : json["messages"].toArray())
         {
             Message mes{};
@@ -49,6 +47,38 @@ public:
         }
 
         loaded = true;
+    }
+
+    QJsonObject toJson() const override
+    {
+        QJsonObject obj;
+        obj["id"] = static_cast<qint64>(id);
+
+        QJsonArray routesArray;
+        for (const Route& route : _routes)
+        {
+            routesArray.append(route.toJson());
+        }
+        obj["routes"] = routesArray;
+
+        QJsonArray messagesArray;
+        for (const Message& message : _messages)
+        {
+            messagesArray.append(message.toJson());
+        }
+        obj["messages"] = messagesArray;
+
+        return obj;
+    }
+
+    bool isLoaded() const
+    {
+        return loaded;
+    }
+
+    QVector<Route> routes() const
+    {
+        return _routes;
     }
 };
 } // namespace Models

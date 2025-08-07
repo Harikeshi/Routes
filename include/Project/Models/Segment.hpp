@@ -6,7 +6,7 @@
 #include <cmath>
 
 namespace Models {
-class Segment
+class Segment : public Input
 {
     size_t id{0};
     QPointF start;
@@ -20,38 +20,40 @@ public:
     {
     }
 
-    size_t getId() const
+    size_t getId() const override
     {
         return id;
     }
 
-    void fromJson(const QJsonObject& json)
+    // TODO: Тут принимаем, что входные с x и y.
+    void initializeProperties(const QJsonObject& json) override
     {
-        id = json["id"].toInt();
+        if (json.contains("id"))
+            id = json["id"].toInt();
 
-        // Read start point
+        // start
         QJsonObject startObj = json["start"].toObject();
         start = QPointF(startObj["x"].toDouble(), startObj["y"].toDouble());
 
-        // Read end point
+        // end
         QJsonObject endObj = json["end"].toObject();
         end = QPointF(endObj["x"].toDouble(), endObj["y"].toDouble());
 
         baseSpeed = json["baseSpeed"].toDouble();
     }
 
-    QJsonObject toJson() const
+    QJsonObject toJson() const override
     {
         QJsonObject obj;
         obj["id"] = static_cast<qint64>(id);
 
-        // Write start point
+        // start
         QJsonObject startObj;
         startObj["x"] = start.x();
         startObj["y"] = start.y();
         obj["start"] = startObj;
 
-        // Write end point
+        // end
         QJsonObject endObj;
         endObj["x"] = end.x();
         endObj["y"] = end.y();

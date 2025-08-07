@@ -55,8 +55,16 @@ public:
         });
     }
 
+    size_t getId() const override
+    {
+        return id;
+    }
+
     void initializeProperties(const QJsonObject& json) override
     {
+        if (json.contains("id"))
+            id = json["id"].toInt();
+
         Operations::setQPointF(detectionPoint, json["detection_point"]);
 
         Operations::setDoublePair(courses, json["courses"]);
@@ -70,6 +78,35 @@ public:
         obsolescenceTime = json["obsolescence_time"].toDouble();
         avoidanceDistance = json["avoidance_distance"].toDouble();
     }
+
+    QJsonObject toJson() const override
+    {
+        QJsonObject obj;
+        obj["id"] = static_cast<qint64>(id);
+
+        // detection point
+        QJsonObject detectionPointObj;
+        detectionPointObj["x"] = detectionPoint.x();
+        detectionPointObj["y"] = detectionPoint.y();
+        obj["detectionPoint"] = detectionPointObj;
+
+        // courses
+        QJsonArray coursesArray;
+        coursesArray.append(courses.first);
+        coursesArray.append(courses.second);
+        obj["courses"] = coursesArray;
+
+        obj["rootMeanSquareError"] = rootMeanSquareError;
+        obj["currentVelocity"] = currentVelocity;
+        obj["maxVelocity"] = maxVelocity;
+        obj["minNoiseReduced"] = minNoiseReduced;
+        obj["maxNoiseReduced"] = maxNoiseReduced;
+        obj["obsolescenceTime"] = obsolescenceTime;
+        obj["avoidanceDistance"] = avoidanceDistance;
+
+        return obj;
+    }
+
     double getMinNoiseReduced() const
     {
         return minNoiseReduced;

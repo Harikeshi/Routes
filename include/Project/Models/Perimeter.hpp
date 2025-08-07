@@ -16,6 +16,80 @@ namespace Models {
 class Perimeter : public Input
 {
 public:
+    Perimeter()
+    {
+        addValidator("entry_point", [](const QJsonObject& json) { validatePointOrPair(json, "entry_point"); });
+        addValidator("exit_point", [](const QJsonObject& json) { validatePointOrPair(json, "exit_point"); });
+
+        addValidator("search_region", [](const QJsonObject& json) { validateRegion(json, "borders"); });
+    }
+
+    size_t getId() const override
+    {
+        return id;
+    }
+
+    // "search_region"
+    void initializeProperties(const QJsonObject& json) override
+    {
+        if (json.contains("id"))
+            id = json["id"].toInt();
+
+        Operations::setQPointF(entrance, json["entry_point"]);
+        Operations::setQPointF(exit, json["exit_point"]);
+
+        rings.clear();
+
+        for (const auto& border : json["borders"].toArray())
+        {
+            QVector<QPointF> inner;
+            // border [[],[]]
+            for (const auto& point : border.toArray())
+            {
+                inner.push_back(Operations::toQPointF(point));
+            }
+
+            this->addInner(inner);
+        }
+    }
+
+    QJsonObject toJson() const override
+    {
+        QJsonObject obj;
+        obj["id"] = static_cast<qint64>(id);
+
+        // TODO: Используются x и y для работы с базой данных.
+        // entrance
+        QJsonObject entranceObj;
+        entranceObj["x"] = entrance.x();
+        entranceObj["y"] = entrance.y();
+        obj["entrance"] = entranceObj;
+
+        // exit
+        QJsonObject exitObj;
+        exitObj["x"] = exit.x();
+        exitObj["y"] = exit.y();
+        obj["exit"] = exitObj;
+
+        // rings
+        QJsonArray ringsArray;
+        for (const QPolygonF& ring : rings)
+        {
+            QJsonArray ringArray;
+            for (const QPointF& point : ring)
+            {
+                QJsonObject pointObj;
+                pointObj["x"] = point.x();
+                pointObj["y"] = point.y();
+                ringArray.append(pointObj);
+            }
+            ringsArray.append(ringArray);
+        }
+        obj["rings"] = ringsArray;
+
+        return obj;
+    }
+
     void clear()
     {
         for (auto& inner : rings)
@@ -134,73 +208,6 @@ public:
             }
             qDebug() << "]";
         }
-    }
-
-    Perimeter()
-    {
-        addValidator("entry_point", [](const QJsonObject& json) { validatePointOrPair(json, "entry_point"); });
-        addValidator("exit_point", [](const QJsonObject& json) { validatePointOrPair(json, "exit_point"); });
-
-        addValidator("search_region", [](const QJsonObject& json) { validateRegion(json, "borders"); });
-    }
-
-    size_t getId() const override
-    {
-        return id;
-    }
-
-    // "search_region"
-    void initializeProperties(const QJsonObject& json) override
-    {
-        id = json["id"].toInt();
-
-        Operations::setQPointF(entrance, json["entry_point"]);
-        Operations::setQPointF(exit, json["exit_point"]);
-
-        rings.clear();
-
-        for (const auto& border : json["borders"].toArray())
-        {
-            QVector<QPointF> inner;
-            // border [[],[]]
-            for (const auto& point : border.toArray())
-            {
-                inner.push_back(Operations::toQPointF(point));
-            }
-
-            this->addInner(inner);
-        }
-    }
-
-    QJsonObject toJson() const override
-    {
-        QJsonObject obj;
-        obj["id"] = static_cast<qint64>(id);
-
-        // Write entrance
-        QJsonArray entrance_point{entrance.x(), entrance.y()};
-        obj["entrance"] = entrance_point;
-
-        // Write exit
-        QJsonArray exit_point{exit.x(), exit.y()};
-        obj["exit"] = exit_point;
-
-        // Write rings
-        QJsonArray ringsArray;
-        for (const QPolygonF& ring : rings)
-        {
-            QJsonArray ringArray;
-            for (const QPointF& point : ring)
-            {
-                //! Добавить Массив-точку
-                QJsonArray _point{point.x(), point.y()};
-                ringArray.append(_point);
-            }
-            ringsArray.append(ringArray);
-        }
-        obj["borders"] = ringsArray;
-
-        return obj;
     }
 
 private:

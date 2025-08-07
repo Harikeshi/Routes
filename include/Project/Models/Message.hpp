@@ -41,6 +41,9 @@ public:
 
     void initializeProperties(const QJsonObject& json) override
     {
+        if (json.contains("id"))
+            id = json["id"].toInt();
+
         code = json["code"].toDouble();
         text = json["text"].toString();
         type = json["type"].toString();
