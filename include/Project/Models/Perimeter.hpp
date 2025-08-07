@@ -168,11 +168,11 @@ public:
 private:
     size_t id{0};
     // TODO: надо ли
-    double minX{1e13}, minY{1e13}, maxX{-1e13}, maxY{-1e13};
 
     QVector<QPolygonF> rings;
 
     QPointF entrance;
     QPointF exit;
+    double minX{1e13}, minY{1e13}, maxX{-1e13}, maxY{-1e13};
 };
 } // namespace Models

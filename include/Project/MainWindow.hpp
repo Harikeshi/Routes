@@ -60,14 +60,14 @@ public:
         // #--------------------------------------------------------------------------------------
         // MainLayout - Основная компоновка
         // #--------------------------------------------------------------------------------------
-        QWidget* centralWidget = new QWidget(this);
+        auto* centralWidget = new QWidget(this);
 
-        QVBoxLayout* mainLayout = new QVBoxLayout(centralWidget);
+        auto* mainLayout = new QVBoxLayout(centralWidget);
         mainLayout->setContentsMargins(0, 0, 0, 0);
         mainLayout->setSpacing(0);
 
         // Главный горизонтальный splitter (разделитель между Scene и правой панелью)
-        QSplitter* mainHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
+        auto* mainHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
 
         // SceneWidget
         scene = new SceneWidget(this);
@@ -77,7 +77,7 @@ public:
         mainHorizontalSplitter->addWidget(scene);
 
         // Вертикальная компоновка справа
-        QSplitter* rightVerticalSplitter = new QSplitter(Qt::Vertical);
+        auto* rightVerticalSplitter = new QSplitter(Qt::Vertical, centralWidget);
 
         // Виджеты для правой вертикальной панели
         dataWidget = new DataWidget(this); // TODO: this
@@ -86,7 +86,7 @@ public:
         rightVerticalSplitter->addWidget(table);
 
         // Горизонтальный splitter нижний
-        QSplitter* innerHorizontalSplitter = new QSplitter(Qt::Horizontal);
+        auto* innerHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
         manage = new ManageWidget(this);
 
         sub = new SubWidget(this);
@@ -194,6 +194,7 @@ public:
 
         this->setWindowTitle("Visualization");
     }
+    ~MainWindow() = default;
 
 signals:
 
@@ -259,6 +260,24 @@ private slots:
 
         infoWidget->addMessage("Был Произведен сброс.", MessageType::Warning);
         infoWidget->addMessage("Требуется загрузка  данных(json).", MessageType::Info);
+    }
+
+    void pushedCalc()
+    {
+        if (requestLoaded)
+        {
+            try
+            {
+                // task.setTask(initializer->getRequestJson());
+            }
+            catch (...)
+            {
+            }
+        }
+        else
+        {
+            infoWidget->addMessage("Загрузите Request. Нельзя построить маршруты.", MessageType::Error);
+        }
     }
 
     void addInformation(int speed)
