@@ -19,7 +19,8 @@ struct Request : public Input
 
     bool loaded = false;
 
-public:
+    Request() = default;
+    
     // TODO:
     size_t getId() const override
     {
@@ -53,7 +54,7 @@ public:
 
         loaded = true;
     }
-    
+
     QJsonObject toJson() const override
     {
         QJsonObject obj;

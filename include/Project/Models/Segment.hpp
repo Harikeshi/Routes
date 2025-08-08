@@ -6,7 +6,7 @@
 #include <cmath>
 
 namespace Models {
-class Segment : public Input
+struct Segment : public Input
 {
     size_t id{0};
     QPointF start;
@@ -15,8 +15,8 @@ class Segment : public Input
     double baseSpeed;
 
 public:
-    Segment(const QPointF& s = QPointF{}, const QPointF& e = QPointF{}, const double b = 0)
-        : start(s), end(e), baseSpeed(b)
+    Segment(size_t _id = 0, const QPointF& s = QPointF{}, const QPointF& e = QPointF{}, const double b = 0)
+        : id{_id}, start(s), end(e), baseSpeed(b)
     {
     }
 

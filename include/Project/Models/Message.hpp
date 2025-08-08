@@ -10,6 +10,9 @@ struct Message : public Input
     double code;
     QString text;
     QString type;
+    explicit Message(size_t _id = 0, double _code = 0, const QString& _text = QString{}, const QString& _type = QString{}) : id{_id}, code{_code}, text{_text}, type{_type}
+    {
+    }
 
 public:
     Message()

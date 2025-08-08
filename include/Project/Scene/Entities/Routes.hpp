@@ -42,9 +42,10 @@ signals:
     void complete(void);
 
 public:
-    explicit Routes(QWidget* parent = nullptr)
+    Routes(QWidget* parent = nullptr)
         : QWidget(parent)
     {
+        parameters = Object{};
         routes = QVector<RouteObject*>();
         numberRoutes = 0;
     }

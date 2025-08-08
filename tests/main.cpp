@@ -10,10 +10,19 @@
 
 #include <cmath>
 
+#include "Project/Database/PostgreSQLRepository.hpp"
 #include "Project/Operations/JsonOperations.hpp"
 
 int main(int argc, char* argv[])
 {
+    const std::string& connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
+    auto repository = PostgreSQLRepository(connectionString);
+
+    auto request = repository.findRequestById(2);
+    auto report = repository.findReportById(1);
+
+    std::cout << "OK!" << std::endl;
+
     //    auto json = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\result.json");
     //
     //    Operations::printJson(json);
@@ -24,7 +33,7 @@ int main(int argc, char* argv[])
     //
     //    Operations::printJson(json);
     //
-    //    return 0;
+    return 0;
 
     QApplication app(argc, argv);
 

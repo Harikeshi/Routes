@@ -205,7 +205,7 @@ public:
 
     void addSegment(QPointF start, QPointF end, double speed)
     {
-        SegmentObject* segment = new SegmentObject(this, {start, end, speed});
+        SegmentObject* segment = new SegmentObject(this, {0, start, end, speed});
 
         segments.push_back(segment);
     }

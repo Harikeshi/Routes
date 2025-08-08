@@ -13,7 +13,7 @@
 #include <algorithm>
 
 namespace Models {
-class Perimeter : public Input
+struct Perimeter : public Input
 {
 public:
     Perimeter()
@@ -210,7 +210,6 @@ public:
         }
     }
 
-private:
     size_t id{0};
     // TODO: надо ли
 

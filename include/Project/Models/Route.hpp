@@ -5,12 +5,11 @@
 #include "ValidateOperations.hpp"
 
 namespace Models {
-class Route : public Input
+struct Route : public Input
 {
     size_t id{0};
     QVector<Segment> segments;
 
-public:
     Route()
     {
         addValidator("points", [](const QJsonObject& json) {
@@ -48,7 +47,7 @@ public:
             QPointF begin = QPointF{start[0].toDouble(), start[1].toDouble()};
             QPointF end = QPointF{finish[0].toDouble(), finish[1].toDouble()};
 
-            this->addSegment(Segment{begin, end, speed});
+            this->addSegment(Segment(0, begin, end, speed));
         }
     }
 

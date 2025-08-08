@@ -22,6 +22,21 @@ struct Target : public Input
     double avoidanceDistance = 999999;
 
 public:
+    Target(
+        size_t _id,
+        QPointF _detectionPoint,
+        std::pair<double, double> _courses,
+        double _rootMeanSquareError,
+        double _currentVelocity,
+        double _maxVelocity,
+        double _minNoiseReduced,
+        double _maxNoiseReduced,
+        double _obsolescenceTime,
+        double _avoidanceDistance) : id(_id), detectionPoint(_detectionPoint), courses(_courses), rootMeanSquareError(_rootMeanSquareError), currentVelocity(_currentVelocity),
+                                     maxVelocity(_maxVelocity), minNoiseReduced(_minNoiseReduced), maxNoiseReduced(_maxNoiseReduced), obsolescenceTime(_obsolescenceTime),
+                                     avoidanceDistance(_avoidanceDistance)
+    {
+    }
     Target()
     {
         addValidator("detection_point", [](const QJsonObject& json) { validatePointOrPair(json, "detection_point"); });

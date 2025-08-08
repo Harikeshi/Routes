@@ -10,6 +10,8 @@
 #include <QObject>
 #include <QString>
 
+#include "Project/Database/PostgreSQLRepository.hpp"
+
 // TODO: Инициализатор должен только отправлять Request и Report и сообщение
 class Initializer : public QObject
 {
@@ -155,11 +157,20 @@ public:
             message += "Файл определен, как request. ";
             request.fromJson(json);
 
+            // qDebug() << repository.save(request.perimeter);
+            //
+            // qDebug() << repository.save(request.target);
+            // qDebug() << repository.save(request.ship);
+
             message += "Файл request загружен в базу!";
 
             // emit sendRequest(request); // Отослать Request
             emit requestLoaded();
             emit sendRequestJson(json); // Для инициализации dataWidget
+
+            request.id = repository.save(request);
+
+            qDebug() << request.id;
 
             //            setLimits(); // Рассчитать лимиты и отправить
         }
@@ -180,11 +191,13 @@ public:
 
             message += "Файл report загружен в базу!";
             // TODO: Какое-то костыльное решение
+            report.request_id = request.id;
 
             emit reportLoaded();
             // emit sendReport(report);
             emit sendReportJson(json); // Для инициализации dataWidget
 
+            qDebug() << repository.save(report);
             //            setLimits();
         }
         catch (std::runtime_error& ex)
@@ -268,8 +281,26 @@ public:
         return report_json;
     }
 
+public:
+    std::string connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
+    //    std::string connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
+
+    Initializer(const std::string& str = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3")
+    {
+        try
+        {
+            repository = PostgreSQLRepository(connectionString);
+            qDebug() << "ctor!";
+        }
+        catch (std::runtime_error& ex)
+        {
+            qDebug() << ex.what();
+        }
+    }
+
 private:
     //    Limits limits;
+    PostgreSQLRepository repository;
 
     QJsonObject request_json;
     QJsonObject report_json;

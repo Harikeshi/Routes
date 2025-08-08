@@ -10,6 +10,7 @@ namespace Models {
 struct Report : public Input
 {
     size_t id{0};
+    size_t request_id{0};
     // TODO: Чтобы поддержать концепцию реализовать Route в validate
     QVector<Route> _routes;
     QVector<Message> _messages;
@@ -30,7 +31,7 @@ public:
 
         for (const auto& message : json["messages"].toArray())
         {
-            Message mes{};
+            Message mes{0, 0, "", ""};
             mes.fromJson(message.toObject());
             _messages.push_back(mes);
         }
