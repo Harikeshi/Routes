@@ -169,22 +169,12 @@ public:
             message += "Файл определен, как request. ";
             request.fromJson(json);
 
-            // qDebug() << repository.save(request.perimeter);
-            //
-            // qDebug() << repository.save(request.target);
-            // qDebug() << repository.save(request.ship);
-
             message += "Файл request загружен в базу!";
 
-            // emit sendRequest(request); // Отослать Request
             emit requestLoaded();
             emit sendRequestJson(json); // Для инициализации dataWidget
 
             request.id = repository->save(request);
-
-            qDebug() << request.id;
-
-            //            setLimits(); // Рассчитать лимиты и отправить
         }
         catch (std::runtime_error& ex)
         {
@@ -206,11 +196,7 @@ public:
             report.request_id = request.id;
 
             emit reportLoaded();
-            // emit sendReport(report);
             emit sendReportJson(json); // Для инициализации dataWidget
-
-            qDebug() << repository->save(report);
-            //            setLimits();
         }
         catch (std::runtime_error& ex)
         {

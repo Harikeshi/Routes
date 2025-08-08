@@ -25,11 +25,8 @@ public:
     {
         Entities::Limits limits;
 
-        perimeter->getPerimeter().show();
         limits.initFromPerimeter(perimeter->getPerimeter());
-        perimeter->getPerimeter().show();
 
-        limits.show();
         return limits;
     }
 

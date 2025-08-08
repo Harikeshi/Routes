@@ -89,9 +89,6 @@ struct Limits
     void initFromPerimeter(const Perimeter& perimeter)
     {
         reset();
-        qDebug() << "start initFrom";
-        perimeter.show();
-        qDebug() << "end initFrom";
 
         minX = perimeter.getMinX();
 
@@ -100,8 +97,6 @@ struct Limits
         maxX = perimeter.getMaxX();
 
         maxY = perimeter.getMaxY();
-
-        show();
     }
 
     Entities::Limits compareLimits(const Entities::Limits& source)
