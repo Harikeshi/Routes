@@ -104,6 +104,7 @@ CREATE TABLE requests
 (
     id           BIGSERIAL PRIMARY KEY,
     time         DOUBLE PRECISION NOT NULL,
+    name         TEXT             NOT NULL,
     perimeter_id BIGINT           NOT NULL REFERENCES perimeters (id) ON DELETE RESTRICT,
     target_id    BIGINT           NOT NULL REFERENCES targets (id) ON DELETE RESTRICT,
     ship_id      BIGINT           NOT NULL REFERENCES objects (id) ON DELETE RESTRICT,

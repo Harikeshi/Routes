@@ -27,8 +27,37 @@ target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/t
 
 target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Widgets Qt5::Core Qt5::Gui)
 
-find_package(libpqxx REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx::pqxx)
+# Функция для определения, является ли система Arch Linux
+function(check_arch_linux)
+    if (EXISTS "/etc/os-release")
+        file(READ "/etc/os-release" os_release)
+        if (os_release MATCHES "ID=arch")
+            set(IS_ARCH_LINUX TRUE PARENT_SCOPE)
+        endif ()
+    endif ()
+endfunction()
+
+# Проверяем
+check_arch_linux()
+
+if (IS_ARCH_LINUX)
+    # Если CMake не нашел libpqxx, пробуем вручную
+    find_path(LIBPQXX_INCLUDE_DIR pqxx/pqxx)
+    find_library(LIBPQXX_LIBRARY pqxx)
+    find_library(LIBPQ_LIBRARY pq)
+
+    if (LIBPQXX_INCLUDE_DIR AND LIBPQXX_LIBRARY AND LIBPQ_LIBRARY)
+        add_library(libpqxx INTERFACE IMPORTED)
+        target_include_directories(libpqxx INTERFACE ${LIBPQXX_INCLUDE_DIR})
+        target_link_libraries(libpqxx INTERFACE ${LIBPQXX_LIBRARY} ${LIBPQ_LIBRARY})
+        target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx)
+    else ()
+        message(FATAL_ERROR "libpqxx not found!")
+    endif ()
+else ()
+    find_package(libpqxx REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx::pqxx)
+endif ()
 
 find_package(PostgreSQL REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
@@ -36,76 +65,13 @@ target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
 target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
 
-if (UNIX)
+if (IS_ARCH_LINUX)
+    target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/arch)
+    target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/arch)
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/arch/libTask.so)
+elseif (UNIX)
     target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/libTask.so)
 else ()
     #    target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/Task.dll)
     target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/Task.lib)
 endif ()
-
-
-#
-#find_package(libpqxx REQUIRED)
-#
-#if (_WIN32)
-#    target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx::pqxx)
-#else ()
-#    target_include_directories(${PROJECT_NAME} PUBLIC ${LIBPQXX_INCLUDE_DIRS})
-#    target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBPQXX_LIBRARIES})
-#    #    target_link_libraries(${PROJECT_NAME} PUBLIC pqxx)
-#endif ()
-
-
-# Подключение Tasks
-#add_subdirectory(dependencies)
-#include_directories(dependencies/tasks)
-#if (UNIX)
-#    set(TASKS_PATH "${CMAKE_SOURCE_DIR}/dependencies/tasks/..")
-#elseif (WIN32)
-#    set(TASKS_PATH "${CMAKE_SOURCE_DIR}/dependencies/tasks/Task.lib")
-#endif ()
-
-#add_library(Task STATIC IMPORTED)
-
-#set_target_properties(Task PROPERTIES
-#        IMPORTED_LOCATION "${TASKS_PATH}"
-#        INTERFACE_INCLUDE_DIRECTORIES
-#        "${CMAKE_SOURCE_DIR}/dependencies/tasks"
-#)
-#target_link_libraries(${PROJECT_NAME} PUBLIC Task)
-
-# MINGW ---------------------------------------------------------------------------------
-#find_package(nlohmann_json REQUIRED)
-#target_link_libraries(${PROJECT_NAME} PUBLIC nlohmann_json)
-#find_package(libpqxx CONFIG REQUIRED)
-#set(MINGW_ROOT "C:/msys64/mingw64")
-#set(PostgreSQL_INCLUDE_DIR "${MINGW_ROOT}/include")
-#set(PostgreSQL_LIBRARY "${MINGW_ROOT}/lib/libpq.dll.a")
-#set(PQXX_INCLUDE_DIR "${MINGW_ROOT}/include")
-#set(PQXX_LIBRARY "${MINGW_ROOT}/lib/libpqxx.dll.a")
-# ---------------------------------------------------------------------------------------
-# MSVC ----------------------------------------------------------------------------------
-#    find_package(libpqxx CONFIG REQUIRED)
-#    set(PQXX_INCLUDE_DIR "C:/vcpkg/installed/x64-windows/include")
-#    set(PQXX_LIBRARY "C:/vcpkg/installed/x64-windows/lib/pqxx.lib")
-#
-#    set(PostgreSQL_INCLUDE_DIR "C:/vcpkg/installed/x64-windows/include")
-#    set(PostgreSQL_LIBRARY "C:/vcpkg/installed/x64-windows/lib/libpq.lib")
-#
-# ---------------------------------------------------------------------------------------
-# Astra ---------------------------------------------------------------------------------
-#    find_package(PostgreSQL REQUIRED)
-#    find_package(libpqxx REQUIRED)
-#
-#    target_link_libraries(${PROJECT_NAME} PUBLIC pqxx)
-#
-# ---------------------------------------------------------------------------------------
-#if (WIN32)
-#    # Для username
-#    target_link_libraries(${PROJECT_NAME} PUBLIC DbgHelp)
-#endif ()
-
-#target_include_directories(${PROJECT_NAME} PUBLIC ${PQXX_INCLUDE_DIR})
-#target_link_libraries(${PROJECT_NAME} PUBLIC ${PQXX_LIBRARY})
-#target_include_directories(${PROJECT_NAME} PUBLIC ${PostgreSQL_INCLUDE_DIR})
-#target_link_libraries(${PROJECT_NAME} PUBLIC ${PostgreSQL_LIBRARY})
