@@ -51,6 +51,8 @@ public:
 
             this->addInner(inner);
         }
+
+        setLimits();
     }
 
     QJsonObject toJson() const override
@@ -102,14 +104,14 @@ public:
 
     void setOuter(const QVector<QPointF>& points)
     {
-        setLimits(points);
-
         if (rings.empty())
             rings[0] = points;
         else
         {
             rings.push_back(points);
         }
+
+        setLimits();
     }
 
     void setRings(const QVector<QPolygonF>& polygons)
@@ -117,15 +119,14 @@ public:
         // TODO: clear?
         for (const auto& polygon : polygons)
         {
-            setLimits(polygon);
             rings.push_back(polygon);
         }
+
+        setLimits();
     }
 
     void addInner(const QVector<QPointF>& points)
     {
-        setLimits(points);
-
         rings.push_back(points);
     }
 
@@ -155,6 +156,11 @@ public:
     }
 
 private:
+    void resetLimits()
+    {
+        minX = 1e13, minY = 1e13, maxX = -1e13, maxY = -1e13;
+    }
+
     void setLimits(const QVector<QPointF>& points)
     {
         for (const auto& point : points)
@@ -166,20 +172,26 @@ private:
         }
     }
 
+    void setLimits()
+    {
+        resetLimits();
+
+        for (const auto& ring : rings)
+        {
+            for (const auto& point : ring)
+                setLimitsFromPoint(point);
+        }
+
+        setLimitsFromPoint(entrance);
+        setLimitsFromPoint(exit);
+    }
+
     void setLimitsFromPoint(const QPointF& point)
     {
         minX = qMin(minX, point.x());
         minY = qMin(minY, point.y());
         maxX = qMax(maxX, point.x());
         maxY = qMax(maxY, point.y());
-    }
-
-    void setLimits(const QPolygonF& polygon)
-    {
-        for (const auto& point : polygon)
-        {
-            this->setLimitsFromPoint(point);
-        }
     }
 
 public:
@@ -210,6 +222,8 @@ public:
             }
             qDebug() << "]";
         }
+
+        qDebug() << "minX: " << minX << ", minY: " << minY << ", maxX: " << maxX << ", maxY: " << maxY;
     }
 
     size_t id{0};
@@ -219,6 +233,7 @@ public:
 
     QPointF entrance;
     QPointF exit;
+
     double minX{1e13}, minY{1e13}, maxX{-1e13}, maxY{-1e13};
 };
 } // namespace Models

@@ -25,9 +25,17 @@ public:
     {
         Entities::Limits limits;
 
+        perimeter->getPerimeter().show();
         limits.initFromPerimeter(perimeter->getPerimeter());
+        perimeter->getPerimeter().show();
 
+        limits.show();
         return limits;
+    }
+
+    void show()
+    {
+        perimeter->show();
     }
 
     virtual void draw(QPainter& painter) override

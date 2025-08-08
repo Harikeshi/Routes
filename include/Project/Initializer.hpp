@@ -272,7 +272,7 @@ public:
     }
 
 public:
-    QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
+    QString connectionString = "host=192.168.50.512 dbname=request_report user=viz_user password=1 connect_timeout=3";
     //    QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
 
     Initializer(const std::string& str = "host=192.168.50.512 dbname=request_report user=viz_user password=1 connect_timeout=3")
@@ -286,9 +286,11 @@ public:
         }
         catch (std::runtime_error& ex)
         {
-            // TODO:
+            // TODO: сообщение
+            emit sendMessage("Не удалось подключиться к postgreSQL: " + QString(ex.what()), MessageType::Error);
             repository = std::make_unique<Database::JsonRepository>(getHomePath());
-            qDebug() << ex.what();
+
+            emit sendMessage("Request/Report будут сохраняться в домашней директории.", MessageType::Info);
         }
     }
 

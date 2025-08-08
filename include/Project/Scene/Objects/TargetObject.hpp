@@ -105,24 +105,6 @@ public:
         RouteObject::reset();
     }
 
-    //    void draw(QPainter& painter)
-    //    {
-    //        RouteObject::draw(painter);
-    //    }
-    //
-    //    void move(double speedMultiplier)
-    //    {
-    //        if (RouteObject::move(speedMultiplier))
-    //        {
-    //            //            emit sendCurrentPositionSpeed(getCurrentPosition(), getSpeed());
-    //            // sendTargetInformation(); // TODO: Сделать одним сигналом
-    //            // sendTargetInformation(pair<QPointF, double>) // точка и скорость
-    //        }
-    //        else
-    //        {
-    //        }
-    //    }
-
     void setParameters(const Models::Target& params)
     {
         targetParameters = params;

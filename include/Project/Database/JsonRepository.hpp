@@ -22,12 +22,16 @@ class JsonRepository : public Database::IRepository
 public:
     JsonRepository(const QString& base_path) : Database::IRepository{base_path}
     {
-        path = base_path + "/db/";
+#ifdef _WIN32
+        path = base_path + "\\json_db\\";
+#else
+        path = base_path + "/json_db/";
+#endif
         QDir dir(path);
 
         if (!dir.exists())
         {
-            if (dir.mkdir(base_path + "/db/"))
+            if (dir.mkdir(path))
             {
             }
             else
@@ -37,9 +41,13 @@ public:
         }
 
         requestPath = path + "requests.json";
-        createEmptyJsonArrayFile(requestPath);
         reportPath = path + "reports.json";
-        createEmptyJsonArrayFile(reportPath);
+
+        if (!QFile::exists(requestPath))
+            createEmptyJsonArrayFile(requestPath);
+
+        if (!QFile::exists(reportPath))
+            createEmptyJsonArrayFile(reportPath);
 
         // QDir::homePath();
         // QFileInfo file{requestPath};
@@ -63,6 +71,7 @@ public:
     {
         return Models::Request{};
     }
+    
     Models::Report findReportById(size_t id) override
     {
         return Models::Report{};
@@ -94,7 +103,6 @@ private:
     bool writeJsonArrayToFile(const QJsonArray& array, const QString& fileName)
     {
         QFile file(fileName);
-        qDebug() << fileName;
         if (!file.open(QIODevice::WriteOnly))
         {
             qWarning("Couldn't open file for writing.");

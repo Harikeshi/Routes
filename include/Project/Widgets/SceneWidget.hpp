@@ -4,9 +4,9 @@
 #include <QGraphicsScene>
 #include <QMouseEvent>
 #include <QPushButton>
+#include <QStackedLayout>
 #include <QToolTip>
 #include <QWidget>
-#include <QStackedLayout>
 
 #include "Project/Models/Report.hpp"
 #include "Project/Models/Request.hpp"
@@ -139,6 +139,7 @@ public:
         // TODO: Все же отдельный виджет
         actorChoose = new QComboBox(topWidget);
 
+        //! Инициализация Выбора Actor.
         for (const auto& act : ActorTypeName)
             actorChoose->addItem(act.second, static_cast<int>(act.first));
 
@@ -146,10 +147,6 @@ public:
             qDebug() << "Выбран: " << type;
             changeActor(static_cast<ActorType>(type));
         });
-        // [this]() {
-        //            ActorType type = static_cast<ActorType>(actorChoose->currentData().toInt());
-        //            changeActor(type);
-        //        });
 
         actorChoose->setFixedSize(80, 30);
 
@@ -198,10 +195,7 @@ public:
         this->resize(800, 800);
 
         // Чтобы не было диких цифр при загрузке
-        limits.set(static_cast<double>(rect().x()),
-                   static_cast<double>(rect().y()),
-                   static_cast<double>(rect().width()),
-                   static_cast<double>(rect().height()));
+        limitesToRect();
 
         // connect(timer, &QTimer::timeout, this, &SceneWidget::updateDrawing);
         connect(timer, &QTimer::timeout, this, &SceneWidget::moveFromTimer);
@@ -252,7 +246,8 @@ signals:
     void sceneReseted();
 
 public:
-    int getActorType()const{
+    int getActorType() const
+    {
         return actorChoose->currentIndex();
     }
 
@@ -299,10 +294,23 @@ public:
 
         timer->stop();
 
+        limitesToRect();
+
+        initCoordinateSystem();
+
         update();
 
         emit sceneReseted();
     };
+
+    void limitesToRect()
+    {
+        // Чтобы не было диких цифр при загрузке
+        limits.set(static_cast<double>(rect().x()),
+                   static_cast<double>(rect().y()),
+                   static_cast<double>(rect().width()),
+                   static_cast<double>(rect().height()));
+    }
 
     void sendObjectInformation(size_t index, const QPointF& position, double speed)
     {
@@ -364,6 +372,9 @@ public:
         this->speedMultiplier = timeWidget->setSpeed(1);
     }
 
+    /*!
+     * Максимальное время БЭНК и ПЛ.
+     */
     void setFullTime()
     {
         fullTime = std::max(routes_->getMaximumTime(), targetStartTime + target->getFullTime()); // TODO: Время цели можно не учитывать
@@ -508,28 +519,32 @@ public slots:
 
     /*!
      * Метод определяет какие настройки устанавливаются при изменении Limits.
+     * Пересчет только делаем при перезагрузке request или report.
      * @param limits
      */
-    //    void setLimits(const Limits& limits)
-    void setLimits()
+    void setLimits(bool isReport)
     {
-        // Получаем из Actor и инициализируем
-        // Установка Пределов
         limits.reset();
 
-        // Собрать из Путей
-        limits.initFromRoutes(this->routes_->getRoutes());
+        //! Собрать из Путей
+        if (isReport)
+            limits.initFromRoutes(this->routes_->getRoutes());
 
+        //! Инициализация из Actor.
+        //! Данные Actor не забываем сбросить.
         this->limits.compareLimits(actor->getLimits());
+
+        //! ПЛ не учитываем, всегда сбрасываем путь лодки.
+        initTargetPath(limits.diagonal() * pointPercent);
+
+        //! Обновляем модели.
+        setModels(Objects::Arrow, 0.01 * limits.diagonal());
 
         if (axies.first > axies.second)
             this->limits.swap();
 
-        initTargetPath(limits.diagonal() * pointPercent);
-
+        //! Обновляем систему координат.
         initCoordinateSystem();
-
-        setModels(Objects::Arrow, 0.01 * limits.diagonal());
 
         update();
     }
@@ -556,24 +571,23 @@ public slots:
         // Гарантированно получаем полностью инициализированный request. Проверяется в mainWindow
         // targets->setParameters(request.getTarget()); // Инициализация данных цели
         target->initialize(request.getTarget(), 10);
+        targetPath->clear();
+
         emit sendTargetSpeed(target->getSpeed());
 
         actor->reload(request);
-
-        this->setLimits();
 
         if (axies.first > axies.second)
         {
             actor->swapCoordinates();
         }
 
+        routes_->reset();
         routes_->setParameters(request.getShip());
+
+        this->setLimits(false);
     }
 
-    void targetsShow() const
-    {
-        target->show();
-    }
     /*!
      * Действия при обновлении Report.
      * @param report
@@ -586,8 +600,6 @@ public slots:
         // Инициализация routes
         routes_->setRoutes(report.routes(), pointPercent * limits.diagonal()); // Радиус точки 1% диагонали
 
-        this->setLimits();
-
         setFullTime();
 
         // TODO: Возможно требуется пересчет модели цели
@@ -595,6 +607,8 @@ public slots:
         {
             routes_->swapCoordinates();
         }
+
+        this->setLimits(true);
     }
 
     /*!
@@ -723,33 +737,6 @@ public:
 
         update();
     }
-
-    // TODO: Управления тут не должно быть
-    /*!
-    *
-    * @param event
-    */
-    //    void mouseReleaseEvent(QMouseEvent* event) override
-    //    {
-    //        if (event->button() == Qt::LeftButton)
-    //        {
-    //            if (drawing)
-    //            {
-    //                targets->setRoute(targetPath->getPath());
-    //                targets->setModel(Objects::Arrow, 0.01 * limits.diagonal());
-    //                update();
-    //
-    //                // TODO:RESET
-    //                // targets->clear();
-    //                // targets->setModel(limits);
-    //
-    //                //! Отправить значения после того как отпустили кнопку мыши.
-    //                emit sendIndexCurrentPositionSpeed(0, targets->getCurrentPosition(), targets->getSpeed());
-    //            }
-    //        }
-    //
-    //        update();
-    //    }
 
 public:
     /*!

@@ -27,6 +27,9 @@ public:
     {
         delete target;
     }
+    void show()
+    {
+    }
 
 public:
     Entities::Limits getLimits() const

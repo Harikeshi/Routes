@@ -219,31 +219,9 @@ private slots:
         // qDebug() << message;
     }
 
-    // Отправка данных request в Scene
-    //    void receiveRequest(const Request& request)
-    void receiveRequest()
-    {
-        if (initializer->getRequest().isLoaded())
-        {
-            requestLoaded = true;
-
-            checkLoad();
-
-            scene->reloadRequest(initializer->getRequest());
-            //            emit sendValidateRequest(request);
-            //// Инициализация дерева request.json
-            dataWidget->clear();
-
-            dataWidget->initializeRequest(initializer->getRequestJson());
-
-            infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
-        }
-        else
-        {
-            infoWidget->addMessage("Request был загружен не полностью.", MessageType::Warning);
-        }
-    }
-
+    /*!
+    * Действия при сбросе сцены.
+    */
     void sceneReset()
     {
         // scene->reset();
@@ -259,7 +237,7 @@ private slots:
         table->reset();
 
         infoWidget->addMessage("Был Произведен сброс.", MessageType::Warning);
-        infoWidget->addMessage("Требуется загрузка  данных(json).", MessageType::Info);
+        infoWidget->addMessage("Требуется загрузка данных(json).", MessageType::Info);
     }
 
     void clickedCalc()
@@ -272,10 +250,10 @@ private slots:
 
                 auto nloh = Operations::convertToNlohmann(json);
 
-//                Operations::printJson(nloh);
+                //                Operations::printJson(nloh);
                 //Operations::printJson(json);
 
-//                task = SearchTask(nloh);
+                //                task = SearchTask(nloh);
                 task.setTask(nloh);
 
                 auto report = task.computeRoute(static_cast<SearchScheme>(scene->getActorType()));
@@ -295,6 +273,34 @@ private slots:
     void addInformation(int speed)
     {
         infoWidget->addMessage(QString::number(speed) + " м/c новая скорость ПЛ.", MessageType::Info);
+    }
+
+    /*!
+     * Действия после инициализации request.
+     */
+    void receiveRequest()
+    {
+        if (initializer->getRequest().isLoaded())
+        {
+            requestLoaded = true;
+
+            checkLoad();
+
+            //! Загрузка request, сброс загрузки report.
+            scene->reloadRequest(initializer->getRequest());
+            reportLoaded = false;
+
+            //! Инициализация дерева request.json
+            // TODO: Переделать дерево.
+            dataWidget->clear();
+            dataWidget->initializeRequest(initializer->getRequestJson());
+
+            infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
+        }
+        else
+        {
+            infoWidget->addMessage("Request был загружен не полностью.", MessageType::Warning);
+        }
     }
 
     // Отправка данных report в Scene
@@ -391,7 +397,6 @@ protected:
         switch (event->key())
         {
         case Qt::Key_U:
-            scene->targetsShow();
             break;
         case Qt::Key_Q:
             scene->change();

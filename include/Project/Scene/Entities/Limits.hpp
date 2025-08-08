@@ -88,13 +88,20 @@ struct Limits
     // TODO: Ошибка требуется реализация в соответствующих классах setLimits()
     void initFromPerimeter(const Perimeter& perimeter)
     {
-        minX = qMin(minX, perimeter.getMinX());
+        reset();
+        qDebug() << "start initFrom";
+        perimeter.show();
+        qDebug() << "end initFrom";
 
-        minY = qMin(minY, perimeter.getMinY());
+        minX = perimeter.getMinX();
 
-        maxX = qMax(maxX, perimeter.getMaxX());
+        minY = perimeter.getMinY();
 
-        maxY = qMax(maxY, perimeter.getMaxY());
+        maxX = perimeter.getMaxX();
+
+        maxY = perimeter.getMaxY();
+
+        show();
     }
 
     Entities::Limits compareLimits(const Entities::Limits& source)

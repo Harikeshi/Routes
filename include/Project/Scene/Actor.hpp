@@ -48,5 +48,7 @@ public:
      * @param time
      */
     virtual void setCurrentTime(double time) = 0;
+
+    virtual void show() = 0;
 };
 } // namespace Scene
