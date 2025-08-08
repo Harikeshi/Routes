@@ -1,17 +1,136 @@
 #pragma once
 
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 
-class JsonRepository
+#include "IRepository.hpp"
+#include "Project/GetCurrentUsername.hpp"
+
+namespace Database {
+class JsonRepository : public Database::IRepository
 {
     QString path;
 
+    // TODO:
+    QString requestPath;
+    QString reportPath;
+
 public:
-    JsonRepository(const QString& base_path) : path{base_path}
+    JsonRepository(const QString& base_path) : Database::IRepository{base_path}
     {
+        path = base_path + "/db/";
+        QDir dir(path);
+
+        if (!dir.exists())
+        {
+            if (dir.mkdir(base_path + "/db/"))
+            {
+            }
+            else
+            {
+                qDebug() << "Папка не создана.";
+            }
+        }
+
+        requestPath = path + "requests.json";
+        createEmptyJsonArrayFile(requestPath);
+        reportPath = path + "reports.json";
+        createEmptyJsonArrayFile(reportPath);
+
+        // QDir::homePath();
+        // QFileInfo file{requestPath};
+    }
+
+    size_t save(const Models::Request& request) override
+    {
+        appendJsonObjectToArrayFile(request.toJson(), requestPath);
+
+        return 0;
+    }
+
+    size_t save(const Models::Report& report) override
+    {
+        appendJsonObjectToArrayFile(report.toJson(), reportPath);
+
+        return 0;
+    }
+
+    Models::Request findRequestById(size_t id) override
+    {
+        return Models::Request{};
+    }
+    Models::Report findReportById(size_t id) override
+    {
+        return Models::Report{};
+    }
+
+private:
+    QJsonArray readJsonArrayFromFile(const QString& fileName)
+    {
+        QFile file(fileName);
+        if (!file.open(QIODevice::ReadOnly))
+        {
+            qWarning("Couldn't open file for reading. Returning empty array.");
+            return QJsonArray();
+        }
+
+        QByteArray data = file.readAll();
+        file.close();
+
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        if (!doc.isArray())
+        {
+            qWarning("File does not contain a JSON array. Returning empty array.");
+            return QJsonArray();
+        }
+
+        return doc.array();
+    }
+
+    bool writeJsonArrayToFile(const QJsonArray& array, const QString& fileName)
+    {
+        QFile file(fileName);
+        qDebug() << fileName;
+        if (!file.open(QIODevice::WriteOnly))
+        {
+            qWarning("Couldn't open file for writing.");
+            return false;
+        }
+
+        QJsonDocument doc(array);
+        if (file.write(doc.toJson()) == -1)
+        {
+            file.close();
+            return false;
+        }
+
+        file.close();
+        return true;
+    }
+
+    bool appendJsonObjectToArrayFile(const QJsonObject& obj, const QString& fileName)
+    {
+        QJsonArray array = readJsonArrayFromFile(fileName);
+
+        QJsonObject newEntry;
+
+        newEntry["id"] = array.size();
+        newEntry["date"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        newEntry["user"] = QString::fromStdString(getCurrentUsername());
+        newEntry["data"] = obj;
+
+        array.append(newEntry);
+
+        return writeJsonArrayToFile(array, fileName);
+    }
+
+    bool createEmptyJsonArrayFile(const QString& fileName)
+    {
+        return writeJsonArrayToFile(QJsonArray{}, fileName);
     }
 
     // Repository methods
@@ -64,7 +183,6 @@ public:
         saveJsonArrayToFile(filename, array);
     }
 
-private:
     void saveJsonToFile(const QString& filename, const QJsonObject& json)
     {
         QFile file(filename);
@@ -121,3 +239,4 @@ private:
         return doc.array();
     }
 };
+} // namespace Database

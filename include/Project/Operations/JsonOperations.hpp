@@ -215,4 +215,17 @@ inline void printJson(const nlohmann::json& obj)
 {
     std::cout << obj.dump(4);
 }
+
+inline QString getHomePath()
+{
+    QString result;
+#ifdef _WIN32
+    result = QString(std::getenv("USERPROFILE"));
+#else
+    result = QString(getenv("HOME"));
+#endif
+
+    return result;
+}
+
 } // namespace Operations

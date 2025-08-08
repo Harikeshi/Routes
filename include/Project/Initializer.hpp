@@ -10,6 +10,7 @@
 #include <QObject>
 #include <QString>
 
+#include "Project/Database/JsonRepository.hpp"
 #include "Project/Database/PostgreSQLRepository.hpp"
 
 // TODO: Инициализатор должен только отправлять Request и Report и сообщение
@@ -31,6 +32,17 @@ signals:
     void sendReportJson(QJsonObject);
 
 private:
+    inline QString getHomePath()
+    {
+        QString result;
+#ifdef _WIN32
+        result = QString(std::getenv("USERPROFILE"));
+#else
+        result = QString(getenv("HOME"));
+#endif
+
+        return result;
+    }
     struct FieldInfo
     {
         QString path;
@@ -168,7 +180,7 @@ public:
             emit requestLoaded();
             emit sendRequestJson(json); // Для инициализации dataWidget
 
-            request.id = repository.save(request);
+            request.id = repository->save(request);
 
             qDebug() << request.id;
 
@@ -197,7 +209,7 @@ public:
             // emit sendReport(report);
             emit sendReportJson(json); // Для инициализации dataWidget
 
-            qDebug() << repository.save(report);
+            qDebug() << repository->save(report);
             //            setLimits();
         }
         catch (std::runtime_error& ex)
@@ -234,23 +246,6 @@ public:
         emit sendMessage(message, type);
     }
 
-    //    void setLimits()
-    //    {
-    //        limits.reset();
-    //
-    //        if (report.isLoaded())
-    //        {
-    //            limits.initFromRoutes(report.routes());
-    //        }
-    //
-    //        if (request.isLoaded())
-    //        {
-    //            limits.initFromPerimeter(request.getPerimeter());
-    //        }
-    //
-    //        emit sendLimits(limits);
-    //    }
-
     Models::Request getRequest() const
     {
         return request;
@@ -260,11 +255,6 @@ public:
     {
         return report;
     }
-
-    //    Limits getLimits() const
-    //    {
-    //        return limits;
-    //    }
 
     QVector<Models::Message> getMessages() const
     {
@@ -282,25 +272,29 @@ public:
     }
 
 public:
-    std::string connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
-    //    std::string connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
+    QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
+    //    QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
 
-    Initializer(const std::string& str = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3")
+    Initializer(const std::string& str = "host=192.168.50.512 dbname=request_report user=viz_user password=1 connect_timeout=3")
     {
+        // TODO: getHomePath()
+
         try
         {
-            repository = PostgreSQLRepository(connectionString);
-            qDebug() << "ctor!";
+            // TODO: need Create Factory
+            repository = std::make_unique<Database::PostgreSQLRepository>(connectionString);
         }
         catch (std::runtime_error& ex)
         {
+            // TODO:
+            repository = std::make_unique<Database::JsonRepository>(getHomePath());
             qDebug() << ex.what();
         }
     }
 
 private:
     //    Limits limits;
-    PostgreSQLRepository repository;
+    std::unique_ptr<Database::IRepository> repository;
 
     QJsonObject request_json;
     QJsonObject report_json;

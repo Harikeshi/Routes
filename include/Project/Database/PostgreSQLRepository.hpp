@@ -7,6 +7,7 @@
 #include <QPointF>
 #include <QString>
 
+#include "IRepository.hpp"
 #include "Project/Models/Message.hpp"
 #include "Project/Models/Object.hpp"
 #include "Project/Models/Perimeter.hpp"
@@ -16,6 +17,7 @@
 #include "Project/Models/Segment.hpp"
 #include "Project/Models/Target.hpp"
 
+namespace Database {
 using Message = Models::Message;
 using Object = Models::Object;
 using Perimeter = Models::Perimeter;
@@ -25,15 +27,15 @@ using Route = Models::Route;
 using Segment = Models::Segment;
 using Target = Models::Target;
 
-class PostgreSQLRepository
+class PostgreSQLRepository : public IRepository
 {
 public:
-    PostgreSQLRepository()
+    PostgreSQLRepository() : Database::IRepository("")
     {
     }
 
-    PostgreSQLRepository(const std::string& connectionString)
-        : m_connection(std::make_unique<pqxx::connection>(connectionString))
+    PostgreSQLRepository(const QString& connectionString)
+        : Database::IRepository{connectionString}, m_connection(std::make_unique<pqxx::connection>(connectionString.toStdString()))
     {
         if (!m_connection->is_open())
         {
@@ -578,3 +580,4 @@ public:
             row["avoidance_distance"].as<double>()};
     }
 };
+} // namespace Database
