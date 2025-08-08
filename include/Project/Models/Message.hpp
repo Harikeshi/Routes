@@ -10,11 +10,11 @@ struct Message : public Input
     int code;
     QString text;
     QString type;
+
     explicit Message(size_t _id = 0, int _code = 0, const QString& _text = QString{}, const QString& _type = QString{}) : id{_id}, code{_code}, text{_text}, type{_type}
     {
     }
 
-public:
     Message()
         : id{0}, code{0}, text{""}, type{""}
     {
@@ -47,7 +47,7 @@ public:
         if (json.contains("id"))
             id = json["id"].toInt();
 
-        code = json["code"].toDouble();
+        code = json["code"].toInt();
         text = json["text"].toString();
         type = json["type"].toString();
     }

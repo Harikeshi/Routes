@@ -772,8 +772,6 @@ public:
 
         //! Перерисовать изображение сетки Image.
         grid->draw(this->limits, rect(), axies.first, axies.second);
-
-        // emit sendCoordinateSystem(cs);
     }
 
     /*!

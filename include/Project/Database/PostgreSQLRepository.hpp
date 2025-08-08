@@ -358,9 +358,10 @@ public:
 
         // Save request
         txn.exec_params(
-            "INSERT INTO requests (id, time, perimeter_id, target_id, ship_id) "
-            "VALUES ($1, $2, $3, $4, $5)",
+            "INSERT INTO requests (id, name, time, perimeter_id, target_id, ship_id) "
+            "VALUES ($1, $2, $3, $4, $5, $6)",
             request_id,
+            getCurrentUsername(),
             request.time,
             perimeter_id,
             target_id,

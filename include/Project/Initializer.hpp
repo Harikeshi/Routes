@@ -272,10 +272,10 @@ public:
     }
 
 public:
-    QString connectionString = "host=192.168.50.512 dbname=request_report user=viz_user password=1 connect_timeout=3";
+    QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
     //    QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
 
-    Initializer(const std::string& str = "host=192.168.50.512 dbname=request_report user=viz_user password=1 connect_timeout=3")
+    Initializer(const std::string& str = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3")
     {
         // TODO: getHomePath()
 
