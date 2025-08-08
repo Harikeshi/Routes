@@ -21,7 +21,7 @@ public:
         addValidator("entry_point", [](const QJsonObject& json) { validatePointOrPair(json, "entry_point"); });
         addValidator("exit_point", [](const QJsonObject& json) { validatePointOrPair(json, "exit_point"); });
 
-        addValidator("search_region", [](const QJsonObject& json) { validateRegion(json, "borders"); });
+        addValidator("borders", [](const QJsonObject& json) { validateRegion(json, "borders"); });
     }
 
     size_t getId() const override
@@ -56,20 +56,21 @@ public:
     QJsonObject toJson() const override
     {
         QJsonObject obj;
-        obj["id"] = static_cast<qint64>(id);
+        //        obj["id"] = static_cast<qint64>(id);
 
         // TODO: Используются x и y для работы с базой данных.
         // entrance
-        QJsonObject entranceObj;
-        entranceObj["x"] = entrance.x();
-        entranceObj["y"] = entrance.y();
-        obj["entrance"] = entranceObj;
+        QJsonArray entranceArr;
+
+        entranceArr.append(entrance.x());
+        entranceArr.append(entrance.y());
+        obj["entry_point"] = entranceArr;
 
         // exit
-        QJsonObject exitObj;
-        exitObj["x"] = exit.x();
-        exitObj["y"] = exit.y();
-        obj["exit"] = exitObj;
+        QJsonArray exitArr;
+        exitArr.append(exit.x());
+        exitArr.append(exit.y());
+        obj["exit_point"] = exitArr;
 
         // rings
         QJsonArray ringsArray;
@@ -78,14 +79,15 @@ public:
             QJsonArray ringArray;
             for (const QPointF& point : ring)
             {
-                QJsonObject pointObj;
-                pointObj["x"] = point.x();
-                pointObj["y"] = point.y();
-                ringArray.append(pointObj);
+                QJsonArray pointArr;
+                pointArr.append(point.x());
+                pointArr.append(point.y());
+
+                ringArray.append(pointArr);
             }
             ringsArray.append(ringArray);
         }
-        obj["rings"] = ringsArray;
+        obj["borders"] = ringsArray;
 
         return obj;
     }

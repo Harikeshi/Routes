@@ -20,7 +20,7 @@ struct Request : public Input
     bool loaded = false;
 
     Request() = default;
-    
+
     // TODO:
     size_t getId() const override
     {
@@ -58,23 +58,22 @@ struct Request : public Input
     QJsonObject toJson() const override
     {
         QJsonObject obj;
-        obj["id"] = static_cast<qint64>(id);
+        // obj["id"] = static_cast<qint64>(id);
         obj["time"] = time;
 
-        obj["perimeter"] = perimeter.toJson();
+        obj["search_region"] = perimeter.toJson();
 
         QJsonArray borderArray;
         for (const QPointF& point : border)
         {
-            QJsonObject pointObj;
-            pointObj["x"] = point.x();
-            pointObj["y"] = point.y();
-            borderArray.append(pointObj);
+            QJsonArray pointArr{point.x(), point.y()};
+            borderArray.append(pointArr);
         }
-        obj["border"] = borderArray;
 
-        obj["target"] = target.toJson();
-        obj["ship"] = ship.toJson();
+        obj["border_line"] = borderArray;
+
+        obj["form_target"] = target.toJson();
+        obj["ships_parameters"] = ship.toJson();
 
         return obj;
     }

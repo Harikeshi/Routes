@@ -54,14 +54,28 @@ struct Route : public Input
     QJsonObject toJson() const override
     {
         QJsonObject obj;
-        obj["id"] = static_cast<qint64>(id);
 
-        QJsonArray segmentsArray;
+        if (segments.isEmpty())
+            return obj;
+
+        // obj["id"] = static_cast<qint64>(id);
+
+        QJsonArray pointsArray;
+
+        QJsonArray first_point{segments.at(0).getStart().x(), segments.at(0).getStart().y()};
+        pointsArray.append(first_point);
+
+        QJsonArray velocitiesArray;
+
         for (const Segment& segment : segments)
         {
-            segmentsArray.append(segment.toJson());
+            velocitiesArray.append(segment.baseSpeed);
+
+            pointsArray.append(QJsonArray{segment.getEnd().x(), segment.getEnd().y()});
         }
-        obj["segments"] = segmentsArray;
+
+        obj["points"] = pointsArray;
+        obj["velocities"] = velocitiesArray;
 
         return obj;
     }

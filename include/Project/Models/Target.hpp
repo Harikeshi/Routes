@@ -97,13 +97,12 @@ public:
     QJsonObject toJson() const override
     {
         QJsonObject obj;
-        obj["id"] = static_cast<qint64>(id);
+        //        obj["id"] = static_cast<qint64>(id);
 
         // detection point
-        QJsonObject detectionPointObj;
-        detectionPointObj["x"] = detectionPoint.x();
-        detectionPointObj["y"] = detectionPoint.y();
-        obj["detectionPoint"] = detectionPointObj;
+        QJsonArray detectionPointArr{detectionPoint.x(), detectionPoint.y()};
+
+        obj["detectionPoint"] = detectionPointArr;
 
         // courses
         QJsonArray coursesArray;
@@ -112,12 +111,17 @@ public:
         obj["courses"] = coursesArray;
 
         obj["rootMeanSquareError"] = rootMeanSquareError;
-        obj["currentVelocity"] = currentVelocity;
-        obj["maxVelocity"] = maxVelocity;
-        obj["minNoiseReduced"] = minNoiseReduced;
-        obj["maxNoiseReduced"] = maxNoiseReduced;
         obj["obsolescenceTime"] = obsolescenceTime;
         obj["avoidanceDistance"] = avoidanceDistance;
+
+        QJsonObject velocitiesObj;
+
+        velocitiesObj["currentVelocity"] = currentVelocity;
+        velocitiesObj["maxVelocity"] = maxVelocity;
+        velocitiesObj["minNoiseReduced"] = minNoiseReduced;
+        velocitiesObj["maxNoiseReduced"] = maxNoiseReduced;
+
+        obj["velocities"] = velocitiesObj;
 
         return obj;
     }

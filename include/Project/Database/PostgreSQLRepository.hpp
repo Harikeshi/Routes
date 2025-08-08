@@ -84,7 +84,7 @@ public:
         auto row = result[0];
         return Message{
             row["id"].as<size_t>(),
-            row["code"].as<double>(),
+            row["code"].as<int>(),
             QString::fromStdString(row["text"].as<std::string>()),
             QString::fromStdString(row["type"].as<std::string>())};
     }
@@ -98,7 +98,7 @@ public:
         for (const auto& row : result)
         {
             messages.append(Message{row["id"].as<size_t>(),
-                                    row["code"].as<double>(),
+                                    row["code"].as<int>(),
                                     QString::fromStdString(row["text"].as<std::string>()),
                                     QString::fromStdString(row["type"].as<std::string>())});
         }

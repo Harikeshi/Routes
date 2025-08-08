@@ -53,13 +53,15 @@ public:
     QJsonObject toJson() const override
     {
         QJsonObject obj;
-        obj["id"] = static_cast<qint64>(id);
+        //        obj["id"] = static_cast<qint64>(id);
 
         QJsonArray routesArray;
+        
         for (const Route& route : _routes)
         {
             routesArray.append(route.toJson());
         }
+
         obj["routes"] = routesArray;
 
         QJsonArray messagesArray;

@@ -7,16 +7,16 @@ namespace Models {
 struct Message : public Input
 {
     size_t id;
-    double code;
+    int code;
     QString text;
     QString type;
-    explicit Message(size_t _id = 0, double _code = 0, const QString& _text = QString{}, const QString& _type = QString{}) : id{_id}, code{_code}, text{_text}, type{_type}
+    explicit Message(size_t _id = 0, int _code = 0, const QString& _text = QString{}, const QString& _type = QString{}) : id{_id}, code{_code}, text{_text}, type{_type}
     {
     }
 
 public:
     Message()
-        : id{0}, code{0.}, text{""}, type{""}
+        : id{0}, code{0}, text{""}, type{""}
     {
         // code , text , type
         // json["messages"][0]
@@ -34,7 +34,7 @@ public:
     {
         QJsonObject obj;
 
-        obj["id"] = static_cast<qint64>(id);
+        // obj["id"] = static_cast<qint64>(id);
         obj["code"] = code;
         obj["text"] = text;
         obj["type"] = type;

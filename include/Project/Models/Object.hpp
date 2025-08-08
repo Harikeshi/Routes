@@ -85,10 +85,8 @@ public:
     {
         QJsonObject obj;
 
-        obj["id"] = static_cast<qint64>(id);
-        obj["detectionRange"] = detectionRange;
-        obj["maxVelocity"] = maxVelocity;
-        obj["currentVelocity"] = currentVelocity;
+        // obj["id"] = static_cast<qint64>(id);
+        obj["count"] = 1;
         obj["detection_range"] = detection_range;
         obj["max_velocity"] = max_velocity;
         obj["search_velocity"] = search_velocity;
