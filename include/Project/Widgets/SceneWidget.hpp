@@ -586,8 +586,6 @@ public slots:
         routes_->setParameters(request.getShip());
 
         this->setLimits(false);
-
-        update();
     }
 
     /*!

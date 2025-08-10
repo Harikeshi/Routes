@@ -47,6 +47,7 @@ private:
         // Request properties
         QList<QStandardItem*> timeItems;
         timeItems << new QStandardItem("Time") << new QStandardItem;
+        timeItems[0]->setFlags(timeItems[0]->flags() & ~Qt::ItemIsEditable);
         model->appendRow(timeItems);
 
         // Target properties
@@ -62,76 +63,106 @@ private:
     void setupPerimeterModel()
     {
         QStandardItem* perimeterRoot = new QStandardItem("Search Region");
+        perimeterRoot->setFlags(perimeterRoot->flags() & ~Qt::ItemIsEditable);
         model->appendRow(perimeterRoot);
         // Perimeter - Points
         createPointEditor(perimeterRoot, "Entrance", QPointF());
         createPointEditor(perimeterRoot, "Exit", QPointF());
         // Perimeter - Borders
         QStandardItem* bordersRoot = new QStandardItem("Rings");
+        bordersRoot->setFlags(bordersRoot->flags() & ~Qt::ItemIsEditable);
         perimeterRoot->appendRow(bordersRoot);
 
         // Border Line
         QStandardItem* borderLineRoot = new QStandardItem("Border Line");
+        borderLineRoot->setFlags(borderLineRoot->flags() & ~Qt::ItemIsEditable);
         perimeterRoot->appendRow(borderLineRoot);
     }
 
     void setupShipModel()
     {
         QStandardItem* shipRoot = new QStandardItem("Ship");
+        shipRoot->setFlags(shipRoot->flags() & ~Qt::ItemIsEditable);
         model->appendRow(shipRoot);
         QList<QStandardItem*> detectionRangeItems;
         detectionRangeItems << new QStandardItem("Detection Range") << new QStandardItem;
+        detectionRangeItems[0]->setFlags(detectionRangeItems[0]->flags() & ~Qt::ItemIsEditable);
         shipRoot->appendRow(detectionRangeItems);
+
         QList<QStandardItem*> maxVelocityItems;
         maxVelocityItems << new QStandardItem("Max Velocity") << new QStandardItem;
+        maxVelocityItems[0]->setFlags(maxVelocityItems[0]->flags() & ~Qt::ItemIsEditable);
         shipRoot->appendRow(maxVelocityItems);
+
         QList<QStandardItem*> searchVelocityItems;
         searchVelocityItems << new QStandardItem("Search Velocity") << new QStandardItem;
+        searchVelocityItems[0]->setFlags(searchVelocityItems[0]->flags() & ~Qt::ItemIsEditable);
         shipRoot->appendRow(searchVelocityItems);
+
         QList<QStandardItem*> turningRadiusItems;
         turningRadiusItems << new QStandardItem("Turning Radius") << new QStandardItem;
+        turningRadiusItems[0]->setFlags(turningRadiusItems[0]->flags() & ~Qt::ItemIsEditable);
         shipRoot->appendRow(turningRadiusItems);
 
         QList<QStandardItem*> minLengthItems;
         minLengthItems << new QStandardItem("Min Length Section") << new QStandardItem;
+        minLengthItems[0]->setFlags(minLengthItems[0]->flags() & ~Qt::ItemIsEditable);
         shipRoot->appendRow(minLengthItems);
     }
+
     void setupTargetModel()
     {
         QStandardItem* targetRoot = new QStandardItem("Target");
         model->appendRow(targetRoot);
+        targetRoot->setFlags(targetRoot->flags() & ~Qt::ItemIsEditable);
         createPointEditor(targetRoot, "Detection Point", QPointF());
         createRangeEditor(targetRoot, "Courses", {0, 0});
+
         QList<QStandardItem*> rmseItems;
-        rmseItems << new QStandardItem("RMSE") << new QStandardItem;
+        rmseItems << new QStandardItem("RootMeanSquareError") << new QStandardItem;
+        rmseItems[0]->setFlags(rmseItems[0]->flags() & ~Qt::ItemIsEditable);
         targetRoot->appendRow(rmseItems);
         // Target - Velocities
         QStandardItem* velocitiesRoot = new QStandardItem("Velocities");
+        velocitiesRoot->setFlags(velocitiesRoot->flags() & ~Qt::ItemIsEditable);
         targetRoot->appendRow(velocitiesRoot);
+
         QList<QStandardItem*> currentVelItems;
         currentVelItems << new QStandardItem("Current") << new QStandardItem;
+        currentVelItems[0]->setFlags(currentVelItems[0]->flags() & ~Qt::ItemIsEditable);
         velocitiesRoot->appendRow(currentVelItems);
+
         QList<QStandardItem*> maxVelItems;
         maxVelItems << new QStandardItem("Max") << new QStandardItem;
+        maxVelItems[0]->setFlags(maxVelItems[0]->flags() & ~Qt::ItemIsEditable);
         velocitiesRoot->appendRow(maxVelItems);
+
         QList<QStandardItem*> minNoiseItems;
         minNoiseItems << new QStandardItem("Min Noise Reduced") << new QStandardItem;
+        minNoiseItems[0]->setFlags(minNoiseItems[0]->flags() & ~Qt::ItemIsEditable);
         velocitiesRoot->appendRow(minNoiseItems);
+
         QList<QStandardItem*> maxNoiseItems;
         maxNoiseItems << new QStandardItem("Max Noise Reduced") << new QStandardItem;
+        maxNoiseItems[0]->setFlags(maxNoiseItems[0]->flags() & ~Qt::ItemIsEditable);
         velocitiesRoot->appendRow(maxNoiseItems);
+
         // Target - Other parameters
         QList<QStandardItem*> obsolescenceItems;
         obsolescenceItems << new QStandardItem("Obsolescence Time") << new QStandardItem;
+        obsolescenceItems[0]->setFlags(obsolescenceItems[0]->flags() & ~Qt::ItemIsEditable);
         targetRoot->appendRow(obsolescenceItems);
 
         QList<QStandardItem*> avoidanceItems;
         avoidanceItems << new QStandardItem("Avoidance Distance") << new QStandardItem;
+        avoidanceItems[0]->setFlags(avoidanceItems[0]->flags() & ~Qt::ItemIsEditable);
         targetRoot->appendRow(avoidanceItems);
     }
 
     void updateModelFromRequest(const Models::Request& request)
     {
+        model->blockSignals(true);
+
         // Time
         model->item(0, 1)->setText(QString::number(request.time));
 
@@ -143,6 +174,8 @@ private:
 
         // Update Perimeter
         updatePerimeterModel(request);
+
+        model->blockSignals(false);
     }
 
     void updateTargetModel(const Models::Request& request)
@@ -202,6 +235,8 @@ private:
                 borderItem = new QStandardItem(QString("Outer"));
             else
                 borderItem = new QStandardItem(QString("Inner %1").arg(i));
+
+            borderItem->setFlags(borderItem->flags() & ~Qt::ItemIsEditable);
             bordersRoot->appendRow(borderItem);
 
             for (int j = 0; j < request.perimeter.rings[i].size(); ++j)
@@ -278,7 +313,7 @@ private:
         if (itemText.startsWith("Point"))
         {
             QStandardItem* parentItem = item->parent();
-            if (parentItem && (parentItem->text().contains("Border") || parentItem->text() == "Border Line"))
+            if (parentItem && (parentItem->text().contains("Outer") || parentItem->text().contains("Search Region") || parentItem->text().contains("Inner") || parentItem->text() == "Border Line"))
             {
                 QAction* editAction = contextMenu.addAction("Edit Point");
                 connect(editAction, &QAction::triggered, [this, item]() {
@@ -352,6 +387,8 @@ private:
     {
         QList<QStandardItem*> pointItems;
         pointItems << new QStandardItem(name) << new QStandardItem(QString("[%1, %2]").arg(point.x()).arg(point.y()));
+        pointItems[0]->setFlags(pointItems[0]->flags() & ~Qt::ItemIsEditable);
+
         parent->appendRow(pointItems);
     }
 
@@ -359,6 +396,7 @@ private:
     {
         QList<QStandardItem*> rangeItems;
         rangeItems << new QStandardItem(name) << new QStandardItem(QString("%1 - %2").arg(range.first).arg(range.second));
+        rangeItems[0]->setFlags(rangeItems[0]->flags() & ~Qt::ItemIsEditable);
         parent->appendRow(rangeItems);
     }
 

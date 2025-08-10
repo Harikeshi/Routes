@@ -16,7 +16,7 @@ class DataWidget : public QTabWidget
     Q_OBJECT
 
     JsonFileExplorer* jsonExplorer;
-    RequestWidget* requestWidget;
+    // RequestWidget* requestWidget;
     Data::PropertyEditor* propertyWidget;
 
 signals:
@@ -30,12 +30,12 @@ public slots:
         emit sendPath(string);
     }
 
-    void initializeRequest(const QJsonObject& jsonObject)
-    {
-        requestWidget->setEnabled(true);
-        requestWidget->clear();
-        requestWidget->createTreeFromJson(jsonObject);
-    }
+    // void initializeRequest(const QJsonObject& jsonObject)
+    // {
+    //     requestWidget->setEnabled(true);
+    //     requestWidget->clear();
+    //     requestWidget->createTreeFromJson(jsonObject);
+    // }
 
     void initializeReport(const QJsonObject& jsonObject)
     {
@@ -52,14 +52,14 @@ public:
         : QTabWidget(parent)
     {
         jsonExplorer = new JsonFileExplorer(this);
-        requestWidget = new RequestWidget(this);
+        // requestWidget = new RequestWidget(this);
+        // requestWidget->setEnabled(false);
+
         propertyWidget = new Data::PropertyEditor(this);
 
-        requestWidget->setEnabled(false);
-
         addTab(jsonExplorer, "JsonExplorer");
-        addTab(propertyWidget, "PropertyWidget");
-        addTab(requestWidget, "Request");
+        addTab(propertyWidget, "Request");
+        // addTab(requestWidget, "Request");
 
         // Проброс пути выше
         connect(jsonExplorer, &JsonFileExplorer::sendPath, this, &DataWidget::pathtoFile);
@@ -70,7 +70,7 @@ public:
 public:
     void clear()
     {
-        requestWidget->clear();
+        // requestWidget->clear();
     }
 
     /*!

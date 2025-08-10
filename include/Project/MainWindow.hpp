@@ -144,7 +144,7 @@ public:
         initializer = new Initializer();
 
         // Initializer <-> Main
-        connect(initializer, &Initializer::sendRequestJson, dataWidget, &DataWidget::initializeRequest);
+        // connect(initializer, &Initializer::sendRequestJson, dataWidget, &DataWidget::initializeRequest);
         connect(initializer, &Initializer::sendMessage, this, &MainWindow::getInitializerMessage);
         //        connect(initializer, &Initializer::sendRequest, this, &MainWindow::receiveRequest);
         //        connect(initializer, &Initializer::sendReport, this, &MainWindow::receiveReport);
@@ -273,19 +273,18 @@ private slots:
         if (initializer->getRequest().isLoaded())
         {
             requestLoaded = true;
-
-            checkLoad();
+            reportLoaded = false;
+            checkLoad(); // TODO: В новых реалиях(сброс при загрузке request) под вопросом
 
             //! Загрузка request, сброс загрузки report.
-            dataWidget->setRequest(initializer->getRequest());
             scene->reloadRequest(initializer->getRequest());
-
-            reportLoaded = false;
 
             //! Инициализация дерева request.json
             // TODO: Переделать дерево.
             dataWidget->clear();
-            dataWidget->initializeRequest(initializer->getRequestJson());
+            dataWidget->setRequest(initializer->getRequest());
+
+            // dataWidget->initializeRequest(initializer->getRequestJson());
 
             infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
         }
@@ -297,6 +296,7 @@ private slots:
 
     void setRequestFromDataWidget(const Models::Request& request)
     {
+        // if (requestLoaded)
         initializer->setRequest(request);
     }
 
