@@ -12,6 +12,7 @@
 
 #include "Project/Database/PostgreSQLRepository.hpp"
 #include "Project/Operations/JsonOperations.hpp"
+#include <../include/Project/Widgets/Data/PropertyTable.hpp>
 
 int main(int argc, char* argv[])
 {

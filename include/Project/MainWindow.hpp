@@ -28,7 +28,8 @@
 #include "Initializer.hpp"
 #include "search_task.hpp"
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QMainWindow
+{
     using SceneWidget = Widgets::SceneWidget;
     using DataWidget = Widgets::DataWidget;
     using CustomTable = Widgets::CustomTable;
@@ -40,13 +41,14 @@ class MainWindow : public QMainWindow {
     using Request = Models::Request;
     using Report = Models::Report;
 
-Q_OBJECT
+    Q_OBJECT
 
     SearchTask task;
 
 public:
-    MainWindow(QWidget *parent = nullptr)
-            : QMainWindow(parent) {
+    MainWindow(QWidget* parent = nullptr)
+        : QMainWindow(parent)
+    {
         // #--------------------------------------------------------------------------------------
         // Меню
         // #--------------------------------------------------------------------------------------
@@ -58,14 +60,14 @@ public:
         // #--------------------------------------------------------------------------------------
         // MainLayout - Основная компоновка
         // #--------------------------------------------------------------------------------------
-        auto *centralWidget = new QWidget(this);
+        auto* centralWidget = new QWidget(this);
 
-        auto *mainLayout = new QVBoxLayout(centralWidget);
+        auto* mainLayout = new QVBoxLayout(centralWidget);
         mainLayout->setContentsMargins(0, 0, 0, 0);
         mainLayout->setSpacing(0);
 
         // Главный горизонтальный splitter (разделитель между Scene и правой панелью)
-        auto *mainHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
+        auto* mainHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
 
         // SceneWidget
         scene = new SceneWidget(this);
@@ -75,7 +77,7 @@ public:
         mainHorizontalSplitter->addWidget(scene);
 
         // Вертикальная компоновка справа
-        auto *rightVerticalSplitter = new QSplitter(Qt::Vertical, centralWidget);
+        auto* rightVerticalSplitter = new QSplitter(Qt::Vertical, centralWidget);
 
         // Виджеты для правой вертикальной панели
         dataWidget = new DataWidget(this); // TODO: this
@@ -84,7 +86,7 @@ public:
         rightVerticalSplitter->addWidget(table);
 
         // Горизонтальный splitter нижний
-        auto *innerHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
+        auto* innerHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
         manage = new ManageWidget(this);
 
         sub = new SubWidget(this);
@@ -98,12 +100,12 @@ public:
 
         // Стиль для разделителей
         QString splitterStyle =
-                "QSplitter::handle {"
-                "   background: #555555;"
-                "   width: 2px;"
-                "   height: 2px;"
-                ""
-                "}";
+            "QSplitter::handle {"
+            "   background: #555555;"
+            "   width: 2px;"
+            "   height: 2px;"
+            ""
+            "}";
         mainHorizontalSplitter->setStyleSheet(splitterStyle);
         rightVerticalSplitter->setStyleSheet(splitterStyle);
         innerHorizontalSplitter->setStyleSheet(splitterStyle);
@@ -188,6 +190,10 @@ public:
         // Table
         //connect(scene, &SceneWidget::sendTargetCurrentPositionSpeed, table, &CustomTable::updateSubmarine);
         connect(scene, &SceneWidget::sendIndexCurrentPositionSpeed, table, &CustomTable::updateOrAddRow);
+
+        // DataWidget
+        connect(dataWidget, &DataWidget::sendRequestFromWidget, this, &MainWindow::setRequestFromDataWidget);
+
         this->setEnabled(false);
 
         this->setWindowTitle("Visualization");
@@ -195,24 +201,15 @@ public:
 
     ~MainWindow() = default;
 
-signals:
-
-    // Отсылаем значения для инициализации в определенной последовательности
-    //    void sendValidateRequest(Request);
-
-    //    void sendValidateReport(Report);
-    //
-    //    void speedUp(const double&);
-    //
-    //    void speedDown(const int&);
-
 private slots:
 
-    void setSpeedLabel(const Request &request) {
+    void setSpeedLabel(const Request& request)
+    {
         sub->setSpeedInput(request.target.currentVelocity);
     }
 
-    void getInitializerMessage(const QString &message, const MessageType type) const {
+    void getInitializerMessage(const QString& message, const MessageType type) const
+    {
         infoWidget->addMessage(message, type);
         // qDebug() << message;
     }
@@ -220,7 +217,8 @@ private slots:
     /*!
     * Действия при сбросе сцены.
     */
-    void sceneReset() {
+    void sceneReset()
+    {
         // scene->reset();
 
         // initializer->reset();
@@ -237,9 +235,12 @@ private slots:
         infoWidget->addMessage("Требуется загрузка данных(json).", MessageType::Info);
     }
 
-    void clickedCalc() {
-        if (requestLoaded) {
-            try {
+    void clickedCalc()
+    {
+        if (requestLoaded)
+        {
+            try
+            {
                 auto json = initializer->getRequestJson();
                 auto nloh = Operations::convertToNlohmann(json);
 
@@ -248,29 +249,37 @@ private slots:
                 auto report = task.computeRoute(static_cast<SearchScheme>(scene->getActorType()));
                 initializer->loadFromJson(Operations::convertToQJsonObject(report));
             }
-            catch (...) {
+            catch (...)
+            {
                 infoWidget->addMessage("Неизвестная ошибка.", MessageType::Error);
             }
-        } else {
+        }
+        else
+        {
             infoWidget->addMessage("Загрузите Request. Нельзя построить маршруты.", MessageType::Error);
         }
     }
 
-    void addInformation(int speed) {
+    void addInformation(int speed)
+    {
         infoWidget->addMessage(QString::number(speed) + " м/c новая скорость ПЛ.", MessageType::Info);
     }
 
     /*!
      * Действия после инициализации request.
      */
-    void receiveRequest() {
-        if (initializer->getRequest().isLoaded()) {
+    void receiveRequest()
+    {
+        if (initializer->getRequest().isLoaded())
+        {
             requestLoaded = true;
 
             checkLoad();
 
             //! Загрузка request, сброс загрузки report.
+            dataWidget->setRequest(initializer->getRequest());
             scene->reloadRequest(initializer->getRequest());
+
             reportLoaded = false;
 
             //! Инициализация дерева request.json
@@ -279,19 +288,29 @@ private slots:
             dataWidget->initializeRequest(initializer->getRequestJson());
 
             infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
-        } else {
+        }
+        else
+        {
             infoWidget->addMessage("Request был загружен не полностью.", MessageType::Warning);
         }
     }
 
+    void setRequestFromDataWidget(const Models::Request& request)
+    {
+        initializer->setRequest(request);
+    }
+
     // Отправка данных report в Scene
-    void receiveReport() {
-        if (!requestLoaded) {
+    void receiveReport()
+    {
+        if (!requestLoaded)
+        {
             infoWidget->addMessage("Загрузите Request. Нельзя построить маршруты.", MessageType::Error);
             return;
         }
 
-        if (initializer->getRequest().isLoaded()) {
+        if (initializer->getRequest().isLoaded())
+        {
             reportLoaded = true;
 
             checkLoad();
@@ -299,18 +318,22 @@ private slots:
             scene->reloadReport(initializer->getReport());
 
             // Вывод сообщений
-            for (const auto &message: initializer->getMessages()) {
+            for (const auto& message : initializer->getMessages())
+            {
                 infoWidget->addMessage(QString("%1").arg(message.code) + ":" + message.type + ": " + message.text);
             }
 
             infoWidget->addMessage("Report был загружен полностью.", MessageType::Success);
-        } else {
+        }
+        else
+        {
             infoWidget->addMessage("Report был загружен не полностью.", MessageType::Warning);
         }
     }
 
 public:
-    void setEnabled(bool value) {
+    void setEnabled(bool value)
+    {
         // manage->setEnabled(value);
 
         sub->setEnabled(value);
@@ -322,25 +345,13 @@ public:
         progress->setEnabled(value);
     }
 
-    // Получаем строку к файлу json из меню
-    //    QString getPathFromMenu(const QString& title)
-    //    {
-    //        auto fileName = QFileDialog::getOpenFileName(this, title, "", "JSON Files (*.json)");
-    //
-    //        if (fileName.isEmpty())
-    //        {
-    //            throw std::runtime_error("Не удалось открыть файл. Операция отменена пользователем.");
-    //        }
-    //
-    //        return fileName;
-    //    }
-
     // TODO:: соединить  DatabaseInitializer reloadRequest(request) и virtual bool reloadRequest(const Request& , const bool&)
 
 private slots:
 
     // Слот для загрузки из пути в базу данных
-    void loadJson(const QString &path) {
+    void loadJson(const QString& path)
+    {
         // Получить по пути Json
         QJsonObject obj = Operations::jsonFromFile(path);
 
@@ -348,12 +359,9 @@ private slots:
         initializer->loadFromJson(obj);
     }
 
-    //void setIntersectionInfo(const QString& str)
-    //{
-    //    infoWidget->addMessage(str, InformationWidget::MessageType::Success);
-    //}
 public:
-    void calculate() {
+    void calculate()
+    {
         // Нажатие Calc:
         // вызов ActorType getSchemeType() из scene
         // SearchTask(request);
@@ -364,88 +372,54 @@ public:
     }
 
 protected:
-    void keyPressEvent(QKeyEvent *event) override {
-        switch (event->key()) {
-            case Qt::Key_U:
-                break;
-            case Qt::Key_Q:
-                scene->change();
-                break;
-            case Qt::Key_Equal:
-                this->speedReset();
-                break;
-            case Qt::Key_Plus:
-                this->upSpeed();
-                break;
-            case Qt::Key_Minus:
-                this->downSpeed();
-                break;
-            case Qt::Key_S:
-                this->start(true);
-                break;
-            case Qt::Key_L:
-                scene->lines();
-                break;
-            case Qt::Key_B:
-                scene->full();
-                break;
-            case Qt::Key_P:
-                this->pause();
-                break;
-            case Qt::Key_F: // TODO: Для тестов
-                this->setup();
-                break;
-            case Qt::Key_X:
-                this->drawing();
-                break;
-                // Очистка путей и точки цели
-            case Qt::Key_C:
-                //scene->targetClear(); // Tagret clear()
-                break;
+    void keyPressEvent(QKeyEvent* event) override
+    {
+        switch (event->key())
+        {
+        case Qt::Key_U:
+            break;
+        case Qt::Key_Q:
+            scene->change();
+            break;
+        case Qt::Key_Equal:
+            this->speedReset();
+            break;
+        case Qt::Key_Plus:
+            this->upSpeed();
+            break;
+        case Qt::Key_Minus:
+            this->downSpeed();
+            break;
+        case Qt::Key_S:
+            this->start(true);
+            break;
+        case Qt::Key_L:
+            scene->lines();
+            break;
+        case Qt::Key_B:
+            scene->full();
+            break;
+        case Qt::Key_P:
+            this->pause();
+            break;
+        case Qt::Key_F: // TODO: Для тестов
+            this->setup();
+            break;
+        case Qt::Key_X:
+            this->drawing();
+            break;
+            // Очистка путей и точки цели
+        case Qt::Key_C:
+            //scene->targetClear(); // Tagret clear()
+            break;
         }
     }
 
-private slots:
-
-    //    void initReportFromMenu()
-    //    {
-    //        QString path;
-    //
-    //        try
-    //        {
-    //            path = getPathFromMenu("Открыть report.json файл(Входные данные).");
-    //        }
-    //        catch (std::runtime_error& ex)
-    //        {
-    //            infoWidget->addMessage(ex.what(), MessageType::Error);
-    //
-    //            return;
-    //        }
-    //
-    //        this->loadJson(path);
-    //    }
-    //
-    //    void initRequestFromMenu() // TODO:
-    //    {
-    //        QString path;
-    //
-    //        try
-    //        {
-    //            path = getPathFromMenu("Открыть request.json файл(Входные данные).");
-    //        }
-    //        catch (std::runtime_error& ex)
-    //        {
-    //            infoWidget->addMessage(ex.what(), MessageType::Error);
-    //
-    //            return;
-    //        }
-    //
-    //        this->loadJson(path);
-    //    }
-
 private:
-    void setup() {
-        try {
+    void setup()
+    {
+        try
+        {
             //        QJsonObject obj = Operations::jsonFromFile("d:\\test\\request.json");
             //            QJsonObject obj = Operations::jsonFromFile("/home/harikeshi/ajson/request.json");
             //            QJsonObject obj = Operations::jsonFromFile("e:\\visualization\\jsons\\request.json");
@@ -464,80 +438,97 @@ private:
 
             reportLoaded = true;
         }
-        catch (...) {
+        catch (...)
+        {
         }
 
         checkLoad();
     }
 
-    void checkLoad() {
+    void checkLoad()
+    {
         if (reportLoaded & reportLoaded)
             setEnabled(true);
     }
 
-    void drawing() {
+    void drawing()
+    {
         scene->setDrawing(true);
     }
 
     // Команды
-    void start(bool checked) {
-        if (!requestLoaded || !reportLoaded) {
+    void start(bool checked)
+    {
+        if (!requestLoaded || !reportLoaded)
+        {
             if (!requestLoaded)
                 infoWidget->addMessage("Request не загружен.", MessageType::Error);
 
-            if (!reportLoaded) {
+            if (!reportLoaded)
+            {
                 infoWidget->addMessage("Report не загружен.", MessageType::Error);
             }
-        } else {
+        }
+        else
+        {
             if (checked)
                 scene->start();
-            else {
+            else
+            {
                 scene->stop();
                 progress->clear();
             }
         }
     }
 
-    void pause() {
-        if (!requestLoaded && !reportLoaded) {
+    void pause()
+    {
+        if (!requestLoaded && !reportLoaded)
+        {
             infoWidget->addMessage("Не все Данные загружены.", MessageType::Error);
-        } else {
+        }
+        else
+        {
             scene->pause();
             // manage->setPauseButtomImage(scene->pause());
         }
     }
 
-    void upSpeed() {
+    void upSpeed()
+    {
         // Вызываем на сцене
         scene->upSpeed(1);
     }
 
-    void downSpeed() {
+    void downSpeed()
+    {
         scene->downSpeed(2);
     }
 
-    void speedReset() {
+    void speedReset()
+    {
         scene->resetSpeed();
     }
 
-    void mouseMoveEvent(QMouseEvent *event) override {
+    void mouseMoveEvent(QMouseEvent* event) override
+    {
     }
 
 private:
     // TODO: Указатель на абстрактную сцену
-    SceneWidget *scene;
+    SceneWidget* scene;
 
     // Правая панель
-    UpdateProgressBar *progress;
-    DataWidget *dataWidget;
-    CustomTable *table;
-    ManageWidget *manage;
-    SubWidget *sub;
+    UpdateProgressBar* progress;
+    DataWidget* dataWidget;
+    CustomTable* table;
+    ManageWidget* manage;
+    SubWidget* sub;
 
-    InformationWidget *infoWidget;
+    InformationWidget* infoWidget;
 
     // Работа с данными
-    Initializer *initializer;
+    Initializer* initializer;
 
     bool requestLoaded = false;
     bool reportLoaded = false;
