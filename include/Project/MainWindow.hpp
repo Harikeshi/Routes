@@ -241,8 +241,9 @@ private slots:
         {
             try
             {
-                auto json = initializer->getRequestJson();
-                auto nloh = Operations::convertToNlohmann(json);
+                // auto json = initializer->getRequestJson();
+                // initializer->getRequest().toJson();
+                auto nloh = Operations::convertToNlohmann(initializer->getRequest().toJson());
 
                 task.setTask(nloh);
 
