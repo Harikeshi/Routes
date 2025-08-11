@@ -126,6 +126,40 @@ public:
         return obj;
     }
 
+    nlohmann::json toNJson() const override
+    {
+        nlohmann::json obj;
+        // obj["id"] = static_cast<qint64>(id);
+
+        // detection point
+        auto detection_point = nlohmann::json::array();
+        detection_point.emplace_back(detectionPoint.x());
+        detection_point.emplace_back(detectionPoint.y());
+
+        obj["detectionPoint"] = std::move(detection_point);
+
+        // courses
+        auto _courses = nlohmann::json::array();
+        _courses.emplace_back(courses.first, courses.second);
+
+        obj["courses"] = std::move(_courses);
+
+        obj["rootMeanSquareError"] = rootMeanSquareError;
+        obj["obsolescenceTime"] = obsolescenceTime;
+        obj["avoidanceDistance"] = avoidanceDistance;
+
+        nlohmann::json velocitiesObj;
+
+        velocitiesObj["currentVelocity"] = currentVelocity;
+        velocitiesObj["maxVelocity"] = maxVelocity;
+        velocitiesObj["minNoiseReduced"] = minNoiseReduced;
+        velocitiesObj["maxNoiseReduced"] = maxNoiseReduced;
+
+        obj["velocities"] = velocitiesObj;
+
+        return obj;
+    }
+
     double getMinNoiseReduced() const
     {
         return minNoiseReduced;

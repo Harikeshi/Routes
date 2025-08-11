@@ -64,6 +64,28 @@ public:
         return obj;
     }
 
+    nlohmann::json toNJson() const override
+    {
+        nlohmann::json obj;
+        // obj["id"] = static_cast<qint64>(id);
+
+        // start
+        nlohmann::json startObj;
+        startObj["x"] = start.x();
+        startObj["y"] = start.y();
+        obj["start"] = startObj;
+
+        // end
+        nlohmann::json endObj;
+        endObj["x"] = end.x();
+        endObj["y"] = end.y();
+        obj["end"] = endObj;
+
+        obj["baseSpeed"] = baseSpeed;
+
+        return obj;
+    }
+
     double getSpeed() const
     {
         return baseSpeed;

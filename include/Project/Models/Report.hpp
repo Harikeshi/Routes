@@ -90,6 +90,31 @@ public:
         return obj;
     }
 
+    nlohmann::json toNJson() const override
+    {
+        nlohmann::json obj;
+        //        obj["id"] = static_cast<qint64>(id);
+
+        auto routesArray = nlohmann::json::array();
+
+        for (const Route& route : _routes)
+        {
+            routesArray.emplace_back(route.toNJson());
+        }
+
+        obj["routes"] = routesArray;
+
+        auto messagesArray = nlohmann::json::array();
+        for (const Message& message : _messages)
+        {
+            messagesArray.emplace_back(message.toNJson());
+        }
+        
+        obj["messages"] = messagesArray;
+
+        return obj;
+    }
+
     bool isLoaded() const
     {
         return loaded;

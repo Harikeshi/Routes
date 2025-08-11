@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QJsonObject>
+#include <nlohmann/json.hpp>
 
 namespace Models {
 class Input
@@ -31,13 +32,16 @@ public:
      */
     virtual QJsonObject toJson() const = 0;
 
+    virtual nlohmann::json toNJson() const = 0;
+
 protected:
     // TODO: Использовать JsonValue
     /*!
      * Инициализация из входного json.
      * @param json
      */
-    virtual void initializeProperties(const QJsonObject& json) = 0;
+    virtual void
+    initializeProperties(const QJsonObject& json) = 0;
 
     void validate(const QJsonObject& object) const
     {

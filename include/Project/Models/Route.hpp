@@ -90,6 +90,42 @@ struct Route : public Input
         return obj;
     }
 
+    nlohmann::json toNJson() const override
+    {
+        nlohmann::json obj;
+
+        if (segments.isEmpty())
+            return obj;
+
+        // obj["id"] = static_cast<qint64>(id);
+
+        nlohmann::json pointsArray = nlohmann::json::array();
+
+        auto first_point = nlohmann::json::array();
+        first_point.emplace_back(segments.at(0).getStart().x());
+        first_point.emplace_back(segments.at(0).getStart().y());
+
+        pointsArray.emplace_back(first_point);
+
+        nlohmann::json velocitiesArray = nlohmann::json::array();
+
+        for (const Segment& segment : segments)
+        {
+            velocitiesArray.emplace_back(segment.baseSpeed);
+
+            auto first_point = nlohmann::json::array();
+            first_point.emplace_back(segment.getEnd().x());
+            first_point.emplace_back(segment.getEnd().y());
+            
+            pointsArray.emplace_back(nlohmann::json{segment.getEnd().x(), segment.getEnd().y()});
+        }
+
+        obj["points"] = pointsArray;
+        obj["velocities"] = velocitiesArray;
+
+        return obj;
+    }
+
     void addSegment(const Segment& segment)
     {
         segments.push_back(segment);

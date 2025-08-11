@@ -8,7 +8,7 @@
 
 #include "../MessageType.hpp"
 #include "Project/Database/DatabaseConnection.hpp"
-#include "Project/Database/DatabaseRepository.hpp"
+#include "Project/Database/InformationRepository.hpp"
 
 namespace Widgets {
 /*!
@@ -25,13 +25,13 @@ public:
         {
             //            repository = Database::DatabaseRepository{Database::DatabaseConnection::createConnection("127.0.0.1")};
             //            repository = Database::DatabaseRepository{Database::DatabaseConnection::createConnection("192.168.205.130")};
-            repository = Database::DatabaseRepository{Database::DatabaseConnection::createConnection("192.168.50.52")};
+            repository = Database::InformationRepository{Database::DatabaseConnection::createConnection("192.168.50.52")};
         }
 
         catch (...)
         {
             qDebug() << "Info haven't connected to postgresql!";
-            repository = Database::DatabaseRepository{};
+            repository = Database::InformationRepository{};
             //addMessage("Невозможно установить соединение.", MessageType::Error);
         }
 
@@ -135,6 +135,6 @@ private:
 
 private:
     //    Database::DatabaseRepository repository; // {Database::DatabaseConnection::createConnection()};
-    Database::DatabaseRepository repository; //{Database::DatabaseConnection::createConnection("192.168.50.52")};
+    Database::InformationRepository repository; //{Database::DatabaseConnection::createConnection("192.168.50.52")};
 };
 } // namespace Widgets

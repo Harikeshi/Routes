@@ -78,6 +78,32 @@ struct Request : public Input
         return obj;
     }
 
+    nlohmann::json toNJson() const override
+    {
+        nlohmann::json obj;
+        // obj["id"] = static_cast<qint64>(id);
+        obj["time"] = time;
+
+        obj["search_region"] = perimeter.toNJson();
+
+        auto borderArray = nlohmann::json::array();
+        for (const QPointF& point : border)
+        {
+            auto pointArr = nlohmann::json::array();
+            pointArr.emplace_back(point.x());
+            pointArr.emplace_back(point.y());
+
+            borderArray.emplace_back(pointArr);
+        }
+
+        obj["border_line"] = borderArray;
+
+        obj["form_target"] = target.toNJson();
+        obj["ships_parameters"] = ship.toNJson();
+
+        return obj;
+    }
+
     bool isLoaded() const
     {
         return loaded;

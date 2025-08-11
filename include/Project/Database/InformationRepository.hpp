@@ -11,7 +11,7 @@
 #include <pqxx/connection.hxx>
 
 namespace Database {
-class DatabaseRepository
+class InformationRepository
 {
     /*
      * Пример использования
@@ -39,13 +39,13 @@ class DatabaseRepository
     DataAccessObjects::ErrorLogDAO errorDao;
 
 public:
-    DatabaseRepository()
+    InformationRepository()
         : connection(nullptr), shipDao(nullptr), requestDao(nullptr),
           eventDao(nullptr), infoDao(nullptr), errorDao(nullptr)
     {
     }
 
-    explicit DatabaseRepository(const std::shared_ptr<pqxx::connection>& conn)
+    explicit InformationRepository(const std::shared_ptr<pqxx::connection>& conn)
         : connection(conn),
           shipDao(connection),
           requestDao(connection),

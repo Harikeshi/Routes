@@ -114,6 +114,46 @@ public:
         return obj;
     }
 
+    nlohmann::json toNJson() const override
+    {
+        nlohmann::json obj;
+        //        obj["id"] = static_cast<qint64>(id);
+
+        // TODO: Используются x и y для работы с базой данных.
+        // entrance
+        auto entranceArr = nlohmann::json::array();
+
+        entranceArr.emplace_back(entrance.x());
+        entranceArr.emplace_back(entrance.y());
+        obj["entry_point"] = entranceArr;
+
+        // exit
+        auto exitArr = nlohmann::json::array();
+        exitArr.emplace_back(exit.x());
+        exitArr.emplace_back(exit.y());
+        obj["exit_point"] = exitArr;
+
+        // rings
+        auto ringsArray = nlohmann::json::array();
+        for (const QPolygonF& ring : rings)
+        {
+            auto ringArray = nlohmann::json::array();
+            for (const QPointF& point : ring)
+            {
+                auto pointArr = nlohmann::json::array();
+                pointArr.emplace_back(point.x());
+                pointArr.emplace_back(point.y());
+
+                ringArray.emplace_back(pointArr);
+            }
+            ringsArray.emplace_back(ringArray);
+        }
+
+        obj["borders"] = ringsArray;
+
+        return obj;
+    }
+
     void clear()
     {
         for (auto& inner : rings)

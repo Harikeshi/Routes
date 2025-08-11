@@ -95,5 +95,20 @@ public:
 
         return obj;
     }
+
+    nlohmann::json toNJson() const override
+    {
+        nlohmann::json obj;
+
+        // obj["id"] = static_cast<qint64>(id);
+        obj["count"] = 1;
+        obj["detection_range"] = detection_range;
+        obj["max_velocity"] = max_velocity;
+        obj["search_velocity"] = search_velocity;
+        obj["turning_radius"] = turning_radius;
+        obj["min_lenght_section"] = min_lenght_section;
+
+        return obj;
+    }
 };
 } // namespace Models

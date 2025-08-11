@@ -42,6 +42,18 @@ struct Message : public Input
         return obj;
     }
 
+    nlohmann::json toNJson() const override
+    {
+        nlohmann::json obj;
+
+        // obj["id"] = static_cast<qint64>(id);
+        obj["code"] = code;
+        obj["text"] = text.toStdString();
+        obj["type"] = type.toStdString();
+
+        return obj;
+    }
+
     void initializeProperties(const QJsonObject& json) override
     {
         if (json.contains("id"))
