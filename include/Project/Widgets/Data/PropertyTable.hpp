@@ -244,7 +244,7 @@ private:
             for (int j = 0; j < request.perimeter.rings[i].size(); ++j)
             {
                 const QPointF& point = request.perimeter.rings[i][j];
-                createPointEditor(borderItem, QString("Point %1").arg(j + 1), point);
+                createPointEditor(borderItem, QString("Point (%1)").arg(j + 1), point);
             }
         }
 
@@ -255,7 +255,7 @@ private:
         for (int i = 0; i < request.border.size(); ++i)
         {
             const QPointF& point = request.border[i];
-            createPointEditor(borderLineRoot, QString("Point %1").arg(i + 1), point);
+            createPointEditor(borderLineRoot, QString("Point (%1)").arg(i + 1), point);
         }
     }
 

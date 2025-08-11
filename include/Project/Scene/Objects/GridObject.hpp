@@ -110,9 +110,11 @@ public:
         // const int leftMargin = fm.horizontalAdvance(QString::number(limits.getMaxDifference()) + "00");
 
         // 1 pixel по ширине
-        auto wPixel = limits.getXDifference() / rect.width();
+        // TODO: Из прямоугольника вычесть отступы в пикселях.
+        auto wPixel = limits.getXDifference() / rect.width(); //! Логический размер пикселя по ширине.
+
         // 2 pixel по высоте
-        auto hPixel = limits.getYDifference() / rect.height();
+        auto hPixel = limits.getYDifference() / rect.height(); //! Логический размер пикселя по высоте.
 
         // Начало по ширине из minX
         // Вертикальные линии
@@ -125,6 +127,7 @@ public:
         // Серединные линии
         // Вертикальные
 
+        // TODO: Брать предел с отступами и и высчитывать логический размер пикселя.
         auto mainLimints = limits.limitsWithMargins(margin);
 
         auto beginX = std::fabs(mainLimints.minX - limits.minX) / wPixel; // начало в пикселях

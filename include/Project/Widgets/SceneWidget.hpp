@@ -72,7 +72,7 @@ class SceneWidget final : public QWidget
 
     std::map<ActorType, std::function<Scene::Actor*()>> actors{
         {ActorType::Zigzag, [this]() { target->setState(new Scene::Objects::WithOutDrawState());return new Scene::Actors::InRegionScene(); }},
-        {ActorType::Shift, []() { return new Scene::Actors::InRegionScene(); }},
+        {ActorType::Shift, [this]() { target->setState(new Scene::Objects::WithOutDrawState());return new Scene::Actors::InRegionScene(); }},
         {ActorType::SectorSpiral, [this]() { target->setState(new Scene::Objects::CurrentDrawState());return new Scene::Actors::Spiral(); }},
         {ActorType::StraightTack, []() { return new Scene::Actors::InRegionScene(); }},
         {ActorType::LinearPatrolling, []() { return new Scene::Actors::InRegionScene(); }},

@@ -233,6 +233,7 @@ private slots:
         table->reset();
 
         infoWidget->addMessage("Был Произведен сброс.", MessageType::Warning);
+
         infoWidget->addMessage("Требуется загрузка данных(json).", MessageType::Info);
     }
 
