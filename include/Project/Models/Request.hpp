@@ -17,6 +17,8 @@ struct Request : public Input
     Target target;
     Object ship;
 
+    QString owner;
+
     bool loaded = false;
 
     Request() = default;

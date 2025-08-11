@@ -130,6 +130,9 @@ public:
         // TODO: Брать предел с отступами и и высчитывать логический размер пикселя.
         auto mainLimints = limits.limitsWithMargins(margin);
 
+        // TODO: Начальные линии разметки брать от минимальных значений пределов.
+
+        // TODO: мы итак знаем значения в пикселях.
         auto beginX = std::fabs(mainLimints.minX - limits.minX) / wPixel; // начало в пикселях
         auto availableWidth = mainLimints.getXDifference() / wPixel;      //
 

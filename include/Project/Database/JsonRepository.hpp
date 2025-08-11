@@ -11,260 +11,336 @@
 #include "Project/GetCurrentUsername.hpp"
 
 namespace Database {
-    class JsonRepository : public Database::IRepository {
-        QString path;
+class JsonRepository : public Database::IRepository
+{
+    QString path;
 
-        // TODO:
-        QString requestPath;
-        QString reportPath;
+    // TODO:
+    QString requestPath;
+    QString reportPath;
 
-    public:
-        JsonRepository(const QString &base_path) : Database::IRepository{base_path} {
+public:
+    JsonRepository(const QString& base_path)
+        : Database::IRepository{base_path}
+    {
 #ifdef _WIN32
-            path = base_path + "\\json_db\\";
+        path = base_path + "\\json_db\\";
 #else
-            path = base_path + "/json_db/";
+        path = base_path + "/json_db/";
 #endif
-            QDir dir(path);
+        QDir dir(path);
 
-            if (!dir.exists()) {
-                if (dir.mkdir(path)) {
-                } else {
-                    qDebug() << "Папка не создана.";
-                }
+        if (!dir.exists())
+        {
+            if (dir.mkdir(path))
+            {
             }
-
-            requestPath = path + "requests.json";
-            reportPath = path + "reports.json";
-
-            if (!QFile::exists(requestPath))
-                createEmptyJsonArrayFile(requestPath);
-
-            if (!QFile::exists(reportPath))
-                createEmptyJsonArrayFile(reportPath);
-
-            // QDir::homePath();
-            // QFileInfo file{requestPath};
-        }
-
-        size_t save(const Models::Request &request) override {
-            appendJsonObjectToArrayFile(request.toJson(), requestPath);
-
-            return 0;
-        }
-
-        size_t save(const Models::Report &report) override {
-            appendJsonObjectToArrayFile(report.toJson(), reportPath);
-
-            return 0;
-        }
-
-        Models::Request findRequestById(size_t id) override {
-            return Models::Request{};
-        }
-
-        Models::Report findReportById(size_t id) override {
-            return Models::Report{};
-        }
-
-    private:
-        QJsonArray readJsonArrayFromFile(const QString &fileName) {
-            QFile file(fileName);
-            if (!file.open(QIODevice::ReadOnly)) {
-                qWarning("Couldn't open file for reading. Returning empty array.");
-                return QJsonArray();
+            else
+            {
+                qDebug() << "Папка не создана.";
             }
-
-            QByteArray data = file.readAll();
-            file.close();
-
-            QJsonDocument doc = QJsonDocument::fromJson(data);
-            if (!doc.isArray()) {
-                qWarning("File does not contain a JSON array. Returning empty array.");
-                return QJsonArray();
-            }
-
-            return doc.array();
         }
 
-        bool writeJsonArrayToFile(const QJsonArray &array, const QString &fileName) {
-            QFile file(fileName);
-            if (!file.open(QIODevice::WriteOnly)) {
-                qWarning("Couldn't open file for writing.");
-                return false;
-            }
+        requestPath = path + "requests.json";
+        reportPath = path + "reports.json";
 
-            QJsonDocument doc(array);
-            if (file.write(doc.toJson()) == -1) {
-                file.close();
-                return false;
-            }
+        if (!QFile::exists(requestPath))
+            createEmptyJsonArrayFile(requestPath);
 
-            file.close();
-            return true;
+        if (!QFile::exists(reportPath))
+            createEmptyJsonArrayFile(reportPath);
+
+        // QDir::homePath();
+        // QFileInfo file{requestPath};
+    }
+
+    size_t save(const Models::Request& request) override
+    {
+        appendRequestJsonObjectToArrayFile(request.toJson());
+
+        return 0;
+    }
+
+    size_t save(const Models::Report& report) override
+    {
+        appendReportJsonObjectToArrayFile(report.toJson());
+
+        return 0;
+    }
+
+    // TODO: template<typename T>
+    Models::Request findRequestById(size_t id) override
+    {
+        QJsonArray array = readJsonArrayFromFile(requestPath);
+
+        Models::Request request;
+
+        request.fromJson(array.at(id).toObject());
+
+        return request;
+    }
+
+    Models::Report findReportById(size_t id) override
+    {
+        QJsonArray array = readJsonArrayFromFile(reportPath);
+
+        Models::Report report;
+
+        report.fromJson(array.at(id).toObject());
+
+        return report;
+    }
+
+private:
+    QJsonArray readJsonArrayFromFile(const QString& fileName)
+    {
+        QFile file(fileName);
+        if (!file.open(QIODevice::ReadOnly))
+        {
+            qWarning("Couldn't open file for reading. Returning empty array.");
+            return QJsonArray();
         }
 
-        bool appendJsonObjectToArrayFile(const QJsonObject &obj, const QString &fileName) {
-            QJsonArray array = readJsonArrayFromFile(fileName);
+        QByteArray data = file.readAll();
+        file.close();
 
-            QJsonObject newEntry;
-
-            newEntry["id"] = array.size();
-            newEntry["date"] = QDateTime::currentDateTime().toString(Qt::ISODate);
-            newEntry["user"] = QString::fromStdString(getCurrentUsername());
-            newEntry["data"] = obj;
-
-            array.append(newEntry);
-
-            return writeJsonArrayToFile(array, fileName);
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        if (!doc.isArray())
+        {
+            qWarning("File does not contain a JSON array. Returning empty array.");
+            return QJsonArray();
         }
 
-        bool createEmptyJsonArrayFile(const QString &fileName) {
-            return writeJsonArrayToFile(QJsonArray{}, fileName);
-        }
+        return doc.array();
+    }
 
-        bool removeObjectById(const QString &fileName, const QString &id) {
-            QJsonArray jsonArray = readJsonArrayFromFile(fileName);
-            QJsonArray newArray;
-            bool found = false;
-
-            for (const QJsonValue &value: jsonArray) {
-                QJsonObject obj = value.toObject();
-                if (obj["id"].toString() != id) {
-                    newArray.append(obj);
-                } else {
-                    found = true;
-                }
-            }
-
-            if (!found) {
-                qWarning() << "ID" << id << "not found";
-                return false;
-            }
-
-            return writeJsonArrayToFile(newArray, fileName);
-        }
-
-        bool isIdExists(const QJsonArray &array, const QString &id) {
-            for (const QJsonValue &value: array) {
-                if (value.toObject()["id"].toString() == id) {
-                    return true;
-                }
-            }
+    bool writeJsonArrayToFile(const QJsonArray& array, const QString& fileName)
+    {
+        QFile file(fileName);
+        if (!file.open(QIODevice::WriteOnly))
+        {
+            qWarning("Couldn't open file for writing.");
             return false;
         }
 
-// Модифицированная версия appendDataToJsonFile с проверкой ID
-        bool appendDataToJsonFileWithIdCheck(const QString &fileName,
-                                             const QString &id,
-                                             const QString &name,
-                                             const QJsonObject &dataObject) {
-            QJsonArray jsonArray = readJsonArrayFromFile(fileName);
+        QJsonDocument doc(array);
+        if (file.write(doc.toJson()) == -1)
+        {
+            file.close();
+            return false;
+        }
 
-            if (isIdExists(jsonArray, id)) {
-                qWarning() << "ID" << id << "already exists";
-                return false;
+        file.close();
+        return true;
+    }
+
+    bool appendRequestJsonObjectToArrayFile(const QJsonObject& obj)
+    {
+        QJsonArray requests = readJsonArrayFromFile(requestPath);
+
+        QJsonObject newEntry;
+
+        newEntry["id"] = requests.last()["id"].toInt() + 1;
+        newEntry["date"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        newEntry["user"] = QString::fromStdString(getCurrentUsername());
+        newEntry["data"] = obj;
+
+        requests.append(newEntry);
+
+        return writeJsonArrayToFile(requests, requestPath);
+    }
+
+    bool appendReportJsonObjectToArrayFile(const QJsonObject& obj)
+    {
+        QJsonArray requests = readJsonArrayFromFile(requestPath);
+        QJsonArray reports = readJsonArrayFromFile(reportPath);
+
+        QJsonObject newEntry;
+
+        newEntry["id"] = reports.last()["id"].toInt() + 1;
+        newEntry["request_id"] = requests.last()["id"].toInt();
+        newEntry["date"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        newEntry["user"] = QString::fromStdString(getCurrentUsername());
+        newEntry["data"] = obj;
+
+        reports.append(newEntry);
+
+        return writeJsonArrayToFile(reports, reportPath);
+    }
+
+    bool createEmptyJsonArrayFile(const QString& fileName)
+    {
+        return writeJsonArrayToFile(QJsonArray{}, fileName);
+    }
+
+    bool removeObjectById(const QString& fileName, const QString& id)
+    {
+        QJsonArray jsonArray = readJsonArrayFromFile(fileName);
+        QJsonArray newArray;
+        bool found = false;
+
+        for (const QJsonValue& value : jsonArray)
+        {
+            QJsonObject obj = value.toObject();
+            if (obj["id"].toString() != id)
+            {
+                newArray.append(obj);
             }
-
-            QJsonObject newEntry;
-            newEntry["id"] = id;
-            newEntry["date"] = QDateTime::currentDateTime().toString(Qt::ISODate);
-            newEntry["name"] = name;
-            newEntry["data"] = dataObject;
-
-            jsonArray.append(newEntry);
-            return writeJsonArrayToFile(jsonArray, fileName);
+            else
+            {
+                found = true;
+            }
         }
 
-        // Repository methods
-        template<typename T>
-        void save(const QString &filename, const T &item) {
-            QJsonObject json = item.toJson();
-            saveJsonToFile(filename, json);
+        if (!found)
+        {
+            qWarning() << "ID" << id << "not found";
+            return false;
         }
 
-        template<typename T>
-        T load(const QString &filename, size_t id) {
-            QJsonObject json = loadJsonFromFile(filename);
+        return writeJsonArrayToFile(newArray, fileName);
+    }
+
+    bool isIdExists(const QJsonArray& array, const QString& id)
+    {
+        for (const QJsonValue& value : array)
+        {
+            if (value.toObject()["id"].toString() == id)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Модифицированная версия appendDataToJsonFile с проверкой ID
+    bool appendDataToJsonFileWithIdCheck(const QString& fileName,
+                                         const QString& id,
+                                         const QString& name,
+                                         const QJsonObject& dataObject)
+    {
+        QJsonArray jsonArray = readJsonArrayFromFile(fileName);
+
+        if (isIdExists(jsonArray, id))
+        {
+            qWarning() << "ID" << id << "already exists";
+            return false;
+        }
+
+        QJsonObject newEntry;
+        newEntry["id"] = id;
+        newEntry["date"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        newEntry["name"] = name;
+        newEntry["data"] = dataObject;
+
+        jsonArray.append(newEntry);
+        return writeJsonArrayToFile(jsonArray, fileName);
+    }
+
+    // Repository methods
+    template<typename T>
+    void save(const QString& filename, const T& item)
+    {
+        QJsonObject json = item.toJson();
+        saveJsonToFile(filename, json);
+    }
+
+    template<typename T>
+    T load(const QString& filename, size_t id)
+    {
+        QJsonObject json = loadJsonFromFile(filename);
+        T item;
+        item.fromJson(json);
+        if (item.getId() != id)
+        {
+            throw std::runtime_error("ID mismatch in loaded object");
+        }
+        return item;
+    }
+
+    template<typename T>
+    std::map<size_t, T> loadAll(const QString& filename)
+    {
+        QJsonArray array = loadJsonArrayFromFile(filename);
+        std::map<size_t, T> result;
+
+        for (const QJsonValue& val : array)
+        {
             T item;
-            item.fromJson(json);
-            if (item.getId() != id) {
-                throw std::runtime_error("ID mismatch in loaded object");
-            }
-            return item;
+            item.fromJson(val.toObject());
+            result[item.getId()] = item;
         }
 
-        template<typename T>
-        std::map<size_t, T> loadAll(const QString &filename) {
-            QJsonArray array = loadJsonArrayFromFile(filename);
-            std::map<size_t, T> result;
+        return result;
+    }
 
-            for (const QJsonValue &val: array) {
-                T item;
-                item.fromJson(val.toObject());
-                result[item.getId()] = item;
-            }
+    template<typename T>
+    void saveAll(const QString& filename, const std::map<size_t, T>& items)
+    {
+        QJsonArray array;
 
-            return result;
+        for (const auto& pair : items)
+        {
+            array.append(pair.second.toJson());
         }
 
-        template<typename T>
-        void saveAll(const QString &filename, const std::map<size_t, T> &items) {
-            QJsonArray array;
+        saveJsonArrayToFile(filename, array);
+    }
 
-            for (const auto &pair: items) {
-                array.append(pair.second.toJson());
-            }
-
-            saveJsonArrayToFile(filename, array);
+    void saveJsonToFile(const QString& filename, const QJsonObject& json)
+    {
+        QFile file(filename);
+        if (!file.open(QIODevice::WriteOnly))
+        {
+            throw std::runtime_error("Could not open file for writing");
         }
 
-        void saveJsonToFile(const QString &filename, const QJsonObject &json) {
-            QFile file(filename);
-            if (!file.open(QIODevice::WriteOnly)) {
-                throw std::runtime_error("Could not open file for writing");
-            }
+        QJsonDocument doc(json);
+        file.write(doc.toJson());
+        file.close();
+    }
 
-            QJsonDocument doc(json);
-            file.write(doc.toJson());
-            file.close();
+    QJsonObject loadJsonFromFile(const QString& filename)
+    {
+        QFile file(filename);
+        if (!file.open(QIODevice::ReadOnly))
+        {
+            throw std::runtime_error("Could not open file for reading");
         }
 
-        QJsonObject loadJsonFromFile(const QString &filename) {
-            QFile file(filename);
-            if (!file.open(QIODevice::ReadOnly)) {
-                throw std::runtime_error("Could not open file for reading");
-            }
+        QByteArray data = file.readAll();
+        file.close();
 
-            QByteArray data = file.readAll();
-            file.close();
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        return doc.object();
+    }
 
-            QJsonDocument doc = QJsonDocument::fromJson(data);
-            return doc.object();
+    void saveJsonArrayToFile(const QString& filename, const QJsonArray& array)
+    {
+        QFile file(filename);
+        if (!file.open(QIODevice::WriteOnly))
+        {
+            throw std::runtime_error("Could not open file for writing");
         }
 
-        void saveJsonArrayToFile(const QString &filename, const QJsonArray &array) {
-            QFile file(filename);
-            if (!file.open(QIODevice::WriteOnly)) {
-                throw std::runtime_error("Could not open file for writing");
-            }
+        QJsonDocument doc(array);
+        file.write(doc.toJson());
+        file.close();
+    }
 
-            QJsonDocument doc(array);
-            file.write(doc.toJson());
-            file.close();
+    QJsonArray loadJsonArrayFromFile(const QString& filename)
+    {
+        QFile file(filename);
+        if (!file.open(QIODevice::ReadOnly))
+        {
+            throw std::runtime_error("Could not open file for reading");
         }
 
-        QJsonArray loadJsonArrayFromFile(const QString &filename) {
-            QFile file(filename);
-            if (!file.open(QIODevice::ReadOnly)) {
-                throw std::runtime_error("Could not open file for reading");
-            }
+        QByteArray data = file.readAll();
+        file.close();
 
-            QByteArray data = file.readAll();
-            file.close();
-
-            QJsonDocument doc = QJsonDocument::fromJson(data);
-            return doc.array();
-        }
-    };
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        return doc.array();
+    }
+};
 } // namespace Database

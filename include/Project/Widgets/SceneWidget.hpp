@@ -74,7 +74,7 @@ class SceneWidget final : public QWidget
         {ActorType::Zigzag, [this]() { target->setState(new Scene::Objects::WithOutDrawState());return new Scene::Actors::InRegionScene(); }},
         {ActorType::Shift, [this]() { target->setState(new Scene::Objects::WithOutDrawState());return new Scene::Actors::InRegionScene(); }},
         {ActorType::SectorSpiral, [this]() { target->setState(new Scene::Objects::CurrentDrawState());return new Scene::Actors::Spiral(); }},
-        {ActorType::StraightTack, []() { return new Scene::Actors::InRegionScene(); }},
+        {ActorType::StraightTack, [this]() {target->setState(new Scene::Objects::CurrentDrawState()); return new Scene::Actors::InRegionScene(); }},
         {ActorType::LinearPatrolling, []() { return new Scene::Actors::InRegionScene(); }},
         {ActorType::OnStop, []() { return new Scene::Actors::InRegionScene(); }}};
 
