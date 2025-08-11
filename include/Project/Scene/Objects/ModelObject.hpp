@@ -71,9 +71,9 @@ public:
 
     void initialize(const Models::Object& parameters)
     {
-        radiusHAS = parameters.detectionRange;
-        currentVelocity = parameters.currentVelocity;
-        maxVelocity = parameters.maxVelocity;
+        radiusHAS = parameters.detection_range;
+        currentVelocity = parameters.search_velocity;
+        maxVelocity = parameters.max_velocity;
     }
 
     void initialize(const Models::Target& target)

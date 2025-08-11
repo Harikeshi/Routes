@@ -99,15 +99,18 @@ private slots:
 
         if (model->isDir(index))
         {
-            navigateTo(path);
+            try
+            {
+                navigateTo(path);
+            }
+            catch (...)
+            {
+                qDebug() << "Exception from json_path_explorer!";
+            }
         }
         else
         {
             emit sendPath(path);
-
-            // if (!QDesktopServices::openUrl(QUrl::fromLocalFile(path))) {
-            //     QMessageBox::warning(this, "Ошибка", "Не удалось открыть файл: " + path);
-            // }
         }
     }
 

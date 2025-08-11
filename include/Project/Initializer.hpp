@@ -176,9 +176,26 @@ public:
             message += "Файл request загружен в базу!";
 
             emit requestLoaded();
-            emit sendRequestJson(json); // Для инициализации dataWidget
+            // emit sendRequestJson(json); // Для инициализации dataWidget
 
             request.id = repository->save(request);
+        }
+        catch (std::runtime_error& ex)
+        {
+            message += "Файл request не загружен:";
+            message += ex.what();
+            type = MessageType::Error;
+        }
+    }
+
+    void loadRequest(const Models::Request& request, QString& message, MessageType& type)
+    {
+        try
+        {
+            this->request = request;
+            this->request.id = repository->save(this->request);
+
+            message += "Файл request загружен в базу!";
         }
         catch (std::runtime_error& ex)
         {
@@ -200,6 +217,10 @@ public:
             // TODO: Какое-то костыльное решение
             report.request_id = request.id;
             repository->save(report);
+
+            report._messages[0].show();
+
+            report.show();
 
             emit reportLoaded();
             emit sendReportJson(json); // Для инициализации dataWidget
@@ -264,8 +285,8 @@ public:
     }
 
 private:
-    QString connectionString = "host=127.0.0.1 dbname=request_report user=viz_user password=1 connect_timeout=3";
-    //    QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
+    //    QString connectionString = "host=127.0.0.1 dbname=request_report user=viz_user password=1 connect_timeout=3";
+    QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
     //    QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
 public:
     Initializer(
@@ -277,13 +298,15 @@ public:
         {
             // TODO: need Create Factory
             repository = std::make_unique<Database::PostgreSQLRepository>(connectionString);
-            qDebug() << "PostgreSQL connected!";
-            emit sendMessage("PostgreSQL connected!", MessageType::Success);
+            qDebug() << "Request/Report PostgreSQL connected!" + connectionString.split(' ')[0];
+            emit sendMessage("Request/Report PostgreSQL connected!" + connectionString.split(' ')[0], MessageType::Success);
         }
         catch (std::runtime_error& ex)
         {
             // TODO: сообщение
-            emit sendMessage("Не удалось подключиться к postgreSQL: " + QString(ex.what()), MessageType::Error);
+            emit sendMessage("Не удалось подключиться к postgreSQL Request/Report." + connectionString.split(' ')[0] + ": " + QString(ex.what()), MessageType::Error);
+            qDebug() << "Не удалось подключиться к postgreSQL Request/Report." + connectionString.split(' ')[0] + ": " + QString(ex.what());
+
             repository = std::make_unique<Database::JsonRepository>(getHomePath());
 
             emit sendMessage("Request/Report будут сохраняться в домашней директории.", MessageType::Info);
@@ -292,6 +315,8 @@ public:
 
     void setRequest(const Models::Request& request)
     {
+        request.show();
+
         qDebug() << "request changed!";
         this->request = request;
     }

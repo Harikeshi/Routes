@@ -150,7 +150,7 @@ public:
         }
 
         this->setColor(color);
-        this->setRadius(parameters.detectionRange);
+        this->setRadius(parameters.detection_range);
 
         this->head->initialize(parameters);
 

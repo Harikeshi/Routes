@@ -161,28 +161,30 @@ private:
 
     void updateModelFromRequest(const Models::Request& request)
     {
+        this->request = request;
+
         model->blockSignals(true);
 
         // Time
-        model->item(0, 1)->setText(QString::number(request.time));
+        model->item(0, 1)->setText(QString::number(this->request.time));
 
         // Update Target
-        updateTargetModel(request);
+        updateTargetModel();
 
         // Update Ship
-        updateShipModel(request);
+        updateShipModel();
 
         // Update Perimeter
-        updatePerimeterModel(request);
+        updatePerimeterModel();
 
         model->blockSignals(false);
     }
 
-    void updateTargetModel(const Models::Request& request)
+    void updateTargetModel()
     {
         QStandardItem* targetRoot = model->item(1);
         // Target - Detection Point
-        targetRoot->child(0, 1)->setText(QString("[%1, %2]")
+        targetRoot->child(0, 1)->setText(QString("%1, %2")
                                              .arg(request.target.detectionPoint.x())
                                              .arg(request.target.detectionPoint.y()));
         // Target - Courses
@@ -202,7 +204,7 @@ private:
         targetRoot->child(5, 1)->setText(QString::number(request.target.avoidanceDistance));
     }
 
-    void updateShipModel(const Models::Request& request)
+    void updateShipModel()
     {
         QStandardItem* shipRoot = model->item(2);
         shipRoot->child(0, 1)->setText(QString::number(request.ship.detection_range));
@@ -212,15 +214,15 @@ private:
         shipRoot->child(4, 1)->setText(QString::number(request.ship.min_lenght_section));
     }
 
-    void updatePerimeterModel(const Models::Request& request)
+    void updatePerimeterModel()
     {
         QStandardItem* perimeterRoot = model->item(3);
 
         // Perimeter - Points
-        perimeterRoot->child(0, 1)->setText(QString("[%1, %2]")
+        perimeterRoot->child(0, 1)->setText(QString("%1, %2")
                                                 .arg(request.perimeter.entrance.x())
                                                 .arg(request.perimeter.entrance.y()));
-        perimeterRoot->child(1, 1)->setText(QString("[%1, %2]")
+        perimeterRoot->child(1, 1)->setText(QString("%1, %2")
                                                 .arg(request.perimeter.exit.x())
                                                 .arg(request.perimeter.exit.y()));
 
@@ -245,6 +247,7 @@ private:
                 createPointEditor(borderItem, QString("Point %1").arg(j + 1), point);
             }
         }
+
         // Border Line
         QStandardItem* borderLineRoot = perimeterRoot->child(3);
         borderLineRoot->removeRows(0, borderLineRoot->rowCount());
@@ -258,44 +261,125 @@ private:
 
     void updateRequestFromModel()
     {
-        Models::Request request;
         // Time
         request.time = model->item(0, 1)->text().toDouble();
+
         // Update Target
-        updateRequestTarget(request);
+        updateRequestTarget();
 
         // Update Ship
-        updateRequestShip(request);
+        updateRequestShip();
 
         // Update Perimeter
-        updateRequestPerimeter(request);
+        updateRequestPerimeter();
 
         emit propertyChanged(request);
     }
+    void updateRequestShip()
+    {
+        QStandardItem* shipRoot = model->item(2);
+        request.ship.detection_range = shipRoot->child(0, 1)->text().toDouble();
+        request.ship.max_velocity = shipRoot->child(1, 1)->text().toDouble();
+        request.ship.search_velocity = shipRoot->child(2, 1)->text().toDouble();
+        request.ship.turning_radius = shipRoot->child(3, 1)->text().toDouble();
+        request.ship.min_lenght_section = shipRoot->child(4, 1)->text().toDouble();
+    }
 
-    void updateRequestPerimeter(Models::Request& request)
+    void updateRequestTarget()
+    {
+        QStandardItem* targetRoot = model->item(1);
+        // Target - Detection Point
+        QString detectionStr = targetRoot->child(0, 1)->text();
+        detectionStr.remove('[').remove(']');
+        QStringList coords = detectionStr.split(',');
+        if (coords.size() == 2)
+        {
+            request.target.detectionPoint.setX(coords[0].trimmed().toDouble());
+            request.target.detectionPoint.setY(coords[1].trimmed().toDouble());
+        }
+        // Target - Courses
+        QString coursesStr = targetRoot->child(1, 1)->text();
+        QStringList courses = coursesStr.split('-');
+        if (courses.size() == 2)
+        {
+            request.target.courses.first = courses[0].trimmed().toDouble();
+            request.target.courses.second = courses[1].trimmed().toDouble();
+        }
+
+        // Target - rootMeanSquareError
+        request.target.rootMeanSquareError = targetRoot->child(2, 1)->text().toDouble();
+
+        // Target - Velocities
+        QStandardItem* velocitiesRoot = targetRoot->child(3);
+        request.target.currentVelocity = velocitiesRoot->child(0, 1)->text().toDouble();
+        request.target.maxVelocity = velocitiesRoot->child(1, 1)->text().toDouble();
+        request.target.minNoiseReduced = velocitiesRoot->child(2, 1)->text().toDouble();
+        request.target.maxNoiseReduced = velocitiesRoot->child(3, 1)->text().toDouble();
+
+        // Target - Other parameters
+        request.target.obsolescenceTime = targetRoot->child(4, 1)->text().toDouble();
+        request.target.avoidanceDistance = targetRoot->child(5, 1)->text().toDouble();
+    }
+
+    void updateRequestPerimeter()
     {
         QStandardItem* perimeterRoot = model->item(3);
         // Perimeter - Points
         QString entranceStr = perimeterRoot->child(0, 1)->text();
-        entranceStr.remove('[').remove(']');
-        QStringList coords = entranceStr.split(',');
-        if (coords.size() == 2)
-        {
-            request.perimeter.entrance.setX(coords[0].trimmed().toDouble());
-            request.perimeter.entrance.setY(coords[1].trimmed().toDouble());
-        }
+        request.perimeter.entrance = parsePoint(entranceStr);
+
         QString exitStr = perimeterRoot->child(1, 1)->text();
-        exitStr.remove('(').remove(')');
-        coords = exitStr.split(',');
-        if (coords.size() == 2)
+        request.perimeter.exit = parsePoint(exitStr);
+
+        // Rings
+        QStandardItem* ringsRoot = perimeterRoot->child(2);
+
+        request.perimeter.rings.clear();
+
+        for (size_t i = 0; i < ringsRoot->rowCount(); ++i)
         {
-            request.perimeter.exit.setX(coords[0].trimmed().toDouble());
-            request.perimeter.exit.setY(coords[1].trimmed().toDouble());
+            QStandardItem* ringItem = ringsRoot->child(i);
+            QPolygonF polygon;
+
+            for (size_t j = 0; j < ringItem->rowCount(); ++j)
+            {
+                QString pointStr = ringItem->child(j, 1)->text();
+
+                polygon << parsePoint(pointStr);
+            }
+
+            request.perimeter.rings.append(polygon);
         }
 
-        // Note: Borders and Border Line are read-only in this implementation
-        // For full editing capability, additional UI would be needed
+        // Border Line
+        QStandardItem* borderLineRoot = perimeterRoot->child(3);
+
+        request.border.clear();
+
+        for (size_t i = 0; i < borderLineRoot->rowCount(); ++i)
+        {
+            QString pointStr = borderLineRoot->child(i, 1)->text();
+
+            request.border << parsePoint(pointStr);
+        }
+    }
+
+    QPointF parsePoint(const QString& pointStr)
+    {
+        QString cleanStr = pointStr;
+        cleanStr /*.remove('[').remove(']')*/.remove(' ');
+
+        QStringList coords = cleanStr.split(',');
+
+        if (coords.size() == 2)
+        {
+            return QPointF(coords[0].toDouble(), coords[1].toDouble());
+        }
+
+        // TODO: Спорно.  Вызывать исключение.
+
+        throw std::runtime_error("Длина pointStr не соответствует.");
+        return QPointF{};
     }
 
     void showContextMenu(const QPoint& pos)
@@ -338,55 +422,10 @@ private:
         }
     }
 
-    void updateRequestShip(Models::Request& request)
-    {
-        QStandardItem* shipRoot = model->item(2);
-        request.ship.detection_range = shipRoot->child(0, 1)->text().toDouble();
-        request.ship.max_velocity = shipRoot->child(1, 1)->text().toDouble();
-        request.ship.search_velocity = shipRoot->child(2, 1)->text().toDouble();
-        request.ship.turning_radius = shipRoot->child(3, 1)->text().toDouble();
-        request.ship.min_lenght_section = shipRoot->child(4, 1)->text().toDouble();
-    }
-
-    void updateRequestTarget(Models::Request& request)
-    {
-        QStandardItem* targetRoot = model->item(1);
-        // Target - Detection Point
-        QString detectionStr = targetRoot->child(0, 1)->text();
-        detectionStr.remove('[').remove(']');
-        QStringList coords = detectionStr.split(',');
-        if (coords.size() == 2)
-        {
-            request.target.detectionPoint.setX(coords[0].trimmed().toDouble());
-            request.target.detectionPoint.setY(coords[1].trimmed().toDouble());
-        }
-        // Target - Courses
-        QString coursesStr = targetRoot->child(1, 1)->text();
-        QStringList courses = coursesStr.split('-');
-        if (courses.size() == 2)
-        {
-            request.target.courses.first = courses[0].trimmed().toDouble();
-            request.target.courses.second = courses[1].trimmed().toDouble();
-        }
-        // Target - rootMeanSquareError
-        request.target.rootMeanSquareError = targetRoot->child(2, 1)->text().toDouble();
-
-        // Target - Velocities
-        QStandardItem* velocitiesRoot = targetRoot->child(3);
-        request.target.currentVelocity = velocitiesRoot->child(0, 1)->text().toDouble();
-        request.target.maxVelocity = velocitiesRoot->child(1, 1)->text().toDouble();
-        request.target.minNoiseReduced = velocitiesRoot->child(2, 1)->text().toDouble();
-        request.target.maxNoiseReduced = velocitiesRoot->child(3, 1)->text().toDouble();
-
-        // Target - Other parameters
-        request.target.obsolescenceTime = targetRoot->child(4, 1)->text().toDouble();
-        request.target.avoidanceDistance = targetRoot->child(5, 1)->text().toDouble();
-    }
-
     void createPointEditor(QStandardItem* parent, const QString& name, const QPointF& point)
     {
         QList<QStandardItem*> pointItems;
-        pointItems << new QStandardItem(name) << new QStandardItem(QString("[%1, %2]").arg(point.x()).arg(point.y()));
+        pointItems << new QStandardItem(name) << new QStandardItem(QString("%1, %2").arg(point.x()).arg(point.y()));
         pointItems[0]->setFlags(pointItems[0]->flags() & ~Qt::ItemIsEditable);
 
         parent->appendRow(pointItems);
@@ -400,6 +439,7 @@ private:
         parent->appendRow(rangeItems);
     }
 
+    Models::Request request;
     QStandardItemModel* model;
     QTreeView* treeView;
 };

@@ -54,22 +54,29 @@ class SceneWidget final : public QWidget
     {
         Zigzag,
         Shift,
-
-        Straight,
-        Spiral
+        SectorSpiral,
+        StraightTack,
+        LinearPatrolling,
+        OnStop
     };
 
-    const std::map<ActorType, QString> ActorTypeName{
-        {ActorType::Zigzag, "Зигзаг"},
-        {ActorType::Shift, "Сдвиг"},
-        {ActorType::Straight, "Гребенка"},
-        {ActorType::Spiral, "Спираль"}};
+    const std::map<ActorType, QString>
+        ActorTypeName{
+            {ActorType::Zigzag, "Зигзаг"},
+            {ActorType::Shift, "Сдвиг"},
+            {ActorType::SectorSpiral, "Спираль"},
+            {ActorType::StraightTack, "Гребенка"},
+            {ActorType::LinearPatrolling, "Линейное"},
+            {ActorType::OnStop, "На Стопе"},
+        };
 
     std::map<ActorType, std::function<Scene::Actor*()>> actors{
         {ActorType::Zigzag, [this]() { target->setState(new Scene::Objects::WithOutDrawState());return new Scene::Actors::InRegionScene(); }},
         {ActorType::Shift, []() { return new Scene::Actors::InRegionScene(); }},
-        {ActorType::Straight, []() { return new Scene::Actors::InRegionScene(); }},
-        {ActorType::Spiral, [this]() { target->setState(new Scene::Objects::CurrentDrawState());return new Scene::Actors::Spiral(); }}};
+        {ActorType::SectorSpiral, [this]() { target->setState(new Scene::Objects::CurrentDrawState());return new Scene::Actors::Spiral(); }},
+        {ActorType::StraightTack, []() { return new Scene::Actors::InRegionScene(); }},
+        {ActorType::LinearPatrolling, []() { return new Scene::Actors::InRegionScene(); }},
+        {ActorType::OnStop, []() { return new Scene::Actors::InRegionScene(); }}};
 
 protected:
     // TODO: Добавляем    comboBox = new QComboBox(this);

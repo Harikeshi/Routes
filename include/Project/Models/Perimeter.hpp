@@ -24,6 +24,26 @@ public:
         addValidator("borders", [](const QJsonObject& json) { validateRegion(json, "borders"); });
     }
 
+    Perimeter operator=(const Perimeter& value)
+    {
+        entrance = value.entrance;
+        exit = value.exit;
+
+        rings.clear();
+
+        for (const auto& ring : value.rings)
+        {
+            QPolygonF r;
+            for (const auto& point : ring)
+            {
+                r.append(point);
+            }
+            rings.append(r);
+        }
+        minX = value.minX, minY = value.minY, maxX = value.maxX, maxY = value.maxY;
+        return *this;
+    }
+
     size_t getId() const override
     {
         return id;

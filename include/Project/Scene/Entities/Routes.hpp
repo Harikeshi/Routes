@@ -150,7 +150,7 @@ public:
     {
         for (const auto& route : routes)
         {
-            route->setModel(model, parameters.detectionRange, size);
+            route->setModel(model, parameters.detection_range, size);
         }
     }
 

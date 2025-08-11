@@ -51,5 +51,10 @@ struct Message : public Input
         text = json["text"].toString();
         type = json["type"].toString();
     }
+
+    void show() const
+    {
+        qDebug() << "Код: " << code << ", текст: " << text << ", тип: " << type;
+    }
 };
 } // namespace Models

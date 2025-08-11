@@ -17,6 +17,21 @@ struct Report : public Input
 
     bool loaded = false;
 
+    void show() const
+    {
+        qDebug() << "Messages: ";
+        for (const auto& message : _messages)
+        {
+            message.show();
+        }
+
+        qDebug() << "Routes:";
+        for (const auto& route : _routes)
+        {
+            route.show();
+        }
+    }
+
 public:
     size_t getId() const override
     {
@@ -29,6 +44,7 @@ public:
         if (json.contains("id"))
             id = json["id"].toInt();
 
+        _messages.clear();
         for (const auto& message : json["messages"].toArray())
         {
             Message mes{0, 0, "", ""};
@@ -56,7 +72,7 @@ public:
         //        obj["id"] = static_cast<qint64>(id);
 
         QJsonArray routesArray;
-        
+
         for (const Route& route : _routes)
         {
             routesArray.append(route.toJson());

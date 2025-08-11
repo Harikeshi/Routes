@@ -20,6 +20,16 @@ struct Route : public Input
             } });
     }
 
+    void show() const
+    {
+        qDebug() << "Id: " << id;
+
+        for (auto const& segment : segments)
+        {
+            segment.show();
+        }
+    }
+
     size_t getId() const override
     {
         return id;
