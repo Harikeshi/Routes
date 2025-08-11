@@ -243,14 +243,11 @@ private slots:
             reportLoaded = false;
             try
             {
-                // auto json = initializer->getRequestJson();
-                // initializer->getRequest().toJson();
                 // TODO: Можно сделать чтобы был перевод в nlohmann toNJson()
-                auto nloh = Operations::convertToNlohmann(initializer->getRequest().toJson());
+                task.setTask(initializer->getRequest().toNJson());
 
-                task.setTask(nloh);
-          
                 auto report = task.computeRoute(static_cast<SearchScheme>(scene->getActorType()));
+
                 initializer->loadFromJson(Operations::convertToQJsonObject(report));
             }
             catch (...)
@@ -304,9 +301,6 @@ private slots:
 
         QString message;
         MessageType type = MessageType::Success;
-
-        qDebug() << request.ship.detection_range;
-        qDebug() << request.ship.detectionRange;
 
         scene->reloadRequest(request);
         initializer->loadRequest(request, message, type);

@@ -38,8 +38,6 @@ public:
 
         limits.fromPoint(target->getCurrentPosition());
 
-        limits.show();
-
         return limits;
     }
 

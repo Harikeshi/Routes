@@ -214,13 +214,9 @@ public:
 
             message += "Файл report загружен в базу!";
 
-            // TODO: Какое-то костыльное решение
+            // TODO: Какое-то костыльное решение или нет
             report.request_id = request.id;
             repository->save(report);
-
-            report._messages[0].show();
-
-            report.show();
 
             emit reportLoaded();
             emit sendReportJson(json); // Для инициализации dataWidget
@@ -286,7 +282,7 @@ public:
 
 private:
     //    QString connectionString = "host=127.0.0.1 dbname=request_report user=viz_user password=1 connect_timeout=3";
-    QString connectionString = "host=192.168.50.512 dbname=request_report user=viz_user password=1 connect_timeout=3";
+    QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
     //    QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
 public:
     Initializer(
@@ -315,9 +311,6 @@ public:
 
     void setRequest(const Models::Request& request)
     {
-        request.show();
-
-        qDebug() << "request changed!";
         this->request = request;
     }
 

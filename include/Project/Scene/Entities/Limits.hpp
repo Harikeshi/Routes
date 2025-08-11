@@ -209,12 +209,12 @@ struct Limits
         const double height = std::fabs(maxY - minY) * percent / 100;
         const double width = std::fabs(maxX - minX) * percent / 100;
 
-        auto miX = minX - width;  // minX
-        auto miY = minY - height; // minY
-        auto maX = maxX + width;  // maxX
-        auto maY = maxY + height; // maxY
+        auto _miX = minX - width;  // minX
+        auto _miY = minY - height; // minY
+        auto _maX = maxX + width;  // maxX
+        auto _maY = maxY + height; // maxY
 
-        return {miX, miY, maX, maY};
+        return {_miX, _miY, _maX, _maY};
     }
 
     void show() const
