@@ -21,6 +21,17 @@ if (MSVC)
             "${CMAKE_SOURCE_DIR}/libs/Task.lib"
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
     )
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/libs/Task_d.dll"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+    )
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/libs/Task_d.lib"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+    )
+
 endif ()
 
 
