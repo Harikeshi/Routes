@@ -141,12 +141,12 @@ public:
         // DataWidget
         connect(dataWidget, &DataWidget::sendPath, this, &MainWindow::loadJson); // Получаем путь из списка
 
-        initializer = new Initializer();
+        // initializer = new Initializer();
 
         // Initializer <-> Main
         // connect(initializer, &Initializer::sendRequestJson, dataWidget, &DataWidget::initializeRequest);
-        connect(initializer, &Initializer::sendMessage, this, &MainWindow::processMessage);
-        connect(initializer, &Initializer::sendError, this, &MainWindow::processError);
+        connect(&Initializer::instance(), &Initializer::sendMessage, this, &MainWindow::processMessage);
+        connect(&Initializer::instance(), &Initializer::sendError, this, &MainWindow::processError);
 
         //        connect(initializer, &Initializer::sendRequest, this, &MainWindow::receiveRequest);
         //        connect(initializer, &Initializer::sendReport, this, &MainWindow::receiveReport);
@@ -155,8 +155,8 @@ public:
         //        connect(initializer, &Initializer::sendLimits, scene, &SceneWidget::setLimits);
         //        connect(initializer, &Initializer::sendRequest, this, &MainWindow::setSpeedLabel);
 
-        connect(initializer, &Initializer::changedRequest, this, &MainWindow::receiveRequest);
-        connect(initializer, &Initializer::changedReport, this, &MainWindow::receiveReport);
+        connect(&Initializer::instance(), &Initializer::changedRequest, this, &MainWindow::receiveRequest);
+        connect(&Initializer::instance(), &Initializer::changedReport, this, &MainWindow::receiveReport);
 
         // ProgressBar <-> Scene
         connect(scene, &SceneWidget::sendFullTime, progress, &UpdateProgressBar::setTotalTime);
@@ -257,11 +257,11 @@ private slots:
             try
             {
                 // TODO: Можно сделать чтобы был перевод в nlohmann toNJson()
-                task.setTask(initializer->getRequest().toNJson());
+                task.setTask(Initializer::instance().getRequest().toNJson());
 
                 auto report = task.computeRoute(static_cast<SearchScheme>(scene->getActorType()));
 
-                initializer->loadFromJson(Operations::convertToQJsonObject(report));
+                Initializer::instance().loadFromJson(Operations::convertToQJsonObject(report));
             }
             catch (...)
             {
@@ -309,7 +309,7 @@ private slots:
         MessageType type = MessageType::Success;
 
         scene->reloadRequest(request);
-        initializer->saveRequest(request);
+        Initializer::instance().saveRequest(request);
 
         infoWidget->addMessage(message, type);
 
@@ -379,7 +379,7 @@ private slots:
         QJsonObject obj = Operations::jsonFromFile(path);
 
         // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
-        initializer->loadFromJson(obj);
+        Initializer::instance().loadFromJson(obj);
     }
 
 public:
@@ -448,7 +448,7 @@ private:
             //            QJsonObject obj = Operations::jsonFromFile("e:\\visualization\\jsons\\request.json");
             QJsonObject obj = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\request.json");
             // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
-            initializer->loadFromJson(obj);
+            Initializer::instance().loadFromJson(obj);
 
             requestLoaded = true;
 
@@ -457,7 +457,7 @@ private:
             //            obj = Operations::jsonFromFile("e:\\visualization\\jsons\\result.json");
             obj = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\result.json");
             // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
-            initializer->loadFromJson(obj);
+            Initializer::instance().loadFromJson(obj);
 
             reportLoaded = true;
         }
@@ -551,7 +551,7 @@ private:
     InformationWidget* infoWidget;
 
     // Работа с данными
-    Initializer* initializer;
+    // Initializer* initializer;
 
     bool requestLoaded = false;
     bool reportLoaded = false;

@@ -289,24 +289,31 @@ private:
     QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
 
 public:
-    Initializer(
-        const std::string& str = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3")
+    static Initializer& instance()
     {
-        // TODO: getHomePath()
-
-        try
-        {
-            // TODO: need Create Factory
-            repository = std::make_unique<Database::PostgreSQLRepository>(connectionString);
-            qDebug() << "Request/Report PostgreSQL connected!" + connectionString.split(' ')[0];
-        }
-        catch (std::runtime_error& ex)
-        {
-            // TODO: сообщение
-            qDebug() << "Не удалось подключиться к postgreSQL Request/Report." + connectionString.split(' ')[0] + ": " + QString(ex.what());
-            repository = std::make_unique<Database::JsonRepository>(getHomePath());
-        }
+        static Initializer instance;
+        return instance;
     }
+
+    Initializer() = default;
+    ~Initializer() = default;
+
+    // Initializer(const std::string& str)
+    // {
+    //     // TODO: getHomePath()
+    //     try
+    //     {
+    //         // TODO: need Create Factory
+    //         repository = std::make_unique<Database::PostgreSQLRepository>(connectionString);
+    //         qDebug() << "Request/Report PostgreSQL connected!" + connectionString.split(' ')[0];
+    //     }
+    //     catch (std::runtime_error& ex)
+    //     {
+    //         // TODO: сообщение
+    //         qDebug() << "Не удалось подключиться к postgreSQL Request/Report." + connectionString.split(' ')[0] + ": " + QString(ex.what());
+    //         repository = std::make_unique<Database::JsonRepository>(getHomePath());
+    //     }
+    // }
 
     void setRequest(const Models::Request& request)
     {
