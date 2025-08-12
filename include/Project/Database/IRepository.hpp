@@ -16,6 +16,8 @@ public:
     virtual Models::Request findRequestById(size_t id) = 0;
     virtual Models::Report findReportById(size_t id) = 0;
 
+    virtual size_t getLastReportId() = 0;
+
     virtual ~IRepository() = default;
 };
 } // namespace Database

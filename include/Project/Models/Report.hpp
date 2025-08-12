@@ -11,6 +11,7 @@ struct Report : public Input
 {
     size_t id{0};
     size_t request_id{0};
+    QString created_at;
     // TODO: Чтобы поддержать концепцию реализовать Route в validate
     QVector<Route> _routes;
     QVector<Message> _messages;
@@ -109,7 +110,7 @@ public:
         {
             messagesArray.emplace_back(message.toNJson());
         }
-        
+
         obj["messages"] = messagesArray;
 
         return obj;

@@ -14,25 +14,24 @@
 #include "Project/Database/PostgreSQLRepository.hpp"
 
 // TODO: Инициализатор должен только отправлять Request и Report и сообщение
+
+/*!
+ * Хранит состояние текущих Request и Repost.
+ */
 class Initializer : public QObject
 {
     using Limits = Scene::Entities::Limits;
     Q_OBJECT
 signals:
-
-    //    void sendRequest(Models::Request);
-    //    void sendReport(Models::Report);
-    void sendMessage(QString, MessageType);
-
-    void reportLoaded();
-
-    void requestLoaded();
-
-    //    void sendLimits(Limits);
-
     void sendRequestJson(QJsonObject);
 
     void sendReportJson(QJsonObject);
+
+    void sendMessage(QString);
+    void sendError(QString);
+
+    void changedRequest(const Models::Request&);
+    void changedReport(const Models::Report&);
 
 private:
     inline QString getHomePath()
@@ -116,7 +115,7 @@ private:
     QVector<FieldInfo> reportFields{{"routes", QJsonValue::Array}};
 
     // Высокоуровневая проверка, только наличие полей
-    bool isCorrect(const QVector<FieldInfo> fields, const QJsonObject& json, QString& message)
+    bool isCorrect(const QVector<FieldInfo> fields, const QJsonObject& json)
     {
         for (const auto& field : fields)
         {
@@ -131,20 +130,20 @@ private:
                 }
                 else
                 {
-                    //emit sendMessage("Пропущено поле:" + field.path, MessageType::Warning);
+                    emit sendError("Пропущено поле: " + field.path);
                     return false;
                 }
             }
 
             if (current.isUndefined())
             {
-                //emit sendMessage("Пропущено поле:" + field.path, MessageType::Warning);
+                emit sendError("Пропущено поле: " + field.path);
                 return false;
             }
 
             if (field.type != QJsonValue::Undefined && current.type() != field.type)
             {
-                //emit sendMessage(QString("Ошибка Поле:[%1], Except: %2, Recieve: %3").arg(field.path).arg(typeToString(field.type)).arg(typeToString(current.type())), MessageType::Warning);
+                emit sendError(QString("Ошибка Поле: [%1], Except: %2, Receive: %3").arg(field.path).arg(typeToString(field.type)).arg(typeToString(current.type())));
                 return false;
             }
         }
@@ -152,107 +151,111 @@ private:
         return true;
     }
 
-    bool isReport(const QJsonObject& json, QString& message)
+    bool isReport(const QJsonObject& json)
     {
-        //emit sendMessage("Проверка файла Report.", MessageType::Info);
-        return isCorrect(reportFields, json, message);
+        emit sendMessage("Проверка файла Report.");
+        return isCorrect(reportFields, json);
     }
 
-    bool isRequest(const QJsonObject& json, QString& message)
+    bool isRequest(const QJsonObject& json)
     {
-        //emit sendMessage("Проверка файла Request.", MessageType::Info);
-        return isCorrect(requestFields, json, message);
+        emit sendMessage("Проверка файла Request.");
+        return isCorrect(requestFields, json);
     }
 
 public:
-    void loadRequest(const QJsonObject& json, QString& message, MessageType& type)
+    void saveRequest(const Models::Request& request)
     {
-        try
-        {
-            // TODO: Формирование сообщения вынести выше по логике
-            message += "Файл определен, как request. ";
-            request.fromJson(json);
-
-            message += "Файл request загружен в базу!";
-
-            emit requestLoaded();
-            // emit sendRequestJson(json); // Для инициализации dataWidget
-
-            request.id = repository->save(request);
-        }
-        catch (std::runtime_error& ex)
-        {
-            message += "Файл request не загружен:";
-            message += ex.what();
-            type = MessageType::Error;
-        }
-    }
-
-    void loadRequest(const Models::Request& request, QString& message, MessageType& type)
-    {
+        // TODO: Валидация
+        QString message;
         try
         {
             this->request = request;
             this->request.id = repository->save(this->request);
 
             message += "Файл request загружен в базу!";
+
+            emit changedRequest(request);
         }
         catch (std::runtime_error& ex)
         {
-            message += "Файл request не загружен:";
-            message += ex.what();
-            type = MessageType::Error;
+            emit sendError(QString("Файл request не загружен: %1").arg(ex.what()));
         }
+
+        emit sendMessage(message);
     }
 
-    void loadReport(const QJsonObject& json, QString& message, MessageType& type)
+    void loadRequest(const QJsonObject& json)
     {
+        QString message;
+        try
+        {
+            // TODO: Формирование сообщения вынести выше по логике
+            message += "Файл определен, как request. ";
+            // TODO:
+            request.fromJson(json);
+
+            message += "Файл request загружен в базу!";
+
+            emit changedRequest(request);
+            // request.id = repository->save(request);
+        }
+        catch (std::runtime_error& ex)
+        {
+            emit sendMessage(QString(message + "Файл request.json не загружен: %1").arg(ex.what()));
+        }
+
+        emit sendMessage(message);
+    }
+
+    void loadReport(const QJsonObject& json)
+    {
+        QString message;
+
         try
         {
             message += "Файл определен, как report.";
             report.fromJson(json);
-
             message += "Файл report загружен в базу!";
 
             // TODO: Какое-то костыльное решение или нет
-            report.request_id = request.id;
-            repository->save(report);
+            // report.request_id = request.id;
+            // repository->save(report);
 
-            emit reportLoaded();
-            emit sendReportJson(json); // Для инициализации dataWidget
+            emit changedReport(report);
         }
         catch (std::runtime_error& ex)
         {
-            message += "Файл report не загружен:";
-            message += ex.what();
+            message += "Файл report не загружен: ";
+            emit sendError(QString(message + "%1").arg(ex.what()));
 
-            type = MessageType::Error;
+            return;
         }
+
+        emit sendMessage(message);
     }
 
     void loadFromJson(const QJsonObject& json) // message
     {
-        QString message; // TODO: Отправить сообщением {text, type}
-        MessageType type = MessageType::Info;
+        // QString message; // TODO: Отправить сообщением {text, type}
+        // MessageType type = MessageType::Info;
 
-        if (isRequest(json, message))
+        if (isRequest(json))
         {
             request_json = json;
-            loadRequest(json, message, type);
+
+            loadRequest(json);
         }
-        else if (isReport(json, message))
+        else if (isReport(json))
         {
             report_json = json;
-            loadReport(json, message, type);
+
+            loadReport(json);
         }
         else
         {
-            // Файл не соответствует требованиям
-            message = "Файл не подходит!";
-            type = MessageType::Error;
+            emit sendError("Файл не соответствует требованиям");
         }
-
-        emit sendMessage(message, type);
     }
 
     Models::Request getRequest() const
@@ -282,8 +285,9 @@ public:
 
 private:
     //    QString connectionString = "host=127.0.0.1 dbname=request_report user=viz_user password=1 connect_timeout=3";
-    QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
-    //    QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
+    // QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
+    QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
+
 public:
     Initializer(
         const std::string& str = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3")
@@ -295,17 +299,12 @@ public:
             // TODO: need Create Factory
             repository = std::make_unique<Database::PostgreSQLRepository>(connectionString);
             qDebug() << "Request/Report PostgreSQL connected!" + connectionString.split(' ')[0];
-            emit sendMessage("Request/Report PostgreSQL connected!" + connectionString.split(' ')[0], MessageType::Success);
         }
         catch (std::runtime_error& ex)
         {
             // TODO: сообщение
-            emit sendMessage("Не удалось подключиться к postgreSQL Request/Report." + connectionString.split(' ')[0] + ": " + QString(ex.what()), MessageType::Error);
             qDebug() << "Не удалось подключиться к postgreSQL Request/Report." + connectionString.split(' ')[0] + ": " + QString(ex.what());
-
             repository = std::make_unique<Database::JsonRepository>(getHomePath());
-
-            emit sendMessage("Request/Report будут сохраняться в домашней директории.", MessageType::Info);
         }
     }
 
@@ -315,7 +314,6 @@ public:
     }
 
 private:
-    //    Limits limits;
     std::unique_ptr<Database::IRepository> repository;
 
     QJsonObject request_json;

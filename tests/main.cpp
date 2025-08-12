@@ -3,18 +3,18 @@
 #include <Project/MainWindow.hpp>
 #include <QApplication>
 
-#include <Project/Scene/Objects/PathWidget.hpp>
-#include <Project/Scene/Objects/PointWidget.hpp>
+// #include <Project/Scene/Objects/PathWidget.hpp>
+// #include <Project/Scene/Objects/PointWidget.hpp>
 
 #include <iostream>
 
 #include <cmath>
 
-#include "Project/Database/PostgreSQLRepository.hpp"
-#include "Project/Operations/JsonOperations.hpp"
-#include <../include/Project/Widgets/Data/PropertyTable.hpp>
+// #include "Project/Database/PostgreSQLRepository.hpp"
+// #include "Project/Operations/JsonOperations.hpp"
+// #include <../include/Project/Widgets/Data/PropertyTable.hpp>
 
-#include "Project/examples/MWindow.hpp"
+// #include "Project/examples/MWindow.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
 
-    // MWindow window;
+    //    MWindow window;
     MainWindow window;
     window.resize(800, 800);
     std::map<int, int> i{{1, 1}, {2, 2}};

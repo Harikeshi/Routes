@@ -24,8 +24,8 @@ public:
         try
         {
             //            repository = Database::DatabaseRepository{Database::DatabaseConnection::createConnection("127.0.0.1")};
-            //            repository = Database::DatabaseRepository{Database::DatabaseConnection::createConnection("192.168.205.130")};
-            repository = Database::InformationRepository{Database::DatabaseConnection::createConnection("192.168.50.52")};
+            repository = Database::InformationRepository{Database::DatabaseConnection::createConnection("192.168.205.130")};
+            // repository = Database::InformationRepository{Database::DatabaseConnection::createConnection("192.168.50.52")};
             qDebug() << "Info connected to postgresql!";
         }
         catch (...)

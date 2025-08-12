@@ -91,6 +91,13 @@ public:
         return report;
     }
 
+    size_t getLastReportId() override
+    {
+        auto reports = readJsonArrayFromFile(reportPath);
+
+        return reports.last()["id"].toInt();
+    }
+
 private:
     QJsonArray readJsonArrayFromFile(const QString& fileName)
     {

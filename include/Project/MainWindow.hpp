@@ -145,7 +145,9 @@ public:
 
         // Initializer <-> Main
         // connect(initializer, &Initializer::sendRequestJson, dataWidget, &DataWidget::initializeRequest);
-        connect(initializer, &Initializer::sendMessage, this, &MainWindow::getInitializerMessage);
+        connect(initializer, &Initializer::sendMessage, this, &MainWindow::processMessage);
+        connect(initializer, &Initializer::sendError, this, &MainWindow::processError);
+
         //        connect(initializer, &Initializer::sendRequest, this, &MainWindow::receiveRequest);
         //        connect(initializer, &Initializer::sendReport, this, &MainWindow::receiveReport);
 
@@ -153,8 +155,8 @@ public:
         //        connect(initializer, &Initializer::sendLimits, scene, &SceneWidget::setLimits);
         //        connect(initializer, &Initializer::sendRequest, this, &MainWindow::setSpeedLabel);
 
-        connect(initializer, &Initializer::requestLoaded, this, &MainWindow::receiveRequest);
-        connect(initializer, &Initializer::reportLoaded, this, &MainWindow::receiveReport);
+        connect(initializer, &Initializer::changedRequest, this, &MainWindow::receiveRequest);
+        connect(initializer, &Initializer::changedReport, this, &MainWindow::receiveReport);
 
         // ProgressBar <-> Scene
         connect(scene, &SceneWidget::sendFullTime, progress, &UpdateProgressBar::setTotalTime);
@@ -206,6 +208,16 @@ private slots:
     void setSpeedLabel(const Request& request)
     {
         sub->setSpeedInput(request.target.currentVelocity);
+    }
+
+    void processMessage(const QString& message)
+    {
+        infoWidget->addMessage(message, MessageType::Info);
+    }
+
+    void processError(const QString& error)
+    {
+        infoWidget->addMessage(error, MessageType::Error);
     }
 
     void getInitializerMessage(const QString& message, const MessageType type) const
@@ -270,30 +282,23 @@ private slots:
     /*!
      * Действия после инициализации request.
      */
-    void receiveRequest()
+    void receiveRequest(const Request& request)
     {
-        if (initializer->getRequest().isLoaded())
-        {
-            requestLoaded = true;
-            reportLoaded = false;
-            checkLoad(); // TODO: В новых реалиях(сброс при загрузке request) под вопросом
+        requestLoaded = true;
+        reportLoaded = false;
+        checkLoad(); // TODO: В новых реалиях(сброс при загрузке request) под вопросом
 
-            //! Загрузка request, сброс загрузки report.
-            scene->reloadRequest(initializer->getRequest());
+        //! Загрузка request, сброс загрузки report.
+        scene->reloadRequest(request);
 
-            //! Инициализация дерева request.json
-            // TODO: Переделать дерево.
-            dataWidget->clear();
-            dataWidget->setRequest(initializer->getRequest());
+        //! Инициализация дерева request.json
+        // TODO: Переделать дерево.
+        dataWidget->clear();
+        dataWidget->setRequest(request);
 
-            // dataWidget->initializeRequest(initializer->getRequestJson());
+        // dataWidget->initializeRequest(initializer->getRequestJson());
 
-            infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
-        }
-        else
-        {
-            infoWidget->addMessage("Request был загружен не полностью.", MessageType::Warning);
-        }
+        infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
     }
 
     void setRequestFromDataWidget(const Models::Request& request)
@@ -304,7 +309,7 @@ private slots:
         MessageType type = MessageType::Success;
 
         scene->reloadRequest(request);
-        initializer->loadRequest(request, message, type);
+        initializer->saveRequest(request);
 
         infoWidget->addMessage(message, type);
 
@@ -316,8 +321,10 @@ private slots:
         //        scene->reloadRequest(request);
     }
 
-    // Отправка данных report в Scene
-    void receiveReport()
+    /*!
+     * Действия при изменении Report.
+     */
+    void receiveReport(const Report& report)
     {
         if (!requestLoaded)
         {
@@ -325,26 +332,26 @@ private slots:
             return;
         }
 
-        if (initializer->getRequest().isLoaded())
+        // if (initializer->getRequest().isLoaded())
+        // {
+        reportLoaded = true;
+
+        checkLoad();
+
+        scene->reloadReport(report);
+
+        // Вывод сообщений
+        for (const auto& message : report._messages)
         {
-            reportLoaded = true;
-
-            checkLoad();
-
-            scene->reloadReport(initializer->getReport());
-
-            // Вывод сообщений
-            for (const auto& message : initializer->getMessages())
-            {
-                infoWidget->addMessage(QString("%1").arg(message.code) + ":" + message.type + ": " + message.text);
-            }
-
-            infoWidget->addMessage("Report был загружен полностью.", MessageType::Success);
+            infoWidget->addMessage(QString("%1").arg(message.code) + ":" + message.type + ": " + message.text);
         }
-        else
-        {
-            infoWidget->addMessage("Report был загружен не полностью.", MessageType::Warning);
-        }
+
+        infoWidget->addMessage("Report был загружен полностью.", MessageType::Success);
+        // }
+        // else
+        // {
+        // infoWidget->addMessage("Report был загружен не полностью.", MessageType::Warning);
+        // }
     }
 
 public:
