@@ -98,6 +98,12 @@ public:
         return reports.last()["id"].toInt();
     }
 
+    size_t getLastRequestId() override
+    {
+        auto requests = readJsonArrayFromFile(requestPath);
+        return requests.last()["id"].toInt();
+    }
+
 private:
     QJsonArray readJsonArrayFromFile(const QString& fileName)
     {

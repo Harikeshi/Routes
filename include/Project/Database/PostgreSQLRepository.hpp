@@ -38,7 +38,8 @@ using Target = Models::Target;
 class PostgreSQLRepository : public IRepository
 {
 public:
-    PostgreSQLRepository() : Database::IRepository("")
+    PostgreSQLRepository()
+        : Database::IRepository("")
     {
     }
 
@@ -64,8 +65,13 @@ public:
 
         return result[0]["id"].as<size_t>();
     }
-    
-    size_t getLastReportId()
+
+    size_t getLastRequestId() override
+    {
+        return getLastId("requests");
+    }
+
+    size_t getLastReportId() override
     {
         return getLastId("reports");
     }

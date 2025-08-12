@@ -26,24 +26,27 @@ private:
 
 public:
     // TODO: DatabaseConnection
-    explicit DatabaseManager(std::shared_ptr<Database::IRepository> repo, QObject* parent = nullptr)
-        : QObject(parent), repository(repo)
+    explicit DatabaseManager(QObject* parent = nullptr)
+        : QObject(parent)
     {
         //!
+        //    QString connectionString = "host=127.0.0.1 dbname=request_report user=viz_user password=1 connect_timeout=3";
+        // QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
+        QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
         try
         {
             // TODO: need Create Factory
             repository = std::make_unique<Database::PostgreSQLRepository>(connectionString);
-            emit sendMessage(QString("Request/Report PostgreSQL connected! %1").arg(connectionString.split(' ')[0]));
+            qDebug() << QString("Request/Report PostgreSQL connected! %1").arg(connectionString.split(' ')[0]);
         }
-        catch (std::runtime_error& ex)
+        catch (std::exception& ex)
         {
             // TODO: сообщение
-            emit sendError(QString("Не удалось подключиться к PostgreSQL %1. %2").arg(connectionString.split(' ')[0]).arg(ex.what()));
+            qDebug() << QString("Не удалось подключиться к PostgreSQL %1. %2").arg(connectionString.split(' ')[0]).arg(ex.what());
 
             repository = std::make_unique<Database::JsonRepository>(getHomePath());
 
-            emit sendMessage("Request/Report будут сохраняться в домашней директории.");
+            qDebug() << "Request/Report будут сохраняться в домашней директории.";
         }
     }
 
@@ -99,12 +102,12 @@ public:
         }
     }
 
-    void saveReport(const Models::Report& report)
+    void saveReport(Models::Report report)
     {
         try
         {
-            repository->save(report);
-            emit reportSaved(report.id);
+            report.request_id = repository->getLastRequestId();
+            emit reportSaved(repository->save(report));
         }
         catch (const std::exception& e)
         {
@@ -116,8 +119,7 @@ public:
     {
         try
         {
-            repository->save(request);
-            emit requestSaved(request.id);
+            emit requestSaved(repository->save(request));
         }
         catch (const std::exception& e)
         {

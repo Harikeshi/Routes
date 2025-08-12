@@ -7,6 +7,7 @@
 
 //TODO: Проверка есть сообщения и Пути
 namespace Models {
+// TODO: Модель для отображения достраивать от этой.
 struct Report : public Input
 {
     size_t id{0};

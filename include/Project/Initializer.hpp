@@ -3,29 +3,21 @@
 #include "Models/Report.hpp"
 #include "Models/Request.hpp"
 
-#include "MessageType.hpp"
-#include "Models/Perimeter.hpp"
-#include "Scene/Entities/Limits.hpp"
-
 #include <QObject>
 #include <QString>
 
-#include "Project/Database/JsonRepository.hpp"
-#include "Project/Database/PostgreSQLRepository.hpp"
-
-// TODO: Инициализатор должен только отправлять Request и Report и сообщение
+// TODO: валидация, хранение и передача.
 
 /*!
  * Хранит состояние текущих Request и Repost.
  */
 class Initializer : public QObject
 {
-    using Limits = Scene::Entities::Limits;
     Q_OBJECT
 signals:
-    void sendRequestJson(QJsonObject);
-
-    void sendReportJson(QJsonObject);
+    // void sendRequestJson(QJsonObject);
+    //
+    // void sendReportJson(QJsonObject);
 
     void sendMessage(QString);
     void sendError(QString);
@@ -170,9 +162,6 @@ public:
         QString message;
         try
         {
-            this->request = request;
-            this->request.id = repository->save(this->request);
-
             message += "Файл request загружен в базу!";
 
             emit changedRequest(request);
@@ -198,7 +187,6 @@ public:
             message += "Файл request загружен в базу!";
 
             emit changedRequest(request);
-            // request.id = repository->save(request);
         }
         catch (std::runtime_error& ex)
         {
@@ -218,10 +206,6 @@ public:
             report.fromJson(json);
             message += "Файл report загружен в базу!";
 
-            // TODO: Какое-то костыльное решение или нет
-            // report.request_id = request.id;
-            // repository->save(report);
-
             emit changedReport(report);
         }
         catch (std::runtime_error& ex)
@@ -237,9 +221,6 @@ public:
 
     void loadFromJson(const QJsonObject& json) // message
     {
-        // QString message; // TODO: Отправить сообщением {text, type}
-        // MessageType type = MessageType::Info;
-
         if (isRequest(json))
         {
             request_json = json;
@@ -283,45 +264,20 @@ public:
         return report_json;
     }
 
-private:
-    //    QString connectionString = "host=127.0.0.1 dbname=request_report user=viz_user password=1 connect_timeout=3";
-    // QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
-    QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
+    void setRequest(const Models::Request& request)
+    {
+        this->request = request;
+    }
 
-public:
     static Initializer& instance()
     {
         static Initializer instance;
         return instance;
     }
 
+private:
     Initializer() = default;
     ~Initializer() = default;
-
-    // Initializer(const std::string& str)
-    // {
-    //     // TODO: getHomePath()
-    //     try
-    //     {
-    //         // TODO: need Create Factory
-    //         repository = std::make_unique<Database::PostgreSQLRepository>(connectionString);
-    //         qDebug() << "Request/Report PostgreSQL connected!" + connectionString.split(' ')[0];
-    //     }
-    //     catch (std::runtime_error& ex)
-    //     {
-    //         // TODO: сообщение
-    //         qDebug() << "Не удалось подключиться к postgreSQL Request/Report." + connectionString.split(' ')[0] + ": " + QString(ex.what());
-    //         repository = std::make_unique<Database::JsonRepository>(getHomePath());
-    //     }
-    // }
-
-    void setRequest(const Models::Request& request)
-    {
-        this->request = request;
-    }
-
-private:
-    std::unique_ptr<Database::IRepository> repository;
 
     QJsonObject request_json;
     QJsonObject report_json;

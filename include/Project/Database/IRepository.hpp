@@ -17,6 +17,7 @@ public:
     virtual Models::Report findReportById(size_t id) = 0;
 
     virtual size_t getLastReportId() = 0;
+    virtual size_t getLastRequestId() = 0;
 
     virtual ~IRepository() = default;
 };

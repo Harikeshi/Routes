@@ -5,15 +5,12 @@
 #endif
 
 #include <QAction>
-#include <QApplication>
-#include <QFileDialog>
 #include <QMainWindow>
 #include <QMenuBar>
 #include <QSplitter>
 #include <QStackedLayout>
 #include <QWidget>
 
-#include "./Scene/Actors/InRegion.hpp"
 #include "./Widgets/SceneWidget.hpp"
 
 #include "MessageType.hpp"
@@ -24,6 +21,8 @@
 #include "./Widgets/ManageWidget.hpp"
 #include "./Widgets/SubWidget.hpp"
 #include "Project/Widgets/UpdateProgress.hpp"
+
+#include "Project/Database/DatabaseManager.hpp"
 
 #include "Initializer.hpp"
 #include "search_task.hpp"
@@ -151,12 +150,11 @@ public:
         //        connect(initializer, &Initializer::sendRequest, this, &MainWindow::receiveRequest);
         //        connect(initializer, &Initializer::sendReport, this, &MainWindow::receiveReport);
 
-        // Scene
-        //        connect(initializer, &Initializer::sendLimits, scene, &SceneWidget::setLimits);
-        //        connect(initializer, &Initializer::sendRequest, this, &MainWindow::setSpeedLabel);
-
         connect(&Initializer::instance(), &Initializer::changedRequest, this, &MainWindow::receiveRequest);
         connect(&Initializer::instance(), &Initializer::changedReport, this, &MainWindow::receiveReport);
+
+        connect(&Initializer::instance(), &Initializer::changedRequest, datamanager, &Database::DatabaseManager::saveRequest);
+        connect(&Initializer::instance(), &Initializer::changedReport, datamanager, &Database::DatabaseManager::saveReport);
 
         // ProgressBar <-> Scene
         connect(scene, &SceneWidget::sendFullTime, progress, &UpdateProgressBar::setTotalTime);
@@ -550,8 +548,8 @@ private:
 
     InformationWidget* infoWidget;
 
-    // Работа с данными
-    // Initializer* initializer;
+    //!
+    Database::DatabaseManager* datamanager = new Database::DatabaseManager(this);
 
     bool requestLoaded = false;
     bool reportLoaded = false;
