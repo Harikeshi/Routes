@@ -172,6 +172,40 @@ public:
             row["min_length_section"].as<double>()};
     }
 
+    QVector<Models::Report> getAllReports() override
+    {
+        QVector<Models::Report> result;
+
+        pqxx::work txn(*m_connection);
+        auto rows = txn.exec("SELECT id FROM reports;");
+
+        result.reserve(rows.size());
+
+        for (const auto& row : rows)
+        {
+            result.append(this->findReportById(row["id"].as<size_t>()));
+        }
+
+        return result;
+    }
+
+    QVector<Models::Request> getAllRequests() override
+    {
+        QVector<Models::Request> result;
+
+        pqxx::work txn(*m_connection);
+        auto rows = txn.exec("SELECT id FROM requests;");
+
+        result.reserve(rows.size());
+
+        for (const auto& row : rows)
+        {
+            result.append(this->findRequestById(row["id"].as<size_t>()));
+        }
+
+        return result;
+    }
+
     QVector<Object> findAllObjects()
     {
         pqxx::work txn(*m_connection);

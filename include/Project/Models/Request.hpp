@@ -10,15 +10,19 @@
 namespace Models {
 struct Request : public Input
 {
+    //! DAO
     size_t id{0};
+    QString owner;
+    QDateTime create_at;
+
+    //! origin
     double time;
     Perimeter perimeter;
     QVector<QPointF> border{QPointF{0, 0}, QPointF{1, 1}, QPointF{2, 2}};
     Target target;
     Object ship;
 
-    QString owner;
-
+    //! for scene
     bool loaded = false;
 
     Request() = default;

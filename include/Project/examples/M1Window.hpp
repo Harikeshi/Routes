@@ -25,7 +25,7 @@ public:
         resize(800, 600);
         // Connect signals
         connect(m_reportView, &ReportListView::reportDoubleClicked, this, &M1Window::onReportSelected);
-        connect(m_reportView, &ReportListView::errorOccurred, this, &M1Window::onError);
+        //        connect(m_reportView, &ReportListView::errorOccurred, this, &M1Window::onError);
         connect(m_reportManager, &ReportManager::errorOccurred, this, &M1Window::onError);
     }
 

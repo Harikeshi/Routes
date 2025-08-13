@@ -3,6 +3,8 @@
 #include <QAbstractTableModel>
 #include <QDateTime>
 
+#include "Project/Initializer.hpp"
+
 class ReportListModel : public QAbstractTableModel
 {
     Q_OBJECT
@@ -49,7 +51,7 @@ public:
                 return report.id;
             case CreatedAt:
                 // TODO: regular
-                return QDateTime::fromString(report.created_at);
+                return report.created_at;
             case RequestId:
                 return report.request_id;
             case RequestName:
@@ -95,6 +97,7 @@ public:
         beginResetModel();
         m_reports = m_manager->loadAllReports();
         m_requests.clear();
+
         for (const auto& report : m_reports)
         {
             try
@@ -121,6 +124,47 @@ public:
         if (index.isValid() && index.row() < m_requests.size())
             return m_requests[index.row()];
         throw std::out_of_range("Invalid index");
+    }
+
+    size_t getRequestId(const QModelIndex& index) const
+    {
+        if (index.isValid() && index.row() < m_reports.size())
+        {
+            auto report = m_reports[index.row()];
+
+            return report.request_id;
+        }
+
+        throw std::out_of_range("Invalid index");
+    }
+
+    size_t getReportId(const QModelIndex& index) const
+    {
+        if (index.isValid() && index.row() < m_reports.size())
+        {
+            return m_reports[index.row()].getId();
+        }
+
+        throw std::out_of_range("Invalid index");
+    }
+
+    void setReports(const QVector<Models::Report>& reports)
+    {
+        m_reports = reports;
+    }
+
+    void setRequest(const QVector<Models::Request>& requests)
+    {
+        m_requests = requests;
+    }
+
+    void setCurrentFromIndex(const QModelIndex& index)
+    {
+        if (index.isValid() && index.row() < m_reports.size())
+        {
+            Initializer::instance().setReport(m_reports[index.row()]);
+            Initializer::instance().setRequest(m_requests[index.row()]);
+        }
     }
 
 private:

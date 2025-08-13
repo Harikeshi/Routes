@@ -10,13 +10,18 @@ namespace Models {
 // TODO: Модель для отображения достраивать от этой.
 struct Report : public Input
 {
+    //! DAO
     size_t id{0};
     size_t request_id{0};
-    QString created_at;
+    QDateTime created_at;
+    QString owner;
+
     // TODO: Чтобы поддержать концепцию реализовать Route в validate
+    //! origin
     QVector<Route> _routes;
     QVector<Message> _messages;
 
+    //! for scene
     bool loaded = false;
 
     void show() const

@@ -3,6 +3,7 @@
 #include "../Database/PostgreSQLRepository.hpp"
 #include <QHeaderView>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QTableWidget>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -46,6 +47,7 @@ private slots:
 
 private:
     std::shared_ptr<Database::PostgreSQLRepository> m_repository;
+
     QTableWidget* m_table;
 
     void setupUI()

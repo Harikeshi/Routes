@@ -9,6 +9,7 @@
 
 #include "IRepository.hpp"
 #include "Project/GetCurrentUsername.hpp"
+#include <QDateTime>
 
 namespace Database {
 class JsonRepository : public Database::IRepository
@@ -96,6 +97,48 @@ public:
         auto reports = readJsonArrayFromFile(reportPath);
 
         return reports.last()["id"].toInt();
+    }
+
+    QVector<Models::Request> getAllRequests() override
+    {
+        auto requests = readJsonArrayFromFile(requestPath);
+
+        QVector<Models::Request> result;
+
+        for (const auto& request : requests)
+        {
+            Models::Request res;
+
+            res.fromJson(request.toObject()["data"].toObject());
+
+            res.owner = request.toObject()["owner"].toString();
+            res.id = request.toObject()["id"].toInt();
+
+            result.push_back(res);
+        }
+
+        return result;
+    }
+
+    QVector<Models::Report> getAllReports() override
+    {
+        auto reports = readJsonArrayFromFile(reportPath);
+
+        QVector<Models::Report> result;
+
+        for (auto report : reports)
+        {
+            Models::Report res;
+            res.fromJson(report.toObject()["data"].toObject());
+
+            res.created_at = QDateTime::fromString(report.toObject()["date"].toString(), "yyyy-MM-dd");
+            res.id = report.toObject()["id"].toInt();
+            res.request_id = report.toObject()["request_id"].toInt();
+
+            result.push_back(res);
+        }
+
+        return result;
     }
 
     size_t getLastRequestId() override

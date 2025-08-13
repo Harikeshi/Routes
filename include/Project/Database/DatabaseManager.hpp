@@ -2,6 +2,8 @@
 
 #include "JsonRepository.hpp"
 #include "PostgreSQLRepository.hpp"
+#include "ReportRowModel.hpp"
+
 #include <QObject>
 
 namespace Database {
@@ -9,10 +11,6 @@ class DatabaseManager : public QObject
 {
     Q_OBJECT
 private:
-    //    QString connectionString = "host=127.0.0.1 dbname=request_report user=viz_user password=1 connect_timeout=3";
-    QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
-    //    QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
-
     inline QString getHomePath()
     {
         QString result;
@@ -31,8 +29,8 @@ public:
     {
         //!
         //    QString connectionString = "host=127.0.0.1 dbname=request_report user=viz_user password=1 connect_timeout=3";
-        // QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
-        QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
+        QString connectionString = "host=192.168.50.512 dbname=request_report user=viz_user password=1 connect_timeout=3";
+        //        QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
         try
         {
             // TODO: need Create Factory
@@ -48,6 +46,29 @@ public:
 
             qDebug() << "Request/Report будут сохраняться в домашней директории.";
         }
+    }
+
+    QVector<ReportRowModel> allReportRowsModel() const
+    {
+        auto reports = repository->getAllReports();
+
+        QVector<ReportRowModel> rows;
+
+        rows.reserve(reports.size());
+
+        for (const auto& report : reports)
+        {
+            ReportRowModel row;
+            row.report_id = report.id;
+            row.request_id = report.request_id;
+            row.owner = "";
+            row.message = report._messages[0].text;
+            row.date = report.created_at;
+
+            rows.push_back(row);
+        }
+
+        return rows;
     }
 
     QVector<Models::Report> loadAllReports() const
@@ -76,7 +97,7 @@ public:
         return reports;
     }
 
-    Models::Report loadReport(size_t id) const
+    Models::Report getReport(size_t id) const
     {
         try
         {
@@ -89,7 +110,7 @@ public:
         }
     }
 
-    Models::Request loadRequest(size_t id) const
+    Models::Request getRequest(size_t id) const
     {
         try
         {

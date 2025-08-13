@@ -15,29 +15,13 @@ class Initializer : public QObject
 {
     Q_OBJECT
 signals:
-    // void sendRequestJson(QJsonObject);
-    //
-    // void sendReportJson(QJsonObject);
-
-    void sendMessage(QString);
-    void sendError(QString);
+    void sendMessage(const QString&);
+    void sendError(const QString&);
 
     void changedRequest(const Models::Request&);
     void changedReport(const Models::Report&);
 
 private:
-    inline QString getHomePath()
-    {
-        QString result;
-#ifdef _WIN32
-        result = QString(std::getenv("USERPROFILE"));
-#else
-        result = QString(getenv("HOME"));
-#endif
-
-        return result;
-    }
-
     struct FieldInfo
     {
         QString path;
@@ -156,7 +140,7 @@ private:
     }
 
 public:
-    void saveRequest(const Models::Request& request)
+    void saveRequest(const Models::Request& _request)
     {
         // TODO: Валидация
         QString message;
@@ -164,7 +148,8 @@ public:
         {
             message += "Файл request загружен в базу!";
 
-            emit changedRequest(request);
+            // TODO: Валидация
+            this->setRequest(_request);
         }
         catch (std::runtime_error& ex)
         {
@@ -179,7 +164,6 @@ public:
         QString message;
         try
         {
-            // TODO: Формирование сообщения вынести выше по логике
             message += "Файл определен, как request. ";
             // TODO:
             request.fromJson(json);
@@ -264,9 +248,18 @@ public:
         return report_json;
     }
 
-    void setRequest(const Models::Request& request)
+    void setRequest(const Models::Request& _request)
     {
-        this->request = request;
+        request = _request;
+
+        emit changedRequest(request);
+    }
+
+    void setReport(const Models::Report& _report)
+    {
+        report = _report;
+
+        emit changedReport(report);
     }
 
     static Initializer& instance()
