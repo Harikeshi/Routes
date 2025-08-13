@@ -19,7 +19,6 @@ public:
     {
         beginResetModel();
         rows = std::move(_rows);
-        qDebug() << "setRows: " << rows.size();
         endResetModel();
     }
 
@@ -60,7 +59,6 @@ public:
             return row.date.toUTC().toString(Qt::ISODate);
         case 4:
             return row.owner;
-            //            row.date.toUTC().toString(Qt::ISODate); //QDataTime
         }
         return {};
     }

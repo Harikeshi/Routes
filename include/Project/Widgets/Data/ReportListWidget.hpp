@@ -23,7 +23,7 @@ public:
         tableView_->setSelectionBehavior(QAbstractItemView::SelectRows);
         tableView_->setSelectionMode(QAbstractItemView::SingleSelection);
         tableView_->setEditTriggers(QAbstractItemView::NoEditTriggers);
-        // tableView_->horizontalHeader()->setStretchLastSection(true);
+        tableView_->horizontalHeader()->setStretchLastSection(true);
 
         layout->addWidget(tableView_);
         setLayout(layout);

@@ -197,7 +197,14 @@ public:
 
         this->setEnabled(false);
 
-        dataWidget->updateReports(datamanager->allReportRowsModel());
+        try
+        {
+            dataWidget->updateReports(datamanager->allReportRowsModel());
+        }
+        catch (std::exception& ex)
+        {
+            qDebug() << ex.what();
+        }
 
         this->setWindowTitle("Visualization");
     }
@@ -224,8 +231,6 @@ private slots:
     void getInitializerMessage(const QString& message, const MessageType type) const
     {
         infoWidget->addMessage(message, type);
-
-        // qDebug() << message;
     }
 
     /*!
@@ -307,12 +312,14 @@ private slots:
         try
         {
             //            auto x = datamanager->getRequest(request_id);
-            receiveRequest(datamanager->getRequest(request_id));
+            // receiveRequest(datamanager->getRequest(request_id));
+            setRequestFromDataWidget(datamanager->getRequest(request_id));
         }
         catch (std::exception& ex)
         {
             infoWidget->addMessage(ex.what(), MessageType::Error);
         }
+
         try
         {
             receiveReport(datamanager->getReport(report_id));

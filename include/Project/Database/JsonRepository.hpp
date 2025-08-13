@@ -100,7 +100,7 @@ public:
         report.id = obj["id"].toInt();
         report.request_id = obj["request_id"].toInt();
         report.owner = obj["owner"].toString();
-        report.created_at = QDateTime::fromString(obj["created_at"].toString(), "yyyy-MM-dd");
+        report.created_at = QDateTime::fromString(obj["created_at"].toString(), "yyyy-MM-dd hh:mm:ss");
 
         return report;
     }
@@ -119,7 +119,7 @@ public:
         request.fromJson(obj["data"].toObject());
 
         request.owner = obj["owner"].toString();
-        request.create_at = QDateTime::fromString(obj["created_at"].toString(), "yyyy-MM-dd");
+        request.created_at = QDateTime::fromString(obj["created_at"].toString(), "yyyy-MM-dd hh:mm:ss");
         request.id = obj["id"].toInt();
 
         return request;

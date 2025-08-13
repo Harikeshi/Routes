@@ -29,8 +29,8 @@ public:
     {
         //!
         //    QString connectionString = "host=127.0.0.1 dbname=request_report user=viz_user password=1 connect_timeout=3";
-        QString connectionString = "host=192.168.50.512 dbname=request_report user=viz_user password=1 connect_timeout=3";
-        //        QString connectionString = "host=192.168.205.130 dbname=request_report user=viz_user password=1 connect_timeout=3";
+        // QString connectionString = "host=192.168.50.52 dbname=request_report user=viz_user password=1 connect_timeout=3";
+        QString connectionString = "host=192.168.205.130 dbname=requests_reports user=viz_user password=1 connect_timeout=3";
         try
         {
             // TODO: need Create Factory
@@ -61,7 +61,7 @@ public:
             ReportRowModel row;
             row.report_id = report.id;
             row.request_id = report.request_id;
-            row.owner = "";
+            row.owner = report.owner;
             row.message = report._messages[0].text;
             row.date = report.created_at;
 

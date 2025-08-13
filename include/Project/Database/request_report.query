@@ -1,5 +1,13 @@
 select current_database();
 
+CREATE DATABASE requests_reports
+  WITH
+  OWNER = viz_user
+  ENCODING = 'UTF8'
+  LC_COLLATE = 'en_US.UTF-8'
+  LC_CTYPE = 'en_US.UTF-8'
+  CONNECTION LIMIT = 100;
+
 -- Таблица сообщений
 CREATE TABLE messages
 (
@@ -104,7 +112,7 @@ CREATE TABLE requests
 (
     id           BIGSERIAL PRIMARY KEY,
     time         DOUBLE PRECISION NOT NULL,
-    name         TEXT             NOT NULL,
+    owner         TEXT             NOT NULL,
     perimeter_id BIGINT           NOT NULL REFERENCES perimeters (id) ON DELETE RESTRICT,
     target_id    BIGINT           NOT NULL REFERENCES targets (id) ON DELETE RESTRICT,
     ship_id      BIGINT           NOT NULL REFERENCES objects (id) ON DELETE RESTRICT,
@@ -128,6 +136,7 @@ CREATE TABLE reports
 (
     id         BIGSERIAL PRIMARY KEY,
     request_id BIGINT NOT NULL REFERENCES requests (id) ON DELETE CASCADE,
+    owner         TEXT             NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

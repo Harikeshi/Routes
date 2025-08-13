@@ -183,7 +183,7 @@ public:
 
         for (const auto& row : rows)
         {
-            result.append(this->findReportById(row["id"].as<size_t>()));
+            result.append(this->findReportById(row["id"].as<size_t>(), txn));
         }
 
         return result;
@@ -414,7 +414,7 @@ public:
 
         // Save request
         txn.exec_params(
-            "INSERT INTO requests (id, name, time, perimeter_id, target_id, ship_id) "
+            "INSERT INTO requests (id, owner, time, perimeter_id, target_id, ship_id) "
             "VALUES ($1, $2, $3, $4, $5, $6)",
             request_id,
             getCurrentUsername(),
@@ -447,7 +447,7 @@ public:
         pqxx::work txn(*m_connection);
 
         auto requestResult = txn.exec_params(
-            "SELECT id, time, perimeter_id, target_id, ship_id FROM requests WHERE id = $1", id);
+            "SELECT id, owner, time, perimeter_id, target_id, ship_id, created_at FROM requests WHERE id = $1", id);
 
         if (requestResult.empty())
         {
@@ -455,12 +455,16 @@ public:
         }
 
         auto row = requestResult[0];
+
         Request request;
+
         request.id = row["id"].as<size_t>();
+        request.owner = QString::fromStdString(row["owner"].as<std::string>());
         request.time = row["time"].as<double>();
         request.perimeter = findPerimeterById(row["perimeter_id"].as<size_t>(), txn);
         request.target = findTargetById(row["target_id"].as<size_t>(), txn);
         request.ship = findObjectById(row["ship_id"].as<size_t>(), txn);
+        request.created_at = QDateTime::fromString(QString::fromStdString(row["created_at"].as<std::string>()), "yyyy-MM-dd hh:mm:ss");
 
         // Get border points
         auto borderResult = txn.exec_params(
@@ -494,10 +498,11 @@ public:
 
         // Save report
         txn.exec_params(
-            "INSERT INTO reports (id, request_id) VALUES ($1, $2) "
+            "INSERT INTO reports (id, request_id, owner) VALUES ($1, $2, $3) "
             "ON CONFLICT (id) DO UPDATE SET request_id = $2",
             report_id,
-            report.request_id);
+            report.request_id,
+            getCurrentUsername());
 
         // Save routes
         for (const auto& route : report._routes)
@@ -527,12 +532,11 @@ public:
         return report_id;
     }
 
-    Report findReportById(size_t id)
+    Report findReportById(size_t id) override
     {
         pqxx::work txn(*m_connection);
 
-        auto reportResult = txn.exec_params(
-            "SELECT id, request_id FROM reports WHERE id = $1", id);
+        auto reportResult = txn.exec_params("SELECT id, request_id, owner, created_at FROM reports WHERE id = $1", id);
 
         if (reportResult.empty())
         {
@@ -543,6 +547,46 @@ public:
         Report report;
         report.id = row["id"].as<size_t>();
         report.request_id = row["request_id"].as<size_t>();
+        report.owner = QString::fromStdString(row["owner"].as<std::string>());
+        report.created_at = QDateTime::fromString(QString::fromStdString(row["created_at"].as<std::string>()), "yyyy-MM-dd hh:mm:ss");
+
+        // Get routes
+        auto routesResult = txn.exec_params(
+            "SELECT route_id FROM report_route_relations WHERE report_id = $1", id);
+
+        for (const auto& routeRow : routesResult)
+        {
+            report._routes.append(findRouteById(routeRow["route_id"].as<size_t>(), txn));
+        }
+
+        // Get messages
+        auto messagesResult = txn.exec_params(
+            "SELECT message_id FROM report_message_relations WHERE report_id = $1", id);
+
+        for (const auto& messageRow : messagesResult)
+        {
+            report._messages.append(findMessageById(messageRow["message_id"].as<size_t>(), txn)); // FindMessageById
+        }
+
+        return report;
+    }
+
+    Report findReportById(size_t id, pqxx::work& txn)
+    {
+        auto reportResult = txn.exec_params("SELECT id, request_id, owner, created_at FROM reports WHERE id = $1", id);
+
+        if (reportResult.empty())
+        {
+            throw std::runtime_error("Report not found");
+        }
+
+        auto row = reportResult[0];
+
+        Report report;
+        report.id = row["id"].as<size_t>();
+        report.request_id = row["request_id"].as<size_t>();
+        report.owner = QString::fromStdString(row["owner"].as<std::string>());
+        report.created_at = QDateTime::fromString(QString::fromStdString(row["created_at"].as<std::string>()), "yyyy-MM-dd hh:mm:ss");
 
         // Get routes
         auto routesResult = txn.exec_params(
@@ -575,13 +619,13 @@ public:
         QVector<Report> reports;
         for (const auto& row : reportsResult)
         {
-            reports.append(findReportById(row["id"].as<size_t>()));
+            reports.append(findReportById(row["id"].as<size_t>(), txn));
         }
 
         return reports;
     }
 
-    //private:
+private:
     std::unique_ptr<pqxx::connection> m_connection;
 
     size_t save(const Target& target, pqxx::work& txn)
