@@ -102,7 +102,7 @@ public:
         // detection point
         QJsonArray detectionPointArr{detectionPoint.x(), detectionPoint.y()};
 
-        obj["detectionPoint"] = detectionPointArr;
+        obj["detection_point"] = detectionPointArr;
 
         // courses
         QJsonArray coursesArray;
@@ -110,16 +110,16 @@ public:
         coursesArray.append(courses.second);
         obj["courses"] = coursesArray;
 
-        obj["rootMeanSquareError"] = rootMeanSquareError;
-        obj["obsolescenceTime"] = obsolescenceTime;
-        obj["avoidanceDistance"] = avoidanceDistance;
+        obj["root-mean-square_error"] = rootMeanSquareError;
+        obj["obsolescence_time"] = obsolescenceTime;
+        obj["avoidance_distance"] = avoidanceDistance;
 
         QJsonObject velocitiesObj;
 
-        velocitiesObj["currentVelocity"] = currentVelocity;
-        velocitiesObj["maxVelocity"] = maxVelocity;
-        velocitiesObj["minNoiseReduced"] = minNoiseReduced;
-        velocitiesObj["maxNoiseReduced"] = maxNoiseReduced;
+        velocitiesObj["current"] = currentVelocity;
+        velocitiesObj["max"] = maxVelocity;
+        velocitiesObj["min_noise-reduced"] = minNoiseReduced;
+        velocitiesObj["max_noise_reduced"] = maxNoiseReduced;
 
         obj["velocities"] = velocitiesObj;
 
@@ -136,7 +136,7 @@ public:
         detection_point.emplace_back(detectionPoint.x());
         detection_point.emplace_back(detectionPoint.y());
 
-        obj["detectionPoint"] = std::move(detection_point);
+        obj["detection_point"] = std::move(detection_point);
 
         // courses
         auto _courses = nlohmann::json::array();
@@ -144,16 +144,16 @@ public:
 
         obj["courses"] = std::move(_courses);
 
-        obj["rootMeanSquareError"] = rootMeanSquareError;
-        obj["obsolescenceTime"] = obsolescenceTime;
-        obj["avoidanceDistance"] = avoidanceDistance;
+        obj["root-mean-square_error"] = rootMeanSquareError;
+        obj["obsolescence_time"] = obsolescenceTime;
+        obj["avoidance_distance"] = avoidanceDistance;
 
         nlohmann::json velocitiesObj;
 
-        velocitiesObj["currentVelocity"] = currentVelocity;
-        velocitiesObj["maxVelocity"] = maxVelocity;
-        velocitiesObj["minNoiseReduced"] = minNoiseReduced;
-        velocitiesObj["maxNoiseReduced"] = maxNoiseReduced;
+        velocitiesObj["current"] = currentVelocity;
+        velocitiesObj["max"] = maxVelocity;
+        velocitiesObj["min_noise-reduced"] = minNoiseReduced;
+        velocitiesObj["max_noise-reduced"] = maxNoiseReduced;
 
         obj["velocities"] = velocitiesObj;
 

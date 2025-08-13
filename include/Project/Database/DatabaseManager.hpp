@@ -68,6 +68,8 @@ public:
             rows.push_back(row);
         }
 
+        qDebug() << "Count: " << rows.size();
+
         return rows;
     }
 

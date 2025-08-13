@@ -139,6 +139,7 @@ public:
 
         // DataWidget
         connect(dataWidget, &DataWidget::sendPath, this, &MainWindow::loadJson); // Получаем путь из списка
+        connect(dataWidget, &DataWidget::sendReportRequestIds, this, &MainWindow::setRequestReportFromIds);
 
         // initializer = new Initializer();
 
@@ -195,6 +196,8 @@ public:
         connect(dataWidget, &DataWidget::sendRequestFromWidget, this, &MainWindow::setRequestFromDataWidget);
 
         this->setEnabled(false);
+
+        dataWidget->updateReports(datamanager->allReportRowsModel());
 
         this->setWindowTitle("Visualization");
     }
@@ -299,6 +302,27 @@ private slots:
         infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
     }
 
+    void setRequestReportFromIds(size_t request_id, size_t report_id)
+    {
+        try
+        {
+            //            auto x = datamanager->getRequest(request_id);
+            receiveRequest(datamanager->getRequest(request_id));
+        }
+        catch (std::exception& ex)
+        {
+            infoWidget->addMessage(ex.what(), MessageType::Error);
+        }
+        try
+        {
+            receiveReport(datamanager->getReport(report_id));
+        }
+        catch (std::exception& ex)
+        {
+            infoWidget->addMessage(ex.what(), MessageType::Error);
+        }
+    }
+
     void setRequestFromDataWidget(const Models::Request& request)
     {
         requestLoaded = true;
@@ -310,13 +334,6 @@ private slots:
         Initializer::instance().saveRequest(request);
 
         infoWidget->addMessage(message, type);
-
-        //        requestLoaded = true;
-        //        reportLoaded = false;
-        //        checkLoad(); // TODO: В новых реалиях(сброс при загрузке request) под вопросом
-        //
-        //        //! Загрузка request, сброс загрузки report.
-        //        scene->reloadRequest(request);
     }
 
     /*!
@@ -330,8 +347,6 @@ private slots:
             return;
         }
 
-        // if (initializer->getRequest().isLoaded())
-        // {
         reportLoaded = true;
 
         checkLoad();
@@ -345,11 +360,6 @@ private slots:
         }
 
         infoWidget->addMessage("Report был загружен полностью.", MessageType::Success);
-        // }
-        // else
-        // {
-        // infoWidget->addMessage("Report был загружен не полностью.", MessageType::Warning);
-        // }
     }
 
 public:
@@ -415,6 +425,7 @@ protected:
             this->start(true);
             break;
         case Qt::Key_L:
+            dataWidget->updateReports(datamanager->allReportRowsModel());
             scene->lines();
             break;
         case Qt::Key_B:

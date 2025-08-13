@@ -15,7 +15,7 @@ public:
      */
     void fromJson(const QJsonObject& json)
     {
-        validate(json);
+        //        validate(json);
 
         initializeProperties(json);
     }

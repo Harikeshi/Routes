@@ -38,6 +38,8 @@ public slots:
         try
         {
             model_->setRows(std::move(rows));
+
+            qDebug() << model_->rowCount();
             update(); // TODO: ?
         }
         catch (const std::exception& ex)

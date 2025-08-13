@@ -18,7 +18,8 @@ public:
     void setRows(const QVector<ReportRowModel>& _rows)
     {
         beginResetModel();
-        rows = std::move(rows);
+        rows = std::move(_rows);
+        qDebug() << "setRows: " << rows.size();
         endResetModel();
     }
 

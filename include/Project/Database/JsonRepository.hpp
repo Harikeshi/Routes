@@ -74,20 +74,33 @@ public:
     {
         QJsonArray array = readJsonArrayFromFile(requestPath);
 
-        Models::Request request;
+        auto it = std::find_if(array.begin(), array.end(), [&id](const QJsonValue& obj) { return obj["id"].toInt() == id; });
 
-        request.fromJson(array.at(id).toObject());
-
-        return request;
+        // TODO: if(it)
+        return initRequest(it->toObject());
     }
 
     Models::Report findReportById(size_t id) override
     {
         QJsonArray array = readJsonArrayFromFile(reportPath);
 
+        auto it = std::find_if(array.begin(), array.end(), [&id](const QJsonValue& obj) { return obj["id"].toInt() == id; });
+
+        auto value = it->toObject();
+
+        return initReport(value);
+    }
+
+    Models::Report initReport(const QJsonObject& obj)
+    {
         Models::Report report;
 
-        report.fromJson(array.at(id).toObject());
+        report.fromJson(obj["data"].toObject());
+
+        report.id = obj["id"].toInt();
+        report.request_id = obj["request_id"].toInt();
+        report.owner = obj["owner"].toString();
+        report.created_at = QDateTime::fromString(obj["created_at"].toString(), "yyyy-MM-dd");
 
         return report;
     }
@@ -99,6 +112,19 @@ public:
         return reports.last()["id"].toInt();
     }
 
+    Models::Request initRequest(const QJsonObject& obj)
+    {
+        Models::Request request;
+
+        request.fromJson(obj["data"].toObject());
+
+        request.owner = obj["owner"].toString();
+        request.create_at = QDateTime::fromString(obj["created_at"].toString(), "yyyy-MM-dd");
+        request.id = obj["id"].toInt();
+
+        return request;
+    }
+
     QVector<Models::Request> getAllRequests() override
     {
         auto requests = readJsonArrayFromFile(requestPath);
@@ -107,14 +133,7 @@ public:
 
         for (const auto& request : requests)
         {
-            Models::Request res;
-
-            res.fromJson(request.toObject()["data"].toObject());
-
-            res.owner = request.toObject()["owner"].toString();
-            res.id = request.toObject()["id"].toInt();
-
-            result.push_back(res);
+            result.push_back(initRequest(request.toObject()));
         }
 
         return result;
@@ -128,14 +147,7 @@ public:
 
         for (auto report : reports)
         {
-            Models::Report res;
-            res.fromJson(report.toObject()["data"].toObject());
-
-            res.created_at = QDateTime::fromString(report.toObject()["date"].toString(), "yyyy-MM-dd");
-            res.id = report.toObject()["id"].toInt();
-            res.request_id = report.toObject()["request_id"].toInt();
-
-            result.push_back(res);
+            result.push_back(initReport(report.toObject()));
         }
 
         return result;

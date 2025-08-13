@@ -71,8 +71,8 @@ inline void validateDigit(const QJsonValue& json, const QString& key, const doub
     /* QJsonDocument doc(json.toObject());
     qDebug() << doc.toJson(QJsonDocument::Compact);*/
     // Проверка: является числом
+    qDebug() << key << ":" << json[key] << ":" << json[key].isDouble();
     checkDouble(json, key);
-
     checkInterval(json, key, min, max);
 }
 
