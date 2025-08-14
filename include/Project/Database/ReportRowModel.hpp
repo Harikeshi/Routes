@@ -9,7 +9,7 @@ struct ReportRowModel
     size_t request_id;
     QString scheme;
     QString message;
-    QDateTime date;
+    QString date;
     QString owner;
 };
 } // namespace Database

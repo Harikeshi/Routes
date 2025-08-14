@@ -407,7 +407,6 @@ public:
 
         // Save ship
         auto ship_id = save(request.ship, txn);
-        qDebug() << request_id;
 
         // Save request
         txn.exec_params(
@@ -461,7 +460,9 @@ public:
         request.perimeter = findPerimeterById(row["perimeter_id"].as<size_t>(), txn);
         request.target = findTargetById(row["target_id"].as<size_t>(), txn);
         request.ship = findObjectById(row["ship_id"].as<size_t>(), txn);
-        request.created_at = QDateTime::fromString(QString::fromStdString(row["created_at"].as<std::string>()), "yyyy-MM-dd hh:mm:ss");
+
+        auto time = QString::fromStdString(row["created_at"].as<std::string>()).split('.').first();
+        request.created_at = QDateTime::fromString(time, "yyyy-MM-dd hh:mm:ss");
 
         // Get border points
         auto borderResult = txn.exec_params(
@@ -547,7 +548,9 @@ public:
         report.request_id = row["request_id"].as<size_t>();
         report.owner = QString::fromStdString(row["owner"].as<std::string>());
         report.scheme = QString::fromStdString(row["scheme"].as<std::string>());
-        report.created_at = QDateTime::fromString(QString::fromStdString(row["created_at"].as<std::string>()), "yyyy-MM-dd hh:mm:ss");
+
+        auto time = QString::fromStdString(row["created_at"].as<std::string>()).split('.').first();
+        report.created_at = QDateTime::fromString(time, "yyyy-MM-dd hh:mm:ss");
 
         // Get routes
         auto routesResult = txn.exec_params(
@@ -586,7 +589,10 @@ public:
         report.request_id = row["request_id"].as<size_t>();
         report.owner = QString::fromStdString(row["owner"].as<std::string>());
         report.scheme = QString::fromStdString(row["scheme"].as<std::string>());
-        report.created_at = QDateTime::fromString(QString::fromStdString(row["created_at"].as<std::string>()), "yyyy-MM-dd hh:mm:ss");
+
+        auto time = QString::fromStdString(row["created_at"].as<std::string>()).split('.').first();
+
+        report.created_at = QDateTime::fromString(time, "yyyy-MM-dd hh:mm:ss");
 
         // Get routes
         auto routesResult = txn.exec_params(

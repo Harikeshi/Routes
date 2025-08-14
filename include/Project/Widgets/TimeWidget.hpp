@@ -43,12 +43,10 @@ public:
 
     void updateTime(double time)
     {
-        // qint64 seconds = static_cast<qint64>(time * 60);
-
         // TODO: Можно добавить общее время
         int t = static_cast<int>(time);
 
-        QDateTime dateTime; // = QDateTime::currentDateTime();
+        QDateTime dateTime;
 
         int seconds = t % 60;
         int minutes = (t / 60) % 60;
@@ -64,7 +62,7 @@ public:
         update();
     }
 
-    double speedDown(int mult)
+    double speedDown(int multi)
     {
         if (defaultNumber == 1)
         {
@@ -79,9 +77,9 @@ public:
         }
         else if (defaultNumber > 1)
         {
-            if (defaultNumber - mult > 0)
+            if (defaultNumber - multi > 0)
             {
-                defaultNumber -= mult;
+                defaultNumber -= multi;
             }
             else
             {
@@ -94,7 +92,7 @@ public:
         return defaultNumber;
     }
 
-    double speedUp(double mult)
+    double speedUp(double multi)
     {
         if (defaultNumber < 1)
         {
@@ -102,7 +100,7 @@ public:
         }
         else
         {
-            defaultNumber += mult;
+            defaultNumber += multi;
         }
 
         setMultiplier();
@@ -110,9 +108,9 @@ public:
         return defaultNumber;
     }
 
-    double setSpeed(double mult)
+    double setSpeed(double multi)
     {
-        defaultNumber = mult;
+        defaultNumber = multi;
 
         setMultiplier();
 

@@ -10,7 +10,8 @@
 
 #include "Project/Models/Report.hpp"
 #include "Project/Models/Request.hpp"
-#include "Project/Scene/ActorType.hpp"
+#include "Project/Scene/ActorTypeInfo.hpp"
+
 #include "TimeWidget.hpp"
 
 #include "../Scene/Entities/CoordinateSystem.hpp"
@@ -50,33 +51,13 @@ class SceneWidget final : public QWidget
 
     Q_OBJECT
 
-    enum ActorType
-    {
-        Zigzag,
-        Shift,
-        SectorSpiral,
-        StraightTack,
-        LinearPatrolling,
-        OnStop
-    };
-
-    const std::map<ActorType, QString>
-        ActorTypeName{
-            {ActorType::Zigzag, "Зигзаг"},
-            {ActorType::Shift, "Сдвиг"},
-            {ActorType::SectorSpiral, "Спираль"},
-            {ActorType::StraightTack, "Гребенка"},
-            {ActorType::LinearPatrolling, "Линейное"},
-            {ActorType::OnStop, "На Стопе"},
-        };
-
-    std::map<ActorType, std::function<Scene::Actor*()>> actors{
-        {ActorType::Zigzag, [this]() { target->setState(new Scene::Objects::WithOutDrawState());return new Scene::Actors::InRegionScene(); }},
-        {ActorType::Shift, [this]() { target->setState(new Scene::Objects::WithOutDrawState());return new Scene::Actors::InRegionScene(); }},
-        {ActorType::SectorSpiral, [this]() { target->setState(new Scene::Objects::CurrentDrawState());return new Scene::Actors::Spiral(); }},
-        {ActorType::StraightTack, [this]() {target->setState(new Scene::Objects::CurrentDrawState()); return new Scene::Actors::InRegionScene(); }},
-        {ActorType::LinearPatrolling, []() { return new Scene::Actors::InRegionScene(); }},
-        {ActorType::OnStop, []() { return new Scene::Actors::InRegionScene(); }}};
+    std::map<Scene::ActorType, std::function<Scene::Actor*()>> actors{
+        {Scene::ActorType::Zigzag, [this]() { target->setState(new Scene::Objects::WithOutDrawState());return new Scene::Actors::InRegionScene(); }},
+        {Scene::ActorType::Shift, [this]() { target->setState(new Scene::Objects::WithOutDrawState());return new Scene::Actors::InRegionScene(); }},
+        {Scene::ActorType::SectorSpiral, [this]() { target->setState(new Scene::Objects::CurrentDrawState());return new Scene::Actors::Spiral(); }},
+        {Scene::ActorType::StraightTack, [this]() {target->setState(new Scene::Objects::CurrentDrawState()); return new Scene::Actors::InRegionScene(); }},
+        {Scene::ActorType::LinearPatrolling, []() { return new Scene::Actors::InRegionScene(); }},
+        {Scene::ActorType::OnStop, []() { return new Scene::Actors::InRegionScene(); }}};
 
 protected:
     // TODO: Добавляем    comboBox = new QComboBox(this);
@@ -147,12 +128,15 @@ public:
         actorChoose = new QComboBox(topWidget);
 
         //! Инициализация Выбора Actor.
-        for (const auto& act : ActorTypeName)
+        for (const auto& act : Scene::ActorTypeName)
             actorChoose->addItem(act.second, static_cast<int>(act.first));
 
-        connect(actorChoose, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int type) {
-            qDebug() << "Выбран: " << type;
-            changeActor(static_cast<ActorType>(type));
+        connect(actorChoose, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int number) {
+            qDebug() << "Выбран: " << number;
+            auto type = static_cast<Scene::ActorType>(number);
+            changeActor(type);
+
+            emit schemeChanged(Scene::ActorTypeName.find(type)->second);
         });
 
         actorChoose->setFixedSize(80, 30);
@@ -237,11 +221,13 @@ public:
 signals:
 
     void sendMessage(const QString&); // Оповещение о пересечении например
+    void sendError(const QString&);
+
     void sendDrawing(const bool&);
 
     void sendIndexCurrentPositionSpeed(size_t, const QPointF&, double);
 
-    void sendTargetSpeed(double); // При изменения значения скорости.
+    void sendTargetSpeed(double);
 
     void sendCurrentTime(double time);
 
@@ -262,10 +248,10 @@ public:
 
     QString getActorName() const
     {
-        return ActorTypeName.find(static_cast<ActorType>(actorChoose->currentIndex()))->second;
+        return Scene::ActorTypeName.find(static_cast<Scene::ActorType>(actorChoose->currentIndex()))->second;
     }
 
-    void changeActor(ActorType type)
+    void changeActor(Scene::ActorType type)
     {
         // 1. Сброс сцены.
         // 2. Назначение актера.
@@ -274,126 +260,36 @@ public:
         actor = actors[type]();
     }
 
-    void setActor(const QString& str)
+    void setActor(const QString& name, const Models::Request& request)
     {
-        //! При загрузке из базы данных например, изменяем только название, так как
+        if (getActorName() == name)
+        {
+            return;
+        }
 
-        auto type = static_cast<ActorType>(actorChoose->currentIndex());
+        this->reset();
 
-        emit schemeChanged("");
+        // Изменить comboBox
+        auto type = std::find_if(Scene::ActorTypeName.begin(), Scene::ActorTypeName.end(), [name](const std::pair<Scene::ActorType, QString>& pair) { return pair.second == name; });
+
+        actor = actors[type->first]();
+
+        // Перезагрузить Actor
+        actor->reload(request);
+
+        //        auto index = static_cast<int>(type->first);
+
+        actorChoose->setCurrentIndex(type->first);
+
+        update();
     }
 
 public:
-    void reload()
-    {
-        targetPath = new PathWidget(this);
-
-        QVBoxLayout* mainLayout = new QVBoxLayout(this);
-
-        mainLayout->setContentsMargins(0, 0, 0, 0); // Убираем отступы по краям
-        mainLayout->setSpacing(0);                  // Убираем промежутки
-
-        // Верхняя часть
-        QWidget* topWidget = new QWidget(this);
-        QHBoxLayout* topLayout = new QHBoxLayout(topWidget);
-        topLayout->setContentsMargins(0, 10, 10, 0); // Отступы: слева, сверху, справа, снизу
-
-        // Добавляем растягивающееся пространство слева
-        topLayout->addStretch();
-
-        // TODO: Все же отдельный виджет
-        actorChoose = new QComboBox(topWidget);
-
-        //! Инициализация Выбора Actor.
-        for (const auto& act : ActorTypeName)
-            actorChoose->addItem(act.second, static_cast<int>(act.first));
-
-        connect(actorChoose, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int type) {
-            qDebug() << "Выбран: " << type;
-            changeActor(static_cast<ActorType>(type));
-        });
-
-        actorChoose->setFixedSize(80, 30);
-
-        // actorChoose->setEnabled(false);
-
-        topLayout->addWidget(actorChoose);
-
-        mainLayout->addWidget(topWidget);
-
-        // Центральная часть
-        QWidget* centerWidget = new QWidget(this);
-        centerWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        mainLayout->addWidget(centerWidget, 1);
-
-        // Нижняя часть
-        QWidget* bottomWidget = new QWidget(this);
-        QHBoxLayout* bottomLayout = new QHBoxLayout(bottomWidget);
-        bottomLayout->setContentsMargins(0, 0, 10, 10);
-
-        // Добавляем растягивающееся пространство слева
-        bottomLayout->addStretch();
-
-        metricChoose = new QPushButton("metric", bottomWidget);
-        metricChoose->setFixedSize(80, 30);
-        metricChoose->setFlat(true); // Убираем стандартное оформление
-
-        // Виджет в правом нижнем углу
-        bottomLayout->addWidget(metricChoose);
-        mainLayout->addWidget(bottomWidget);
-
-        routes_ = new Routes(this);
-        target = new Targets(this);
-        target->setState(new Scene::Objects::WithOutDrawState());
-
-        grid = new Grid(this);
-        timer = new QTimer(this);
-
-        // TODO: переименовать
-        actor = new InRegionScene(this);
-
-        cs = CoordinateSystem();
-
-        drawing = false;
-        speedMultiplier = 1;
-
-        this->resize(800, 800);
-
-        // Чтобы не было диких цифр при загрузке
-        limitesToRect();
-
-        // connect(timer, &QTimer::timeout, this, &SceneWidget::updateDrawing);
-        connect(timer, &QTimer::timeout, this, &SceneWidget::moveFromTimer);
-
-        connect(routes_, &Routes::complete, this, &SceneWidget::stop);
-        connect(routes_, &Routes::sendIndexCurrentPositionSpeed, this, &SceneWidget::sendObjectInformation);
-
-        // TimeWidget
-        timeWidget = new TimeWidget(this);
-        connect(this, &SceneWidget::sendCurrentTime, timeWidget, &TimeWidget::updateTime);
-
-        // Размещение Времени и множителя на сцене.
-
-        QWidget* upperWidget = new QWidget(this);
-        upperWidget->setGeometry(10, 10, 200, 70);                   // Отступы, ширина и высота
-        upperWidget->setAttribute(Qt::WA_TransparentForMouseEvents); // Игнорировать события мыши
-        upperWidget->show();
-        upperWidget->setStyleSheet("background: transparent;"); // Прозрачный фон
-
-        QVBoxLayout* sceneLayout = new QVBoxLayout(upperWidget);
-
-        sceneLayout->addWidget(timeWidget);
-
-        QStackedLayout* stackedLayout = new QStackedLayout(this);
-
-        stackedLayout->addWidget(upperWidget);
-        stackedLayout->setCurrentIndex(1); // overlayWidget поверх
-    }
-
     /*!
      * Метод сброса сцены к стартовому состоянию.
      */
-    void reset()
+    void
+    reset()
     {
         //!
         //! Обнулить все динамические объекты.
@@ -430,112 +326,6 @@ public:
         update();
 
         emit sceneReseted();
-    }
-
-    void initialize()
-    {
-        targetPath = new PathWidget(this);
-
-        QVBoxLayout* mainLayout = new QVBoxLayout(this);
-
-        mainLayout->setContentsMargins(0, 0, 0, 0); // Убираем отступы по краям
-        mainLayout->setSpacing(0);                  // Убираем промежутки
-
-        // Верхняя часть
-        QWidget* topWidget = new QWidget(this);
-        QHBoxLayout* topLayout = new QHBoxLayout(topWidget);
-        topLayout->setContentsMargins(0, 10, 10, 0); // Отступы: слева, сверху, справа, снизу
-
-        // Добавляем растягивающееся пространство слева
-        topLayout->addStretch();
-
-        // TODO: Все же отдельный виджет
-        actorChoose = new QComboBox(topWidget);
-
-        //! Инициализация Выбора Actor.
-        for (const auto& act : ActorTypeName)
-            actorChoose->addItem(act.second, static_cast<int>(act.first));
-
-        connect(actorChoose, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int type) {
-            qDebug() << "Выбран: " << type;
-            changeActor(static_cast<ActorType>(type));
-        });
-
-        actorChoose->setFixedSize(80, 30);
-
-        // actorChoose->setEnabled(false);
-
-        topLayout->addWidget(actorChoose);
-
-        mainLayout->addWidget(topWidget);
-
-        // Центральная часть
-        QWidget* centerWidget = new QWidget(this);
-        centerWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        mainLayout->addWidget(centerWidget, 1);
-
-        // Нижняя часть
-        QWidget* bottomWidget = new QWidget(this);
-        QHBoxLayout* bottomLayout = new QHBoxLayout(bottomWidget);
-        bottomLayout->setContentsMargins(0, 0, 10, 10);
-
-        // Добавляем растягивающееся пространство слева
-        bottomLayout->addStretch();
-
-        metricChoose = new QPushButton("metric", bottomWidget);
-        metricChoose->setFixedSize(80, 30);
-        metricChoose->setFlat(true); // Убираем стандартное оформление
-
-        // Виджет в правом нижнем углу
-        bottomLayout->addWidget(metricChoose);
-        mainLayout->addWidget(bottomWidget);
-
-        routes_ = new Routes(this);
-        target = new Targets(this);
-        target->setState(new Scene::Objects::WithOutDrawState());
-
-        grid = new Grid(this);
-        timer = new QTimer(this);
-
-        // TODO: переименовать
-        actor = new InRegionScene(this);
-
-        cs = CoordinateSystem();
-
-        drawing = false;
-        speedMultiplier = 1;
-
-        this->resize(800, 800);
-
-        // Чтобы не было диких цифр при загрузке
-        limitesToRect();
-
-        // connect(timer, &QTimer::timeout, this, &SceneWidget::updateDrawing);
-        connect(timer, &QTimer::timeout, this, &SceneWidget::moveFromTimer);
-
-        connect(routes_, &Routes::complete, this, &SceneWidget::stop);
-        connect(routes_, &Routes::sendIndexCurrentPositionSpeed, this, &SceneWidget::sendObjectInformation);
-
-        // TimeWidget
-        timeWidget = new TimeWidget(this);
-        connect(this, &SceneWidget::sendCurrentTime, timeWidget, &TimeWidget::updateTime);
-
-        // Размещение Времени и множителя на сцене.
-
-        QWidget* upperWidget = new QWidget(this);
-        upperWidget->setGeometry(10, 10, 200, 70);                   // Отступы, ширина и высота
-        upperWidget->setAttribute(Qt::WA_TransparentForMouseEvents); // Игнорировать события мыши
-        upperWidget->show();
-        upperWidget->setStyleSheet("background: transparent;"); // Прозрачный фон
-
-        QVBoxLayout* sceneLayout = new QVBoxLayout(upperWidget);
-
-        sceneLayout->addWidget(timeWidget);
-
-        QStackedLayout* stackedLayout = new QStackedLayout(this);
-
-        stackedLayout->addWidget(upperWidget);
-        stackedLayout->setCurrentIndex(1); // overlayWidget поверх
     }
 
     void limitesToRect()

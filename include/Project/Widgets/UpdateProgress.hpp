@@ -68,7 +68,7 @@ protected:
         int scaleY = height() - scaleHeight - 15;
         QRect scaleRect(margin, scaleY, width() - 2 * margin, scaleHeight);
 
-        // Базовая линия
+        // Средняя линия
         painter.setPen(QPen(QColor(100, 100, 100), 2));
         painter.drawLine(scaleRect.left(), scaleRect.center().y(), scaleRect.right(), scaleRect.center().y());
 

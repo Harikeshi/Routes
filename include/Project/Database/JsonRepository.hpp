@@ -101,7 +101,7 @@ public:
         report.request_id = obj["request_id"].toInt();
         report.owner = obj["owner"].toString();
         report.scheme = obj["scheme"].toString();
-        report.created_at = QDateTime::fromString(obj["created_at"].toString(), "yyyy-MM-dd hh:mm:ss");
+        report.created_at = QDateTime::fromString(obj["created_at"].toString(), "yyyy-MM-ddThh:mm:ss");
 
         return report;
     }
@@ -120,7 +120,7 @@ public:
         request.fromJson(obj["data"].toObject());
 
         request.owner = obj["owner"].toString();
-        request.created_at = QDateTime::fromString(obj["created_at"].toString(), "yyyy-MM-dd hh:mm:ss");
+        request.created_at = QDateTime::fromString(obj["created_at"].toString(), "yyyy-MM-ddThh:mm:ss");
         request.id = obj["id"].toInt();
 
         return request;
@@ -210,8 +210,8 @@ private:
         QJsonObject newEntry;
 
         newEntry["id"] = requests.last()["id"].toInt() + 1;
-        newEntry["date"] = QDateTime::currentDateTime().toString(Qt::ISODate);
-        newEntry["user"] = QString::fromStdString(getCurrentUsername());
+        newEntry["created_at"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        newEntry["owner"] = QString::fromStdString(getCurrentUsername());
         newEntry["data"] = obj;
 
         requests.append(newEntry);
@@ -229,8 +229,8 @@ private:
         newEntry["id"] = reports.last()["id"].toInt() + 1;
         newEntry["scheme"] = report.scheme;
         newEntry["request_id"] = requests.last()["id"].toInt();
-        newEntry["date"] = QDateTime::currentDateTime().toString(Qt::ISODate);
-        newEntry["user"] = QString::fromStdString(getCurrentUsername());
+        newEntry["created_at"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        newEntry["owner"] = QString::fromStdString(getCurrentUsername());
 
         auto obj = report.toJson();
         newEntry["data"] = obj;
@@ -301,8 +301,8 @@ private:
 
         QJsonObject newEntry;
         newEntry["id"] = id;
-        newEntry["date"] = QDateTime::currentDateTime().toString(Qt::ISODate);
-        newEntry["name"] = name;
+        newEntry["created_at"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        newEntry["owner"] = name;
         newEntry["data"] = dataObject;
 
         jsonArray.append(newEntry);

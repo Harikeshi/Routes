@@ -38,7 +38,7 @@ public:
     int columnCount(const QModelIndex& parent = QModelIndex()) const override
     {
         Q_UNUSED(parent);
-        return 4; // ID, Name, Date, RequestId
+        return 6; // ID, Name, Date, RequestId
     }
 
     QVariant data(const QModelIndex& index, int role) const override
@@ -57,9 +57,10 @@ public:
             return row.scheme;
         case 3:
             return row.message;
-            //return row.date.toUTC().toString(Qt::ISODate);
-            //        case 4:
-            //            return row.owner;
+        case 4:
+            return row.date; // .toUTC().toString(Qt::ISODate);
+        case 5:
+            return row.owner;
         }
         return {};
     }
@@ -74,14 +75,14 @@ public:
             return "Report ID";
         case 1:
             return "Request ID";
-        case 3:
-            return "Scheme";
         case 2:
+            return "Scheme";
+        case 3:
             return "Message";
-            //        case 3:
-            //            return "Date";
-            //        case 4:
-            //            return "Owner";
+        case 4:
+            return "Date";
+        case 5:
+            return "Owner";
         }
         return {};
     }

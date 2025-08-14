@@ -48,43 +48,33 @@ public:
     MainWindow(QWidget* parent = nullptr)
         : QMainWindow(parent)
     {
-        // #--------------------------------------------------------------------------------------
-        // Меню
-        // #--------------------------------------------------------------------------------------
-        //        QMenu* fileMenu = menuBar()->addMenu("Файл");`
-        //        QAction* openRequest = new QAction("Загрузить Request.json", this);
-        //        QAction* openResult = new QAction("Загрузить Result.json", this);
-        //        fileMenu->addAction(openRequest);
-        //        fileMenu->addAction(openResult);
-        // #--------------------------------------------------------------------------------------
-        // MainLayout - Основная компоновка
-        // #--------------------------------------------------------------------------------------
+        //! MainLayout - Основная компоновка
         auto* centralWidget = new QWidget(this);
 
         auto* mainLayout = new QVBoxLayout(centralWidget);
         mainLayout->setContentsMargins(0, 0, 0, 0);
         mainLayout->setSpacing(0);
 
-        // Главный горизонтальный splitter (разделитель между Scene и правой панелью)
+        //! Главный горизонтальный splitter (разделитель между Scene и правой панелью)
         auto* mainHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
 
-        // SceneWidget
+        //! SceneWidget
         scene = new SceneWidget(this);
         scene->setFocusPolicy(Qt::StrongFocus);
         scene->resize(800, 800);
         scene->setMouseTracking(false); // Отключить трекинг мыши
         mainHorizontalSplitter->addWidget(scene);
 
-        // Вертикальная компоновка справа
+        //! Вертикальная компоновка справа
         auto* rightVerticalSplitter = new QSplitter(Qt::Vertical, centralWidget);
 
-        // Виджеты для правой вертикальной панели
+        //! Виджеты для правой вертикальной панели
         dataWidget = new DataWidget(this); // TODO: this
         table = new CustomTable(this);
         rightVerticalSplitter->addWidget(dataWidget);
         rightVerticalSplitter->addWidget(table);
 
-        // Горизонтальный splitter нижний
+        //! Горизонтальный splitter нижний
         auto* innerHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
         manage = new ManageWidget(this);
 
@@ -97,7 +87,7 @@ public:
         infoWidget = new InformationWidget(this);
         rightVerticalSplitter->addWidget(infoWidget);
 
-        // Стиль для разделителей
+        //! Стиль для разделителей
         QString splitterStyle =
             "QSplitter::handle {"
             "   background: #555555;"
@@ -109,43 +99,42 @@ public:
         rightVerticalSplitter->setStyleSheet(splitterStyle);
         innerHorizontalSplitter->setStyleSheet(splitterStyle);
 
-        // Главный горизонтальный splitter
+        //! Главный горизонтальный splitter
         mainHorizontalSplitter->addWidget(rightVerticalSplitter);
-        //        mainHorizontalSplitter->setStretchFactor(0, 2);
-        //        mainHorizontalSplitter->setStretchFactor(1, 1);
 
-        // Добавляем главный splitter в layout
+        //! Добавляем главный splitter в layout
         mainLayout->addWidget(mainHorizontalSplitter, 1);
         progress = new UpdateProgressBar(this);
-        //        progress->setTextVisible(true);
-        //        progressBar->setFixedHeight(24);
-        //        progressBar->setValue(50);
 
-        //        QWidget* progressContainer = new QWidget();
-        //        QVBoxLayout* progressLayout = new QVBoxLayout(progressContainer);
-        //        progressLayout->setContentsMargins(0, 0, 0, 2);
-        //        progressLayout->addWidget(progress);
-        //        mainLayout->addWidget(progressContainer);
-        //
         mainLayout->addWidget(progress);
         this->setCentralWidget(centralWidget);
-        // #--------------------------------------------------------------------------------------
-        // Logics
-        // #--------------------------------------------------------------------------------------
-        //        connect(openRequest, &QAction::triggered, this, &MainWindow::initRequestFromMenu);
-        //        connect(openResult, &QAction::triggered, this, &MainWindow::initReportFromMenu);
 
-        // connect(visWidget, &VisWidget::sendIntersectionResult, this, &MainWindow::setIntersectionInfo);
+        //! Signals-Slots
+        this->initConnections();
 
-        // DataWidget
+        //! Установка дефолтный схемы схема(0)
+        this->datamanager->setScheme(Scene::ActorTypeName.find(static_cast<Scene::ActorType>(0))->second);
+
+        //! Инициализация ReportsView
+        this->initReportsListView();
+
+        //! Отключить виджеты
+        this->setEnabled(false);
+
+        this->setWindowTitle("Visualization");
+    }
+
+    ~MainWindow() = default;
+
+    void initConnections()
+    {
+        //! Logics
+
+        //! DataWidget
         connect(dataWidget, &DataWidget::sendPath, this, &MainWindow::loadJson); // Получаем путь из списка
         connect(dataWidget, &DataWidget::sendReportRequestIds, this, &MainWindow::setRequestReportFromIds);
 
         connect(datamanager, &Database::DatabaseManager::sendReportsModel, dataWidget, &DataWidget::updateReports);
-        // initializer = new Initializer();
-
-        // Initializer <-> Main
-        // connect(initializer, &Initializer::sendRequestJson, dataWidget, &DataWidget::initializeRequest);
         connect(&Initializer::instance(), &Initializer::sendMessage, this, &MainWindow::processMessage);
         connect(&Initializer::instance(), &Initializer::sendError, this, &MainWindow::processError);
 
@@ -155,27 +144,26 @@ public:
         connect(&Initializer::instance(), &Initializer::changedRequest, datamanager, &Database::DatabaseManager::saveRequest);
         connect(&Initializer::instance(), &Initializer::changedReport, datamanager, &Database::DatabaseManager::saveReport);
 
-        // ProgressBar <-> Scene
+        //! ProgressBar <-> Scene
         connect(scene, &SceneWidget::sendFullTime, progress, &UpdateProgressBar::setTotalTime);
         connect(scene, &SceneWidget::sendCurrentTime, progress, &UpdateProgressBar::setCurrentTime);
         connect(progress, &UpdateProgressBar::timeChanged, scene, &SceneWidget::moveFromProgress);
 
-        // SubWidget
-        // Submarine <-> Scene
+        //! SubWidget
+        //! Submarine <-> Scene
         connect(sub, &SubWidget::resetButtomPushed, scene, &SceneWidget::resetTarget);
         connect(sub, &SubWidget::sendSpeedChanged, scene, &SceneWidget::setTargetSpeed);
 
         connect(scene, &SceneWidget::sendTargetSpeed, sub, &SubWidget::setSpeedInput);
 
-        // [ Set ]
+        //! [ Set ]
         connect(scene, &SceneWidget::sendDrawing, sub, &SubWidget::changeButtonColor);
         connect(sub, &SubWidget::checkBottomChanged, scene, &SceneWidget::changeDrawing);
 
-        // [ Reset ]
+        //! [ Reset ]
         connect(sub, &SubWidget::sendReset, scene, &SceneWidget::resetTarget);
-        //        connect(sub, &SubWidget::sendSpeedChanged, this, &MainWindow::addInformation);
 
-        // Manage
+        //! Manage
         connect(manage, &ManageWidget::sendPlayButtonClicked, this, &MainWindow::start);
         connect(manage, &ManageWidget::sendPauseButtonClicked, this, &MainWindow::pause);
         connect(manage, &ManageWidget::sendMinusButtonClicked, this, &MainWindow::downSpeed);
@@ -186,21 +174,13 @@ public:
 
         connect(scene, &SceneWidget::sceneReseted, this, &MainWindow::sceneReset);
 
-        // Table
-        //connect(scene, &SceneWidget::sendTargetCurrentPositionSpeed, table, &CustomTable::updateSubmarine);
+        //! Table
         connect(scene, &SceneWidget::sendIndexCurrentPositionSpeed, table, &CustomTable::updateOrAddRow);
-
-        // DataWidget
+        connect(scene, &SceneWidget::schemeChanged, datamanager, &Database::DatabaseManager::setScheme);
+        
+        //! DataWidget
         connect(dataWidget, &DataWidget::sendRequestFromWidget, this, &MainWindow::setRequestFromDataWidget);
-
-        this->initReportsListView(); //! Инициализация ReportsView
-
-        this->setEnabled(false);
-
-        this->setWindowTitle("Visualization");
     }
-
-    ~MainWindow() = default;
 
 private slots:
     /*!
@@ -260,7 +240,11 @@ private slots:
 
     void clickedCalc()
     {
-        datamanager->setScheme(scene->getActorName());
+        auto type = scene->getActorName();
+
+        datamanager->setScheme(type);
+
+        scene->setActor(type, Initializer::instance().getRequest());
 
         if (requestLoaded)
         {
@@ -320,17 +304,19 @@ private slots:
      */
     void setRequestReportFromIds(size_t report_id, size_t request_id)
     {
+        Models::Request request = datamanager->getRequest(request_id);
+        Models::Report report = datamanager->getReport(report_id);
+
+        if (!report.scheme.isEmpty())
+            scene->setActor(report.scheme, request);
+
         try
         {
             scene->reset();
 
-            Initializer::instance().setRequest(datamanager->getRequest(request_id));
+            Initializer::instance().setRequest(request);
 
-            //            auto x = Initializer::instance().getRequest();
-
-            //            std::cout << x.toNJson().dump(4) << std::endl;
-
-            receiveRequest(Initializer::instance().getRequest());
+            receiveRequest(request);
         }
         catch (std::exception& ex)
         {
@@ -339,8 +325,9 @@ private slots:
 
         try
         {
-            Initializer::instance().setReport(datamanager->getReport(report_id));
-            receiveReport(Initializer::instance().getReport());
+            Initializer::instance().setReport(report);
+
+            receiveReport(report);
         }
         catch (std::exception& ex)
         {

@@ -18,8 +18,6 @@ public:
     explicit SubWidget(QWidget* parent = nullptr)
         : QWidget(parent)
     {
-        drawing = false;
-
         const auto mainLayout = new QVBoxLayout(this);
 
         // Label Submarine
@@ -61,24 +59,19 @@ public:
         resetButton = new QPushButton("Reset", this);
         mainLayout->addWidget(resetButton);
 
-        // this->setLayout(mainLayout); // Не нужно, т.к. передали this в конструктор QVBoxLayout
-
         connect(speedInput, &QLineEdit::textChanged, this, &SubWidget::actualSpeed);
         connect(this, &SubWidget::sendSpeedChanged, this, &SubWidget::changeSpeed);
 
         connect(checkButton, &QPushButton::toggled, this, &SubWidget::changeDrawing);
-        //  connect(paintButton, &QPushButton::toggled, this, &SubWidget::changeDrawing);
         connect(resetButton, &QPushButton::clicked, this, &SubWidget::reset);
     }
 
 signals:
     void checkBottomChanged();
-    void paintBottomChanged();
     void sendSpeedChanged(int);
     void resetButtomPushed();
 
     void sendReset();
-    void sendSpeed(double);
 
 private slots:
     void changeSpeed(double speed)
@@ -89,11 +82,6 @@ private slots:
     void changeDrawing()
     {
         emit checkBottomChanged();
-    }
-
-    void changePainting()
-    {
-        emit paintBottomChanged();
     }
 
     void actualSpeed()
@@ -140,21 +128,6 @@ public slots:
         checkButton->update();
     }
 
-    static void changeButtonImage(QPushButton* button, const bool checked)
-    {
-        // TODO: Добавить картинки какие требуется поменять
-        if (checked)
-        {
-            button->setStyleSheet("QPushButton { background-color: red; }");
-        }
-        else
-        {
-            button->setStyleSheet("QPushButton { }");
-        }
-
-        button->update();
-    }
-
     void setSpeedInput(double speed)
     {
         speedInput->setText(QString("%1").arg(speed));
@@ -168,8 +141,6 @@ public slots:
     }
 
 private:
-    bool drawing;
-
     QLabel* speedLabel;
     QLineEdit* speedInput;
 
