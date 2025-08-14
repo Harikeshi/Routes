@@ -38,14 +38,11 @@ public slots:
         emit sendReportRequestIds(report_id, request_id);
     }
 
-    void needRefreshReports()
-    {
-    }
-
     void updateReports(const QVector<Database::ReportRowModel>& rows)
     {
         reportList->refresh(rows);
-        qDebug() << rows.size();
+
+        update();
     }
 
     void pathtoFile(const QString string)

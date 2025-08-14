@@ -15,7 +15,6 @@ struct Report : public Input
     size_t request_id{0};
     QDateTime created_at;
     QString owner;
-    QString scheme;
 
     // TODO: Чтобы поддержать концепцию реализовать Route в validate
     //! origin

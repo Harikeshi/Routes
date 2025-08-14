@@ -54,11 +54,12 @@ public:
         case 1:
             return row.request_id;
         case 2:
-            return row.message;
+            return row.scheme;
         case 3:
-            return row.date.toUTC().toString(Qt::ISODate);
-        case 4:
-            return row.owner;
+            return row.message;
+            //return row.date.toUTC().toString(Qt::ISODate);
+            //        case 4:
+            //            return row.owner;
         }
         return {};
     }
@@ -73,12 +74,14 @@ public:
             return "Report ID";
         case 1:
             return "Request ID";
+        case 3:
+            return "Scheme";
         case 2:
             return "Message";
-        case 3:
-            return "Date";
-        case 4:
-            return "Owner";
+            //        case 3:
+            //            return "Date";
+            //        case 4:
+            //            return "Owner";
         }
         return {};
     }

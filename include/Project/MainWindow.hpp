@@ -141,6 +141,7 @@ public:
         connect(dataWidget, &DataWidget::sendPath, this, &MainWindow::loadJson); // Получаем путь из списка
         connect(dataWidget, &DataWidget::sendReportRequestIds, this, &MainWindow::setRequestReportFromIds);
 
+        connect(datamanager, &Database::DatabaseManager::sendReportsModel, dataWidget, &DataWidget::updateReports);
         // initializer = new Initializer();
 
         // Initializer <-> Main
@@ -314,13 +315,17 @@ private slots:
      * @param request_id
      * @param report_id
      */
-    void setRequestReportFromIds(size_t request_id, size_t report_id)
+    void setRequestReportFromIds(size_t report_id, size_t request_id)
     {
         try
         {
             scene->reset();
-            
+
             Initializer::instance().loadRequestFromDb(datamanager->getRequest(request_id));
+
+            //            auto x = Initializer::instance().getRequest();
+
+            //            std::cout << x.toNJson().dump(4) << std::endl;
 
             receiveRequest(Initializer::instance().getRequest());
         }

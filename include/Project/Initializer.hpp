@@ -232,7 +232,7 @@ public:
     {
         return report;
     }
-   
+
     /*!
      * При загрузке из Базы данных.
      * @param _request
@@ -254,9 +254,6 @@ public:
     void setRequest(const Models::Request& _request)
     {
         //TODO: Валидация.
-        if (request.id == _request.id)
-            return;
-
         request = _request;
         emit changedRequest(request);
     }
@@ -264,9 +261,6 @@ public:
     void setReport(const Models::Report& _report)
     {
         //TODO: Валидация.
-        if (report.id == _report.id)
-            return;
-
         report = _report;
         emit changedReport(report);
     }

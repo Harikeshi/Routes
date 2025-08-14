@@ -68,8 +68,6 @@ public:
             rows.push_back(row);
         }
 
-        qDebug() << "Count: " << rows.size();
-
         return rows;
     }
 
@@ -129,8 +127,14 @@ public:
     {
         try
         {
+            qDebug() << report.request_id;
+
             report.request_id = repository->getLastRequestId();
+            qDebug() << report.request_id;
+
             emit reportSaved(repository->save(report));
+
+            emit sendReportsModel(allReportRowsModel());
         }
         catch (const std::exception& e)
         {
@@ -153,6 +157,8 @@ public:
 signals:
     void reportSaved(size_t id);
     void requestSaved(size_t id);
+
+    void sendReportsModel(const QVector<ReportRowModel>&) const;
     void sendError(const QString& message) const;
     void sendMessage(const QString& message) const;
 

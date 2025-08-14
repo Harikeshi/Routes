@@ -5,19 +5,16 @@
 #include <QPolygonF>
 #include <QVector>
 
-#include "Input.hpp"
-#include "ValidateOperations.hpp"
+#include "../Input.hpp"
+#include "../ValidateOperations.hpp"
 
 #include "Project/Operations/JsonOperations.hpp"
 
 #include <algorithm>
 
-namespace Models {
+namespace Models::origin {
 struct Perimeter : public Input
 {
-    size_t id{0};
-    // TODO: надо ли
-
     QVector<QPolygonF> rings;
 
     QPointF entrance;
@@ -33,37 +30,30 @@ struct Perimeter : public Input
         addValidator("borders", [](const QJsonObject& json) { validateRegion(json, "borders"); });
     }
 
-    Perimeter operator=(const Perimeter& value)
-    {
-        entrance = value.entrance;
-        exit = value.exit;
-
-        rings.clear();
-
-        for (const auto& ring : value.rings)
-        {
-            QPolygonF r;
-            for (const auto& point : ring)
-            {
-                r.append(point);
-            }
-            rings.append(r);
-        }
-        minX = value.minX, minY = value.minY, maxX = value.maxX, maxY = value.maxY;
-        return *this;
-    }
-
-    size_t getId() const override
-    {
-        return id;
-    }
+    //    Perimeter operator=(const Perimeter& value)
+    //    {
+    //        entrance = value.entrance;
+    //        exit = value.exit;
+    //
+    //        rings.clear();
+    //
+    //        for (const auto& ring : value.rings)
+    //        {
+    //            QPolygonF r;
+    //            for (const auto& point : ring)
+    //            {
+    //                r.append(point);
+    //            }
+    //            rings.append(r);
+    //        }
+    //        minX = value.minX, minY = value.minY, maxX = value.maxX, maxY = value.maxY;
+    //
+    //        return *this;
+    //    }
 
     // "search_region"
     void initializeProperties(const QJsonObject& json) override
     {
-        if (json.contains("id"))
-            id = json["id"].toInt();
-
         Operations::setQPointF(entrance, json["entry_point"]);
         Operations::setQPointF(exit, json["exit_point"]);
 
@@ -87,7 +77,6 @@ struct Perimeter : public Input
     QJsonObject toJson() const override
     {
         QJsonObject obj;
-        //        obj["id"] = static_cast<qint64>(id);
 
         // TODO: Используются x и y для работы с базой данных.
         // entrance
@@ -126,7 +115,6 @@ struct Perimeter : public Input
     nlohmann::json toNJson() const override
     {
         nlohmann::json obj;
-        //        obj["id"] = static_cast<qint64>(id);
 
         // TODO: Используются x и y для работы с базой данных.
         // entrance
@@ -171,6 +159,34 @@ struct Perimeter : public Input
         }
     }
 
+    void setOuter(const QVector<QPointF>& points)
+    {
+        if (rings.empty())
+            rings[0] = points;
+        else
+        {
+            rings.push_back(points);
+        }
+
+        setLimits();
+    }
+
+    void setRings(const QVector<QPolygonF>& polygons)
+    {
+        // TODO: clear?
+        for (const auto& polygon : polygons)
+        {
+            rings.push_back(polygon);
+        }
+
+        setLimits();
+    }
+
+    void addInner(const QVector<QPointF>& points)
+    {
+        rings.push_back(points);
+    }
+
     QVector<QPolygonF> getRings() const
     {
         return rings;
@@ -196,6 +212,46 @@ struct Perimeter : public Input
         return maxY;
     }
 
+private:
+    void resetLimits()
+    {
+        minX = 1e13, minY = 1e13, maxX = -1e13, maxY = -1e13;
+    }
+
+    void setLimits(const QVector<QPointF>& points)
+    {
+        for (const auto& point : points)
+        {
+            minX = qMin(minX, point.x());
+            minY = qMin(minY, point.y());
+            maxX = qMax(maxX, point.x());
+            maxY = qMax(maxY, point.y());
+        }
+    }
+
+    void setLimits()
+    {
+        resetLimits();
+
+        for (const auto& ring : rings)
+        {
+            for (const auto& point : ring)
+                setLimitsFromPoint(point);
+        }
+
+        setLimitsFromPoint(entrance);
+        setLimitsFromPoint(exit);
+    }
+
+    void setLimitsFromPoint(const QPointF& point)
+    {
+        minX = qMin(minX, point.x());
+        minY = qMin(minY, point.y());
+        maxX = qMax(maxX, point.x());
+        maxY = qMax(maxY, point.y());
+    }
+
+public:
     void setFrom(const Perimeter& perimeter)
     {
         rings = perimeter.rings;
@@ -206,6 +262,7 @@ struct Perimeter : public Input
         setLimits();
     }
 
+public:
     void swapCoordinates()
     {
         for (auto& ring : rings)
@@ -236,72 +293,5 @@ struct Perimeter : public Input
 
         qDebug() << "minX: " << minX << ", minY: " << minY << ", maxX: " << maxX << ", maxY: " << maxY;
     }
-
-private:
-    void setOuter(const QVector<QPointF>& points)
-    {
-        if (rings.empty())
-            rings[0] = points;
-        else
-        {
-            rings.push_back(points);
-        }
-
-        setLimits();
-    }
-
-    void setRings(const QVector<QPolygonF>& polygons)
-    {
-        // TODO: clear?
-        for (const auto& polygon : polygons)
-        {
-            rings.push_back(polygon);
-        }
-
-        setLimits();
-    }
-    
-    void addInner(const QVector<QPointF>& points)
-    {
-        rings.push_back(points);
-    }
-
-    void resetLimits()
-    {
-        minX = 1e13, minY = 1e13, maxX = -1e13, maxY = -1e13;
-    }
-
-    void setLimitsFromPoint(const QPointF& point)
-    {
-        minX = qMin(minX, point.x());
-        minY = qMin(minY, point.y());
-        maxX = qMax(maxX, point.x());
-        maxY = qMax(maxY, point.y());
-    }
-
-    void setLimits()
-    {
-        resetLimits();
-
-        for (const auto& ring : rings)
-        {
-            for (const auto& point : ring)
-                setLimitsFromPoint(point);
-        }
-
-        setLimitsFromPoint(entrance);
-        setLimitsFromPoint(exit);
-    }
-
-    void setLimits(const QVector<QPointF>& points)
-    {
-        for (const auto& point : points)
-        {
-            minX = qMin(minX, point.x());
-            minY = qMin(minY, point.y());
-            maxX = qMax(maxX, point.x());
-            maxY = qMax(maxY, point.y());
-        }
-    }
 };
-} // namespace Models
+} // namespace Models::origin

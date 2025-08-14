@@ -443,7 +443,7 @@ public:
         pqxx::work txn(*m_connection);
 
         auto requestResult = txn.exec_params(
-            "SELECT id, owner, time, perimeter_id, target_id, ship_id, created_at FROM requests WHERE id = $1", id);
+            "SELECT id, time, owner,  perimeter_id, target_id, ship_id, created_at FROM requests WHERE id = $1", id);
 
         if (requestResult.empty())
         {

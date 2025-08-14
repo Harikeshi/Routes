@@ -6,7 +6,7 @@
 #include "Route.hpp"
 
 //TODO: Проверка есть сообщения и Пути
-namespace Models {
+namespace Models::origin {
 // TODO: Модель для отображения достраивать от этой.
 struct Report : public Input
 {
@@ -15,7 +15,6 @@ struct Report : public Input
     size_t request_id{0};
     QDateTime created_at;
     QString owner;
-    QString scheme;
 
     // TODO: Чтобы поддержать концепцию реализовать Route в validate
     //! origin
@@ -133,4 +132,4 @@ public:
         return _routes;
     }
 };
-} // namespace Models
+} // namespace Models::origin

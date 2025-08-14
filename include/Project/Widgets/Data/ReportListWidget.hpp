@@ -1,7 +1,7 @@
 #pragma once
 
-//#include "core/*.h"
-//#include "ui/*.h"
+//#include "core/*.hpp"
+//#include "ui/*.hpp"
 
 #include "Project/Database/ReportTableModel.hpp"
 #include <QTableView>
@@ -23,7 +23,7 @@ public:
         tableView_->setSelectionBehavior(QAbstractItemView::SelectRows);
         tableView_->setSelectionMode(QAbstractItemView::SingleSelection);
         tableView_->setEditTriggers(QAbstractItemView::NoEditTriggers);
-        tableView_->horizontalHeader()->setStretchLastSection(true);
+        //        tableView_->horizontalHeader()->setStretchLastSection(true);
 
         layout->addWidget(tableView_);
         setLayout(layout);
@@ -39,12 +39,10 @@ public slots:
         {
             model_->setRows(std::move(rows));
 
-            qDebug() << model_->rowCount();
             update(); // TODO: ?
         }
         catch (const std::exception& ex)
         {
-            // В реальном приложении — показать пользователю ошибку
             emit sendError(QString("Failed to load reports: %1").arg(ex.what()));
         }
     }
