@@ -407,14 +407,15 @@ public:
 
         // Save ship
         auto ship_id = save(request.ship, txn);
+        qDebug() << request_id;
 
         // Save request
         txn.exec_params(
-            "INSERT INTO requests (id, owner, time, perimeter_id, target_id, ship_id) "
+            "INSERT INTO requests (id, time, owner, perimeter_id, target_id, ship_id) "
             "VALUES ($1, $2, $3, $4, $5, $6)",
             request_id,
-            getCurrentUsername(),
             request.time,
+            getCurrentUsername(),
             perimeter_id,
             target_id,
             ship_id);
@@ -443,7 +444,7 @@ public:
         pqxx::work txn(*m_connection);
 
         auto requestResult = txn.exec_params(
-            "SELECT id, time, owner,  perimeter_id, target_id, ship_id, created_at FROM requests WHERE id = $1", id);
+            "SELECT id, time, owner, perimeter_id, target_id, ship_id, created_at FROM requests WHERE id = $1", id);
 
         if (requestResult.empty())
         {
@@ -494,11 +495,12 @@ public:
 
         // Save report
         txn.exec_params(
-            "INSERT INTO reports (id, request_id, owner) VALUES ($1, $2, $3) "
+            "INSERT INTO reports (id, request_id, owner, scheme) VALUES ($1, $2, $3, $4) "
             "ON CONFLICT (id) DO UPDATE SET request_id = $2",
             report_id,
             report.request_id,
-            getCurrentUsername());
+            getCurrentUsername(),
+            report.scheme.toStdString());
 
         // Save routes
         for (const auto& route : report._routes)
@@ -532,7 +534,7 @@ public:
     {
         pqxx::work txn(*m_connection);
 
-        auto reportResult = txn.exec_params("SELECT id, request_id, owner, created_at FROM reports WHERE id = $1", id);
+        auto reportResult = txn.exec_params("SELECT id, request_id, owner, scheme, created_at FROM reports WHERE id = $1", id);
 
         if (reportResult.empty())
         {
@@ -544,6 +546,7 @@ public:
         report.id = row["id"].as<size_t>();
         report.request_id = row["request_id"].as<size_t>();
         report.owner = QString::fromStdString(row["owner"].as<std::string>());
+        report.scheme = QString::fromStdString(row["scheme"].as<std::string>());
         report.created_at = QDateTime::fromString(QString::fromStdString(row["created_at"].as<std::string>()), "yyyy-MM-dd hh:mm:ss");
 
         // Get routes
@@ -569,7 +572,7 @@ public:
 
     Report findReportById(size_t id, pqxx::work& txn)
     {
-        auto reportResult = txn.exec_params("SELECT id, request_id, owner, created_at FROM reports WHERE id = $1", id);
+        auto reportResult = txn.exec_params("SELECT id, request_id, owner, scheme, created_at FROM reports WHERE id = $1", id);
 
         if (reportResult.empty())
         {
@@ -582,6 +585,7 @@ public:
         report.id = row["id"].as<size_t>();
         report.request_id = row["request_id"].as<size_t>();
         report.owner = QString::fromStdString(row["owner"].as<std::string>());
+        report.scheme = QString::fromStdString(row["scheme"].as<std::string>());
         report.created_at = QDateTime::fromString(QString::fromStdString(row["created_at"].as<std::string>()), "yyyy-MM-dd hh:mm:ss");
 
         // Get routes

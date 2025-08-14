@@ -140,9 +140,10 @@ public:
 
         // courses
         auto _courses = nlohmann::json::array();
-        _courses.emplace_back(courses.first, courses.second);
+        _courses.emplace_back(courses.first);
+        _courses.emplace_back(courses.second);
 
-        obj["courses"] = std::move(_courses);
+        obj["courses"] = _courses;
 
         obj["root-mean-square_error"] = rootMeanSquareError;
         obj["obsolescence_time"] = obsolescenceTime;

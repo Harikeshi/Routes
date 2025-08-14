@@ -252,10 +252,17 @@ signals:
     void scenePaused();
     void sceneReseted();
 
+    void schemeChanged(const QString&);
+
 public:
     int getActorType() const
     {
         return actorChoose->currentIndex();
+    }
+
+    QString getActorName() const
+    {
+        return ActorTypeName.find(static_cast<ActorType>(actorChoose->currentIndex()))->second;
     }
 
     void changeActor(ActorType type)
@@ -265,6 +272,15 @@ public:
         this->reset();
 
         actor = actors[type]();
+    }
+
+    void setActor(const QString& str)
+    {
+        //! При загрузке из базы данных например, изменяем только название, так как
+
+        auto type = static_cast<ActorType>(actorChoose->currentIndex());
+
+        emit schemeChanged("");
     }
 
 public:

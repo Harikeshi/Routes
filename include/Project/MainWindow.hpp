@@ -260,6 +260,8 @@ private slots:
 
     void clickedCalc()
     {
+        datamanager->setScheme(scene->getActorName());
+
         if (requestLoaded)
         {
             reportLoaded = false;

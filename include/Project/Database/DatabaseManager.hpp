@@ -62,6 +62,8 @@ public:
             row.report_id = report.id;
             row.request_id = report.request_id;
             row.owner = report.owner;
+            row.scheme = report.scheme;
+            qDebug() << row.scheme;
             row.message = report._messages[0].text;
             row.date = report.created_at;
 
@@ -127,9 +129,9 @@ public:
     {
         try
         {
-            qDebug() << report.request_id;
-
             report.request_id = repository->getLastRequestId();
+            report.scheme = scheme;
+            qDebug() << scheme;
             qDebug() << report.request_id;
 
             emit reportSaved(repository->save(report));
@@ -154,6 +156,11 @@ public:
         }
     }
 
+    void setScheme(const QString& name)
+    {
+        scheme = name;
+    }
+
 signals:
     void reportSaved(size_t id);
     void requestSaved(size_t id);
@@ -164,5 +171,7 @@ signals:
 
 private:
     std::shared_ptr<Database::IRepository> repository;
+
+    QString scheme;
 };
 } // namespace Database

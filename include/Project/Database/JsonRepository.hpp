@@ -64,7 +64,7 @@ public:
 
     size_t save(const Models::Report& report) override
     {
-        appendReportJsonObjectToArrayFile(report.toJson());
+        appendReportJsonObjectToArrayFile(report);
 
         return 0;
     }
@@ -100,6 +100,7 @@ public:
         report.id = obj["id"].toInt();
         report.request_id = obj["request_id"].toInt();
         report.owner = obj["owner"].toString();
+        report.scheme = obj["scheme"].toString();
         report.created_at = QDateTime::fromString(obj["created_at"].toString(), "yyyy-MM-dd hh:mm:ss");
 
         return report;
@@ -218,7 +219,7 @@ private:
         return writeJsonArrayToFile(requests, requestPath);
     }
 
-    bool appendReportJsonObjectToArrayFile(const QJsonObject& obj)
+    bool appendReportJsonObjectToArrayFile(const Models::Report& report)
     {
         QJsonArray requests = readJsonArrayFromFile(requestPath);
         QJsonArray reports = readJsonArrayFromFile(reportPath);
@@ -226,9 +227,12 @@ private:
         QJsonObject newEntry;
 
         newEntry["id"] = reports.last()["id"].toInt() + 1;
+        newEntry["scheme"] = report.scheme;
         newEntry["request_id"] = requests.last()["id"].toInt();
         newEntry["date"] = QDateTime::currentDateTime().toString(Qt::ISODate);
         newEntry["user"] = QString::fromStdString(getCurrentUsername());
+
+        auto obj = report.toJson();
         newEntry["data"] = obj;
 
         reports.append(newEntry);
