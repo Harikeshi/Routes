@@ -273,6 +273,9 @@ private slots:
                 auto report = task.computeRoute(static_cast<SearchScheme>(scene->getActorType()));
 
                 Initializer::instance().loadFromJson(Operations::convertToQJsonObject(report));
+
+                //TODO: message Произведен расчет
+                infoWidget->addMessage(QString("Расчет %1 произведен успешно!").arg(scene->getActorName()), MessageType::Success);
             }
             catch (...)
             {
@@ -307,8 +310,6 @@ private slots:
         dataWidget->clear();
         dataWidget->setRequest(request);
 
-        // dataWidget->initializeRequest(initializer->getRequestJson());
-
         infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
     }
 
@@ -323,7 +324,7 @@ private slots:
         {
             scene->reset();
 
-            Initializer::instance().loadRequestFromDb(datamanager->getRequest(request_id));
+            Initializer::instance().setRequest(datamanager->getRequest(request_id));
 
             //            auto x = Initializer::instance().getRequest();
 
@@ -338,7 +339,7 @@ private slots:
 
         try
         {
-            Initializer::instance().loadReportFromDb(datamanager->getReport(report_id));
+            Initializer::instance().setReport(datamanager->getReport(report_id));
             receiveReport(Initializer::instance().getReport());
         }
         catch (std::exception& ex)
@@ -367,7 +368,7 @@ private slots:
     {
         if (!requestLoaded)
         {
-            infoWidget->addMessage("Загрузите Request. Нельзя построить маршруты.", MessageType::Error);
+            infoWidget->addMessage("Загрузите Входные данные. Нельзя построить маршруты.", MessageType::Error);
             return;
         }
 

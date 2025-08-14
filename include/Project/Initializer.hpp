@@ -129,72 +129,95 @@ private:
 
     bool isReport(const QJsonObject& json)
     {
-        emit sendMessage("Проверка файла Report.");
         return isCorrect(reportFields, json);
     }
 
     bool isRequest(const QJsonObject& json)
     {
-        emit sendMessage("Проверка файла Request.");
         return isCorrect(requestFields, json);
     }
 
 public:
+    /*!
+     * Загрузка входных данных из объекта.
+     * @param _request
+     */
     void saveRequest(const Models::Request& _request)
     {
-        // TODO: Валидация
-        QString message;
         try
         {
-            message += "Файл request загружен в базу!";
-
             // TODO: Валидация
             this->setRequest(_request);
-        }
-        catch (std::runtime_error& ex)
-        {
-            emit sendError(QString("Файл request не загружен: %1").arg(ex.what()));
-        }
-
-        emit sendMessage(message);
-    }
-
-    void loadRequest(const QJsonObject& json)
-    {
-        QString message;
-        try
-        {
-            message += "Файл определен, как request. ";
-            // TODO:
-            request.fromJson(json);
-
-            message += "Файл request загружен в базу!";
 
             emit changedRequest(request);
         }
         catch (std::runtime_error& ex)
         {
-            emit sendMessage(QString(message + "Файл request.json не загружен: %1").arg(ex.what()));
+            emit sendError(QString("Входные данные не удалось загрузить: %1").arg(ex.what()));
+        }
+    }
+
+    /*!
+     * Загрузка выходных данных из объекта.
+     * @param _report
+     */
+    void saveReport(const Models::Report& _report)
+    {
+        try
+        {
+            // TODO: Валидация
+            this->setReport(_report);
+
+            emit changedReport(report);
+        }
+        catch (std::runtime_error& ex)
+        {
+            emit sendError(QString("Выходные данные не удалось загрузить: %1").arg(ex.what()));
+        }
+    }
+
+    /*!
+     * Загрузка входных данных из объекта json.
+     * @param json
+     */
+    void loadRequest(const QJsonObject& json)
+    {
+        QString message;
+        try
+        {
+            // TODO:
+            request.fromJson(json);
+
+            message = "Входные данные(request.json) загружены!";
+
+            emit changedRequest(request);
+        }
+        catch (std::runtime_error& ex)
+        {
+            emit sendMessage(QString(message + "Входные данные(request.json) не удалось загрузить: %1").arg(ex.what()));
         }
 
         emit sendMessage(message);
     }
 
+    /*!
+     * Загрузка выходных данных из объекта json.
+     * @param json
+     */
     void loadReport(const QJsonObject& json)
     {
         QString message;
 
         try
         {
-            message += "Файл определен, как report.";
             report.fromJson(json);
-            message += "Файл report загружен в базу!";
+            message = "Выходные данные(report.json) загружены!";
 
             emit changedReport(report);
         }
         catch (std::runtime_error& ex)
         {
-            message += "Файл report не загружен: ";
+            message = "Выходные данные(report.json) не удалось загрузить: ";
             emit sendError(QString(message + "%1").arg(ex.what()));
 
             return;
@@ -203,23 +226,31 @@ public:
         emit sendMessage(message);
     }
 
-    void loadFromJson(const QJsonObject& json) // message
+    /*!
+     * Метод определения валидности json файла.
+     * @param json
+     */
+    void loadFromJson(const QJsonObject& json)
     {
         if (isRequest(json))
         {
+            emit sendMessage("Определен, как файл Входных данных.");
+
             request_json = json;
 
             loadRequest(json);
         }
         else if (isReport(json))
         {
+            emit sendMessage("Определен, как файл Выходных данных.");
+
             report_json = json;
 
             loadReport(json);
         }
         else
         {
-            emit sendError("Файл не соответствует требованиям");
+            emit sendError("Файл не соответствует требованиям.");
         }
     }
 
@@ -233,36 +264,20 @@ public:
         return report;
     }
 
-    /*!
-     * При загрузке из Базы данных.
-     * @param _request
-     */
-    void loadRequestFromDb(const Models::Request& _request)
-    {
-        request = _request;
-    }
-
-    /*!
-     * При загрузке из Базы данных.
-     * @param _report
-     */
-    void loadReportFromDb(const Models::Report& _report)
-    {
-        report = _report;
-    }
-
     void setRequest(const Models::Request& _request)
     {
         //TODO: Валидация.
         request = _request;
-        emit changedRequest(request);
+
+        emit sendMessage("Входные данные изменены!");
     }
 
     void setReport(const Models::Report& _report)
     {
         //TODO: Валидация.
         report = _report;
-        emit changedReport(report);
+
+        emit sendMessage("Выходные данные изменены!");
     }
 
     static Initializer& instance()
