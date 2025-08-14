@@ -119,6 +119,7 @@ private slots:
                 result = text.toDouble();
             }
         }
+
         emit sendSpeedChanged(result);
     }
 

@@ -9,7 +9,7 @@
 // TODO: валидация, хранение и передача.
 
 /*!
- * Хранит состояние текущих Request и Repost.
+ * Хранит текущее состояние Request и Repost.
  */
 class Initializer : public QObject
 {
@@ -232,33 +232,42 @@ public:
     {
         return report;
     }
-
-    QVector<Models::Message> getMessages() const
+   
+    /*!
+     * При загрузке из Базы данных.
+     * @param _request
+     */
+    void loadRequestFromDb(const Models::Request& _request)
     {
-        return report._messages;
+        request = _request;
     }
 
-    QJsonObject getRequestJson() const
+    /*!
+     * При загрузке из Базы данных.
+     * @param _report
+     */
+    void loadReportFromDb(const Models::Report& _report)
     {
-        return request_json;
-    }
-
-    QJsonObject getReportJson() const
-    {
-        return report_json;
+        report = _report;
     }
 
     void setRequest(const Models::Request& _request)
     {
-        request = _request;
+        //TODO: Валидация.
+        if (request.id == _request.id)
+            return;
 
+        request = _request;
         emit changedRequest(request);
     }
 
     void setReport(const Models::Report& _report)
     {
-        report = _report;
+        //TODO: Валидация.
+        if (report.id == _report.id)
+            return;
 
+        report = _report;
         emit changedReport(report);
     }
 

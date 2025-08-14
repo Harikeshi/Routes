@@ -148,9 +148,6 @@ public:
         connect(&Initializer::instance(), &Initializer::sendMessage, this, &MainWindow::processMessage);
         connect(&Initializer::instance(), &Initializer::sendError, this, &MainWindow::processError);
 
-        //        connect(initializer, &Initializer::sendRequest, this, &MainWindow::receiveRequest);
-        //        connect(initializer, &Initializer::sendReport, this, &MainWindow::receiveReport);
-
         connect(&Initializer::instance(), &Initializer::changedRequest, this, &MainWindow::receiveRequest);
         connect(&Initializer::instance(), &Initializer::changedReport, this, &MainWindow::receiveReport);
 
@@ -175,7 +172,7 @@ public:
 
         // [ Reset ]
         connect(sub, &SubWidget::sendReset, scene, &SceneWidget::resetTarget);
-        connect(sub, &SubWidget::sendSpeedChanged, this, &MainWindow::addInformation);
+        //        connect(sub, &SubWidget::sendSpeedChanged, this, &MainWindow::addInformation);
 
         // Manage
         connect(manage, &ManageWidget::sendPlayButtonClicked, this, &MainWindow::start);
@@ -195,8 +192,21 @@ public:
         // DataWidget
         connect(dataWidget, &DataWidget::sendRequestFromWidget, this, &MainWindow::setRequestFromDataWidget);
 
+        this->initReportsListView(); //! Инициализация ReportsView
+
         this->setEnabled(false);
 
+        this->setWindowTitle("Visualization");
+    }
+
+    ~MainWindow() = default;
+
+private slots:
+    /*!
+     * Инициализация Reports при загрузке MainWindow.
+     */
+    void initReportsListView()
+    {
         try
         {
             dataWidget->updateReports(datamanager->allReportRowsModel());
@@ -205,32 +215,24 @@ public:
         {
             qDebug() << ex.what();
         }
-
-        this->setWindowTitle("Visualization");
     }
 
-    ~MainWindow() = default;
-
-private slots:
-
-    void setSpeedLabel(const Request& request)
-    {
-        sub->setSpeedInput(request.target.currentVelocity);
-    }
-
+    /*!
+     * Обработка сообщения.
+     * @param message
+     */
     void processMessage(const QString& message)
     {
         infoWidget->addMessage(message, MessageType::Info);
     }
 
+    /*!
+     * Обработка Ошибки.
+     * @param error
+     */
     void processError(const QString& error)
     {
         infoWidget->addMessage(error, MessageType::Error);
-    }
-
-    void getInitializerMessage(const QString& message, const MessageType type) const
-    {
-        infoWidget->addMessage(message, type);
     }
 
     /*!
@@ -280,10 +282,10 @@ private slots:
         }
     }
 
-    void addInformation(int speed)
-    {
-        infoWidget->addMessage(QString::number(speed) + " м/c новая скорость ПЛ.", MessageType::Info);
-    }
+    //    void addInformation(int speed)
+    //    {
+    //        infoWidget->addMessage(QString::number(speed) + " м/c новая скорость ПЛ.", MessageType::Info);
+    //    }
 
     /*!
      * Действия после инициализации request.
@@ -307,13 +309,18 @@ private slots:
         infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
     }
 
+    /*!
+     * Для загрузки из строки из базы Данных.
+     * @param request_id
+     * @param report_id
+     */
     void setRequestReportFromIds(size_t request_id, size_t report_id)
     {
         try
         {
-            //            auto x = datamanager->getRequest(request_id);
-            // receiveRequest(datamanager->getRequest(request_id));
-            setRequestFromDataWidget(datamanager->getRequest(request_id));
+            Initializer::instance().loadRequestFromDb(datamanager->getRequest(request_id));
+
+            receiveRequest(Initializer::instance().getRequest());
         }
         catch (std::exception& ex)
         {
@@ -322,7 +329,8 @@ private slots:
 
         try
         {
-            receiveReport(datamanager->getReport(report_id));
+            Initializer::instance().loadReportFromDb(datamanager->getReport(report_id));
+            receiveReport(Initializer::instance().getReport());
         }
         catch (std::exception& ex)
         {

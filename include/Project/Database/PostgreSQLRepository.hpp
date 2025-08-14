@@ -133,12 +133,10 @@ public:
         size_t obj_id = 0;
 
         obj_id = txn.exec_params(
-                        "INSERT INTO objects (detection_range, max_velocity, current_velocity, "
-                        "search_velocity, turning_radius, min_length_section) "
-                        "VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-                        obj.detectionRange,
-                        obj.maxVelocity,
-                        obj.currentVelocity,
+                        "INSERT INTO objects (detection_range, max_velocity, search_velocity, turning_radius, min_length_section) "
+                        "VALUES ($1, $2, $3, $4, $5) RETURNING id",
+                        obj.detection_range,
+                        obj.max_velocity,
                         obj.search_velocity,
                         obj.turning_radius,
                         obj.min_lenght_section)[0]["id"]
@@ -151,7 +149,7 @@ public:
     Object findObjectById(size_t id, pqxx::work& txn)
     {
         auto result = txn.exec_params(
-            "SELECT id, detection_range, max_velocity, current_velocity, "
+            "SELECT id, detection_range, max_velocity, "
             "search_velocity, turning_radius, min_length_section "
             "FROM objects WHERE id = $1",
             id);
@@ -166,7 +164,6 @@ public:
             row["id"].as<size_t>(),
             row["detection_range"].as<double>(),
             row["max_velocity"].as<double>(),
-            row["current_velocity"].as<double>(),
             row["search_velocity"].as<double>(),
             row["turning_radius"].as<double>(),
             row["min_length_section"].as<double>()};
@@ -210,7 +207,7 @@ public:
     {
         pqxx::work txn(*m_connection);
         auto result = txn.exec(
-            "SELECT id, detection_range, max_velocity, current_velocity, "
+            "SELECT id, detection_range, max_velocity, "
             "search_velocity, turning_radius, min_length_section FROM objects");
 
         QVector<Object> objects;
@@ -219,7 +216,6 @@ public:
             objects.append(Object{row["id"].as<size_t>(),
                                   row["detection_range"].as<double>(),
                                   row["max_velocity"].as<double>(),
-                                  row["current_velocity"].as<double>(),
                                   row["search_velocity"].as<double>(),
                                   row["turning_radius"].as<double>(),
                                   row["min_length_section"].as<double>()});

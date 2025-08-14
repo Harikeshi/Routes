@@ -8,9 +8,6 @@ namespace Models {
 struct Object : public Input
 {
     size_t id;
-    double detectionRange;
-    double maxVelocity;
-    double currentVelocity;
 
     double detection_range;
     double max_velocity;
@@ -22,14 +19,12 @@ public:
     // TODO: Значения излишни.
     Object(
         size_t _id = 0,
-        double _detectionRange = 99,
-        double _maxVelocity = 99.99,
-        double _currentVelocity = 99.99,
         double _detection_range = 3,
         double _max_velocity = 18,
         double _search_velocity = 12,
         double _turning_radius = 3,
-        double _min_lenght_section = 2) : id{_id}, detectionRange{_detectionRange}, maxVelocity{_maxVelocity}, currentVelocity{_currentVelocity}, detection_range{_detection_range}, max_velocity{_max_velocity}, search_velocity{_search_velocity}, turning_radius{_turning_radius},
+        double _min_lenght_section = 2) : id{_id}, detection_range{_detection_range}, max_velocity{_max_velocity},
+                                          search_velocity{_search_velocity}, turning_radius{_turning_radius},
                                           min_lenght_section{_min_lenght_section}
     {
         addValidator("detection_range", [](const QJsonObject& json) { validateDigit(json["detection_range"], "detection_range"); });
@@ -41,10 +36,6 @@ public:
 
     void reset()
     {
-        detectionRange = 0;
-        maxVelocity = 0;
-        currentVelocity = 0;
-
         detection_range = 0;
         max_velocity = 0;
         search_velocity = 0;
@@ -72,11 +63,8 @@ public:
             id = json["id"].toInt();
 
         detection_range = json["detection_range"].toDouble();
-        detectionRange = detection_range;
         max_velocity = json["max_velocity"].toDouble();
-        maxVelocity = max_velocity;
         search_velocity = json["search_velocity"].toDouble();
-        currentVelocity = search_velocity;
         turning_radius = json["turning_radius"].toDouble();
         min_lenght_section = json["min_lenght_section"].toDouble();
     }
