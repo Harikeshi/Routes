@@ -47,7 +47,7 @@ public:
 
     void setPerimeter(const Perimeter& perimeter)
     {
-        this->perimeter = perimeter;
+        this->perimeter.setFrom(perimeter);
     }
 
     Perimeter getPerimeter() const

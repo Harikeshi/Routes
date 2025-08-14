@@ -318,6 +318,8 @@ private slots:
     {
         try
         {
+            scene->reset();
+            
             Initializer::instance().loadRequestFromDb(datamanager->getRequest(request_id));
 
             receiveRequest(Initializer::instance().getRequest());

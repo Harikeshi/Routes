@@ -255,6 +255,17 @@ private:
     }
 
 public:
+    void setFrom(const Perimeter& perimeter)
+    {
+        rings = perimeter.rings;
+
+        entrance = perimeter.entrance;
+        exit = perimeter.exit;
+
+        setLimits();
+    }
+
+public:
     void swapCoordinates()
     {
         for (auto& ring : rings)

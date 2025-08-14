@@ -268,6 +268,112 @@ public:
     }
 
 public:
+    void reload()
+    {
+        targetPath = new PathWidget(this);
+
+        QVBoxLayout* mainLayout = new QVBoxLayout(this);
+
+        mainLayout->setContentsMargins(0, 0, 0, 0); // Убираем отступы по краям
+        mainLayout->setSpacing(0);                  // Убираем промежутки
+
+        // Верхняя часть
+        QWidget* topWidget = new QWidget(this);
+        QHBoxLayout* topLayout = new QHBoxLayout(topWidget);
+        topLayout->setContentsMargins(0, 10, 10, 0); // Отступы: слева, сверху, справа, снизу
+
+        // Добавляем растягивающееся пространство слева
+        topLayout->addStretch();
+
+        // TODO: Все же отдельный виджет
+        actorChoose = new QComboBox(topWidget);
+
+        //! Инициализация Выбора Actor.
+        for (const auto& act : ActorTypeName)
+            actorChoose->addItem(act.second, static_cast<int>(act.first));
+
+        connect(actorChoose, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int type) {
+            qDebug() << "Выбран: " << type;
+            changeActor(static_cast<ActorType>(type));
+        });
+
+        actorChoose->setFixedSize(80, 30);
+
+        // actorChoose->setEnabled(false);
+
+        topLayout->addWidget(actorChoose);
+
+        mainLayout->addWidget(topWidget);
+
+        // Центральная часть
+        QWidget* centerWidget = new QWidget(this);
+        centerWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        mainLayout->addWidget(centerWidget, 1);
+
+        // Нижняя часть
+        QWidget* bottomWidget = new QWidget(this);
+        QHBoxLayout* bottomLayout = new QHBoxLayout(bottomWidget);
+        bottomLayout->setContentsMargins(0, 0, 10, 10);
+
+        // Добавляем растягивающееся пространство слева
+        bottomLayout->addStretch();
+
+        metricChoose = new QPushButton("metric", bottomWidget);
+        metricChoose->setFixedSize(80, 30);
+        metricChoose->setFlat(true); // Убираем стандартное оформление
+
+        // Виджет в правом нижнем углу
+        bottomLayout->addWidget(metricChoose);
+        mainLayout->addWidget(bottomWidget);
+
+        routes_ = new Routes(this);
+        target = new Targets(this);
+        target->setState(new Scene::Objects::WithOutDrawState());
+
+        grid = new Grid(this);
+        timer = new QTimer(this);
+
+        // TODO: переименовать
+        actor = new InRegionScene(this);
+
+        cs = CoordinateSystem();
+
+        drawing = false;
+        speedMultiplier = 1;
+
+        this->resize(800, 800);
+
+        // Чтобы не было диких цифр при загрузке
+        limitesToRect();
+
+        // connect(timer, &QTimer::timeout, this, &SceneWidget::updateDrawing);
+        connect(timer, &QTimer::timeout, this, &SceneWidget::moveFromTimer);
+
+        connect(routes_, &Routes::complete, this, &SceneWidget::stop);
+        connect(routes_, &Routes::sendIndexCurrentPositionSpeed, this, &SceneWidget::sendObjectInformation);
+
+        // TimeWidget
+        timeWidget = new TimeWidget(this);
+        connect(this, &SceneWidget::sendCurrentTime, timeWidget, &TimeWidget::updateTime);
+
+        // Размещение Времени и множителя на сцене.
+
+        QWidget* upperWidget = new QWidget(this);
+        upperWidget->setGeometry(10, 10, 200, 70);                   // Отступы, ширина и высота
+        upperWidget->setAttribute(Qt::WA_TransparentForMouseEvents); // Игнорировать события мыши
+        upperWidget->show();
+        upperWidget->setStyleSheet("background: transparent;"); // Прозрачный фон
+
+        QVBoxLayout* sceneLayout = new QVBoxLayout(upperWidget);
+
+        sceneLayout->addWidget(timeWidget);
+
+        QStackedLayout* stackedLayout = new QStackedLayout(this);
+
+        stackedLayout->addWidget(upperWidget);
+        stackedLayout->setCurrentIndex(1); // overlayWidget поверх
+    }
+
     /*!
      * Метод сброса сцены к стартовому состоянию.
      */
@@ -308,7 +414,113 @@ public:
         update();
 
         emit sceneReseted();
-    };
+    }
+
+    void initialize()
+    {
+        targetPath = new PathWidget(this);
+
+        QVBoxLayout* mainLayout = new QVBoxLayout(this);
+
+        mainLayout->setContentsMargins(0, 0, 0, 0); // Убираем отступы по краям
+        mainLayout->setSpacing(0);                  // Убираем промежутки
+
+        // Верхняя часть
+        QWidget* topWidget = new QWidget(this);
+        QHBoxLayout* topLayout = new QHBoxLayout(topWidget);
+        topLayout->setContentsMargins(0, 10, 10, 0); // Отступы: слева, сверху, справа, снизу
+
+        // Добавляем растягивающееся пространство слева
+        topLayout->addStretch();
+
+        // TODO: Все же отдельный виджет
+        actorChoose = new QComboBox(topWidget);
+
+        //! Инициализация Выбора Actor.
+        for (const auto& act : ActorTypeName)
+            actorChoose->addItem(act.second, static_cast<int>(act.first));
+
+        connect(actorChoose, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int type) {
+            qDebug() << "Выбран: " << type;
+            changeActor(static_cast<ActorType>(type));
+        });
+
+        actorChoose->setFixedSize(80, 30);
+
+        // actorChoose->setEnabled(false);
+
+        topLayout->addWidget(actorChoose);
+
+        mainLayout->addWidget(topWidget);
+
+        // Центральная часть
+        QWidget* centerWidget = new QWidget(this);
+        centerWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        mainLayout->addWidget(centerWidget, 1);
+
+        // Нижняя часть
+        QWidget* bottomWidget = new QWidget(this);
+        QHBoxLayout* bottomLayout = new QHBoxLayout(bottomWidget);
+        bottomLayout->setContentsMargins(0, 0, 10, 10);
+
+        // Добавляем растягивающееся пространство слева
+        bottomLayout->addStretch();
+
+        metricChoose = new QPushButton("metric", bottomWidget);
+        metricChoose->setFixedSize(80, 30);
+        metricChoose->setFlat(true); // Убираем стандартное оформление
+
+        // Виджет в правом нижнем углу
+        bottomLayout->addWidget(metricChoose);
+        mainLayout->addWidget(bottomWidget);
+
+        routes_ = new Routes(this);
+        target = new Targets(this);
+        target->setState(new Scene::Objects::WithOutDrawState());
+
+        grid = new Grid(this);
+        timer = new QTimer(this);
+
+        // TODO: переименовать
+        actor = new InRegionScene(this);
+
+        cs = CoordinateSystem();
+
+        drawing = false;
+        speedMultiplier = 1;
+
+        this->resize(800, 800);
+
+        // Чтобы не было диких цифр при загрузке
+        limitesToRect();
+
+        // connect(timer, &QTimer::timeout, this, &SceneWidget::updateDrawing);
+        connect(timer, &QTimer::timeout, this, &SceneWidget::moveFromTimer);
+
+        connect(routes_, &Routes::complete, this, &SceneWidget::stop);
+        connect(routes_, &Routes::sendIndexCurrentPositionSpeed, this, &SceneWidget::sendObjectInformation);
+
+        // TimeWidget
+        timeWidget = new TimeWidget(this);
+        connect(this, &SceneWidget::sendCurrentTime, timeWidget, &TimeWidget::updateTime);
+
+        // Размещение Времени и множителя на сцене.
+
+        QWidget* upperWidget = new QWidget(this);
+        upperWidget->setGeometry(10, 10, 200, 70);                   // Отступы, ширина и высота
+        upperWidget->setAttribute(Qt::WA_TransparentForMouseEvents); // Игнорировать события мыши
+        upperWidget->show();
+        upperWidget->setStyleSheet("background: transparent;"); // Прозрачный фон
+
+        QVBoxLayout* sceneLayout = new QVBoxLayout(upperWidget);
+
+        sceneLayout->addWidget(timeWidget);
+
+        QStackedLayout* stackedLayout = new QStackedLayout(this);
+
+        stackedLayout->addWidget(upperWidget);
+        stackedLayout->setCurrentIndex(1); // overlayWidget поверх
+    }
 
     void limitesToRect()
     {
@@ -573,6 +785,8 @@ public slots:
      */
     void reloadRequest(const Request& request)
     {
+        //        this->reload();
+
         target->reset();
 
         // Гарантированно получаем полностью инициализированный request. Проверяется в mainWindow
