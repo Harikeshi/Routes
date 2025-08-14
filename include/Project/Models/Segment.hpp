@@ -67,7 +67,6 @@ public:
     nlohmann::json toNJson() const override
     {
         nlohmann::json obj;
-        // obj["id"] = static_cast<qint64>(id);
 
         // start
         nlohmann::json startObj;
@@ -99,21 +98,6 @@ public:
     QPointF getStart() const
     {
         return start;
-    }
-
-    void setSpeed(const double speed)
-    {
-        baseSpeed = speed;
-    }
-
-    void setEnd(const QPointF& point)
-    {
-        end = point;
-    }
-
-    void setStart(const QPointF& point)
-    {
-        start = point;
     }
 
     void swapCoordinates()

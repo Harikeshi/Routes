@@ -97,7 +97,6 @@ public:
     QJsonObject toJson() const override
     {
         QJsonObject obj;
-        //        obj["id"] = static_cast<qint64>(id);
 
         // detection point
         QJsonArray detectionPointArr{detectionPoint.x(), detectionPoint.y()};
@@ -129,7 +128,6 @@ public:
     nlohmann::json toNJson() const override
     {
         nlohmann::json obj;
-        // obj["id"] = static_cast<qint64>(id);
 
         // detection point
         auto detection_point = nlohmann::json::array();
@@ -158,21 +156,6 @@ public:
         obj["velocities"] = velocitiesObj;
 
         return obj;
-    }
-
-    double getMinNoiseReduced() const
-    {
-        return minNoiseReduced;
-    }
-
-    void setCurrentVelocity(const double velocity)
-    {
-        currentVelocity = velocity;
-    }
-
-    double getCurrentVelocity() const
-    {
-        return currentVelocity;
     }
 };
 } // namespace Models

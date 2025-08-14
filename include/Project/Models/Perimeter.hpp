@@ -87,7 +87,6 @@ struct Perimeter : public Input
     QJsonObject toJson() const override
     {
         QJsonObject obj;
-        //        obj["id"] = static_cast<qint64>(id);
 
         // TODO: Используются x и y для работы с базой данных.
         // entrance
@@ -126,7 +125,6 @@ struct Perimeter : public Input
     nlohmann::json toNJson() const override
     {
         nlohmann::json obj;
-        //        obj["id"] = static_cast<qint64>(id);
 
         // TODO: Используются x и y для работы с базой данных.
         // entrance
@@ -260,7 +258,7 @@ private:
 
         setLimits();
     }
-    
+
     void addInner(const QVector<QPointF>& points)
     {
         rings.push_back(points);

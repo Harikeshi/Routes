@@ -80,7 +80,7 @@ inline void validateDigitValue(const QJsonObject& json, const QString& key, doub
 {
     checkContains(json, key);
 
-    validateDigit(json[key], key);
+    validateDigit(json[key], key, min, max);
 }
 
 // Неименованная точка или пара

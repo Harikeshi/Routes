@@ -77,7 +77,6 @@ public:
     QJsonObject toJson() const override
     {
         QJsonObject obj;
-        //        obj["id"] = static_cast<qint64>(id);
 
         QJsonArray routesArray;
 
@@ -101,7 +100,6 @@ public:
     nlohmann::json toNJson() const override
     {
         nlohmann::json obj;
-        //        obj["id"] = static_cast<qint64>(id);
 
         auto routesArray = nlohmann::json::array();
 
@@ -121,11 +119,6 @@ public:
         obj["messages"] = messagesArray;
 
         return obj;
-    }
-
-    bool isLoaded() const
-    {
-        return loaded;
     }
 
     QVector<Route> routes() const

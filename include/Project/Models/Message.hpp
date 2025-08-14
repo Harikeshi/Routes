@@ -34,7 +34,6 @@ struct Message : public Input
     {
         QJsonObject obj;
 
-        // obj["id"] = static_cast<qint64>(id);
         obj["code"] = code;
         obj["text"] = text;
         obj["type"] = type;
@@ -46,7 +45,6 @@ struct Message : public Input
     {
         nlohmann::json obj;
 
-        // obj["id"] = static_cast<qint64>(id);
         obj["code"] = code;
         obj["text"] = text.toStdString();
         obj["type"] = type.toStdString();

@@ -114,7 +114,7 @@ public:
     void setModel(Objects model, double size)
     {
         RouteObject::initHead(targetParameters);
-        RouteObject::setModel(model, targetParameters.getMinNoiseReduced(), size);
+        RouteObject::setModel(model, targetParameters.minNoiseReduced, size);
         modelLoaded = true;
     }
 
@@ -126,10 +126,6 @@ public:
     void setSpeed(double speed)
     {
         targetParameters.currentVelocity = speed;
-    }
-
-    void setDistance(double distance)
-    {
     }
 
     void swapCoordinates()

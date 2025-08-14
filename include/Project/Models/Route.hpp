@@ -8,7 +8,7 @@ namespace Models {
 struct Route : public Input
 {
     size_t id{0};
-    QVector<Segment> segments;
+    QVector<Segment> segments = QVector<Segment>();
 
     Route()
     {
@@ -68,8 +68,6 @@ struct Route : public Input
         if (segments.isEmpty())
             return obj;
 
-        // obj["id"] = static_cast<qint64>(id);
-
         QJsonArray pointsArray;
 
         QJsonArray first_point{segments.at(0).getStart().x(), segments.at(0).getStart().y()};
@@ -97,8 +95,6 @@ struct Route : public Input
         if (segments.isEmpty())
             return obj;
 
-        // obj["id"] = static_cast<qint64>(id);
-
         nlohmann::json pointsArray = nlohmann::json::array();
 
         auto first_point = nlohmann::json::array();
@@ -113,10 +109,10 @@ struct Route : public Input
         {
             velocitiesArray.emplace_back(segment.baseSpeed);
 
-            auto first_point = nlohmann::json::array();
+            first_point = nlohmann::json::array();
             first_point.emplace_back(segment.getEnd().x());
             first_point.emplace_back(segment.getEnd().y());
-            
+
             pointsArray.emplace_back(nlohmann::json{segment.getEnd().x(), segment.getEnd().y()});
         }
 
@@ -134,11 +130,6 @@ struct Route : public Input
     QVector<Segment> getSegments() const
     {
         return segments;
-    }
-
-    void setSegments(const QVector<Segment>& segments)
-    {
-        this->segments = segments;
     }
 
     void swapCoordinates()

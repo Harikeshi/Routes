@@ -64,7 +64,6 @@ struct Request : public Input
     QJsonObject toJson() const override
     {
         QJsonObject obj;
-        // obj["id"] = static_cast<qint64>(id);
         obj["time"] = time;
 
         obj["search_region"] = perimeter.toJson();
@@ -87,7 +86,6 @@ struct Request : public Input
     nlohmann::json toNJson() const override
     {
         nlohmann::json obj;
-        // obj["id"] = static_cast<qint64>(id);
         obj["time"] = time;
 
         obj["search_region"] = perimeter.toNJson();
@@ -108,11 +106,6 @@ struct Request : public Input
         obj["ships_parameters"] = ship.toNJson();
 
         return obj;
-    }
-
-    bool isLoaded() const
-    {
-        return loaded;
     }
 
     // TODO: getPerimeter()
