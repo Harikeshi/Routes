@@ -50,9 +50,9 @@ public:
         switch (index.column())
         {
         case 0:
-            return static_cast<int>(row.report_id);
+            return QVariant::fromValue(row.report_id);
         case 1:
-            return static_cast<int>(row.request_id);
+            return QVariant::fromValue(row.request_id);
         case 2:
             return row.scheme;
         case 3:

@@ -48,19 +48,19 @@ public:
             switch (index.column())
             {
             case ID:
-                return static_cast<int>(report.id);
+                return QVariant::fromValue(report.id);
             case CreatedAt:
                 // TODO: regular
                 return report.created_at;
             case RequestId:
-                return static_cast<int>(report.request_id);
+                return QVariant::fromValue(report.request_id);
             case RequestName:
                 return request.owner;
             }
         }
         else if (role == Qt::UserRole)
         {
-            return static_cast<int>(report.id); // Return report ID for internal use
+            return QVariant::fromValue(report.id); // Return report ID for internal use
         }
 
         return QVariant();
