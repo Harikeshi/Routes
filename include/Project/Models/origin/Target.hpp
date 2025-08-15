@@ -7,7 +7,6 @@
 namespace Models::origin {
 struct Target : public Input
 {
-    size_t id{0};
     QPointF detectionPoint{0, 0};
     std::pair<double, double> courses{360, 360};
 
@@ -23,7 +22,6 @@ struct Target : public Input
 
 public:
     Target(
-        size_t _id,
         QPointF _detectionPoint,
         std::pair<double, double> _courses,
         double _rootMeanSquareError,
@@ -32,7 +30,7 @@ public:
         double _minNoiseReduced,
         double _maxNoiseReduced,
         double _obsolescenceTime,
-        double _avoidanceDistance) : id(_id), detectionPoint(_detectionPoint), courses(_courses), rootMeanSquareError(_rootMeanSquareError), currentVelocity(_currentVelocity),
+        double _avoidanceDistance) : detectionPoint(_detectionPoint), courses(_courses), rootMeanSquareError(_rootMeanSquareError), currentVelocity(_currentVelocity),
                                      maxVelocity(_maxVelocity), minNoiseReduced(_minNoiseReduced), maxNoiseReduced(_maxNoiseReduced), obsolescenceTime(_obsolescenceTime),
                                      avoidanceDistance(_avoidanceDistance)
     {
@@ -70,16 +68,8 @@ public:
         });
     }
 
-    size_t getId() const override
-    {
-        return id;
-    }
-
     void initializeProperties(const QJsonObject& json) override
     {
-        if (json.contains("id"))
-            id = json["id"].toInt();
-
         Operations::setQPointF(detectionPoint, json["detection_point"]);
 
         Operations::setDoublePair(courses, json["courses"]);
@@ -97,7 +87,6 @@ public:
     QJsonObject toJson() const override
     {
         QJsonObject obj;
-        //        obj["id"] = static_cast<qint64>(id);
 
         // detection point
         QJsonArray detectionPointArr{detectionPoint.x(), detectionPoint.y()};
@@ -129,7 +118,6 @@ public:
     nlohmann::json toNJson() const override
     {
         nlohmann::json obj;
-        // obj["id"] = static_cast<qint64>(id);
 
         // detection point
         auto detection_point = nlohmann::json::array();

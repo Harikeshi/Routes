@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Project/Models/Input.hpp"
+
 #include <QDebug>
 #include <QPointF>
 
@@ -8,29 +10,20 @@
 namespace Models::origin {
 struct Segment : public Input
 {
-    size_t id{0};
     QPointF start;
     QPointF end;
 
     double baseSpeed;
 
 public:
-    Segment(size_t _id = 0, const QPointF& s = QPointF{}, const QPointF& e = QPointF{}, const double b = 0)
-        : id{_id}, start(s), end(e), baseSpeed(b)
+    Segment(const QPointF& s = QPointF{}, const QPointF& e = QPointF{}, const double b = 0)
+        : start(s), end(e), baseSpeed(b)
     {
-    }
-
-    size_t getId() const override
-    {
-        return id;
     }
 
     // TODO: Тут принимаем, что входные с x и y.
     void initializeProperties(const QJsonObject& json) override
     {
-        if (json.contains("id"))
-            id = json["id"].toInt();
-
         // start
         QJsonObject startObj = json["start"].toObject();
         start = QPointF(startObj["x"].toDouble(), startObj["y"].toDouble());
@@ -45,8 +38,7 @@ public:
     QJsonObject toJson() const override
     {
         QJsonObject obj;
-        obj["id"] = static_cast<qint64>(id);
-
+        
         // start
         QJsonObject startObj;
         startObj["x"] = start.x();
@@ -67,7 +59,6 @@ public:
     nlohmann::json toNJson() const override
     {
         nlohmann::json obj;
-        // obj["id"] = static_cast<qint64>(id);
 
         // start
         nlohmann::json startObj;

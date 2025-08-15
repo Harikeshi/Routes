@@ -7,7 +7,6 @@
 namespace Models::origin {
 struct Route : public Input
 {
-    size_t id{0};
     QVector<Segment> segments;
 
     Route()
