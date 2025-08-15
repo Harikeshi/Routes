@@ -22,8 +22,8 @@ find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
 
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-add_subdirectory(tests/)
-target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+add_subdirectory(visualization/)
+target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/visualization")
 
 target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Widgets Qt5::Core Qt5::Gui)
 
