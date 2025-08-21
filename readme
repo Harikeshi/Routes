@@ -1,3 +1,7 @@
+-deploy
 - Положить актуальную библиотеку libTask.so в папку libs.
-- libpqxx должна быть в /usr/lib
-- Пересобрать проект tests.
+- Скомпилировать Visualization, должен быть по пути /build/visualization
+- Запустить скрипт make-deb.sh
+
+-install
+- на целевой машине запускаем sudo -i visualization-1.0.0-AMD64.deb

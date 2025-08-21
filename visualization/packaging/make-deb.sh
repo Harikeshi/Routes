@@ -11,7 +11,7 @@ TRIPLET="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"   # x86_64-linux-gnu и т.�
 # --- Пути проекта ---
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-BUILD_DIR="$ROOT_DIR/build"             # где лежит собранный бинарник
+BUILD_DIR="$ROOT_DIR/build/visualization"             # где лежит собранный бинарник
 BIN_NAME="visualization"                        # имя бинарника
 LIBD_DIR="$ROOT_DIR/../libs"               #! ваши готовые библиотеки
 
