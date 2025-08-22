@@ -88,7 +88,7 @@ private:
         {"ships_parameters.turning_radius", QJsonValue::Double},
         {"ships_parameters.min_lenght_section", QJsonValue::Double}};
 
-    QVector<FieldInfo> reportFields{{"routes", QJsonValue::Array}};
+    QVector<FieldInfo> reportFields{{"routes", QJsonValue::Array}, {"messages", QJsonValue::Array}};
 
     // Высокоуровневая проверка, только наличие полей
     bool isCorrect(const QVector<FieldInfo> fields, const QJsonObject& json)
