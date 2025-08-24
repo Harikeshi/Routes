@@ -1,5 +1,6 @@
+#include <QApplication>
+
 //#include <Project/MainWindow.hpp>
-//#include <QApplication>
 //
 //int main(int argc, char* argv[])
 //{
@@ -14,80 +15,12 @@
 
 #include <QDebug>
 #include <QPainter>
-//#include <Project/MainWindow.hpp>
-//#include <QApplication>
-//#include "Project/examples/Trajectory.hpp"
-//
-//int main(int argc, char *argv[]) {
-//
-//    QApplication app(argc, argv);
-//
-////    GraphTrajectory window;
-//    MainWindow1 window;
-//    window.resize(800, 800);
-//
-//    window.show();
-//    return app.exec();
-//}
-
 #include <cmath>
 
-double angle(const QPointF &A, const QPointF &B) {
-    return std::atan2(B.y() - A.y(), B.x() - A.x());
-}
+#include "figures/geometry.hpp"
+#include "figures/Arc.hpp"
 
-double dot(const QPointF &A, const QPointF &B) {
-    return A.x() * B.x() + A.y() * B.y();
-}
-
-QPointF vector(const QPointF &from, const QPointF &to) {
-    return QPointF{to.x() - from.x(), to.y() - from.y()};
-}
-
-double cross(const QPointF &a, const QPointF &b) {
-    return a.x() * b.y() - a.y() * b.x();
-}
-
-double normalize(double radians) {
-    if (radians < 0)
-        radians += 2 * M_PI;
-    if (radians >= 2 * M_PI)
-        radians -= 2 * M_PI;
-
-    return radians;
-}
-
-QPointF normalize(const QPointF &v) {
-    double len = std::hypot(v.x(), v.y());
-
-    if (len == 0)
-        return {0, 0};
-
-    return {v.x() / len, v.y() / len};
-}
-
-double angle_between(const QPointF &a, const QPointF &b) {
-    normalize(a);
-    normalize(b);
-
-// TODO: Перестановить a<->b
-    return std::atan2(cross(b, a), dot(b, a));
-}
-
-double angle(const QPointF &A, const QPointF &B, const QPointF &C) {
-    auto a = vector(B, A);
-    auto b = vector(B, C);
-
-    return std::atan2(cross(a, b), dot(a, b));
-}
-
-double angle(const QPointF &A) {
-    return std::atan2(A.x(), A.y());
-}
-
-double distance(const QPointF &A, const QPointF &B) {
-    return std::hypot(B.x() - A.x(), B.y() - A.y());
-}
+using namespace geometry;
 
 enum turnType {
     left,
@@ -95,473 +28,13 @@ enum turnType {
     UTurn
 };
 
+
 #include "config.hpp"
 #include <QPointF>
 #include <QtMath>
 #include <iomanip>
 #include <iostream>
 #include <memory>
-
-class Element {
-    // draw
-    // ...
-public:
-    virtual QPointF start() const = 0;
-
-    virtual QPointF end() const = 0;
-
-    virtual double speed() const = 0;
-
-    virtual void draw(QPainter &painter) = 0;
-
-    virtual double length() const = 0;
-
-    virtual void show() const = 0;
-
-    virtual QPointF move(double time) const = 0;
-
-    Element() {
-    }
-
-    ~Element() = default;
-};
-
-/*!
- * Дуги мы не можем изменять, чтобы придать ускорение или замедление объекту,
- * но можем поделить Дугу в зависимости от ускорения/замедления.
- * Отрезок можем использовать для составления отрезков для ускорения/замедления.
- */
-class segment : public Element {
-    QPointF A;
-    QPointF B;
-
-    double _speed;
-
-public:
-    segment(const QPointF &a = QPointF{}, const QPointF &b = QPointF{}, double s = 0)
-            : Element(), A(a), B(b), _speed(s) {
-    }
-
-    // TODO: Не тестировал толком, надо проверять
-    std::vector<segment> split(double v0, double v1, int n) {
-        std::vector<segment> result;
-
-        //        double dx = original.end.x - original.start.x;
-        //        double dy = original.end.y - original.start.y;
-        auto AB = B - A;
-        double L = std::hypot(AB.x(), AB.y());
-        double a = (v1 > v0) ? acceleration : -deceleration;
-        double L_target = (v1 * v1 - v0 * v0) / (2 * a);
-
-        bool canReach = (a > 0) ? (L_target <= L) : (L_target <= L);
-
-        double remainingLength = L;
-        double currentV = v0;
-        auto currentStart = A;
-
-        // Единичный вектор направления движения
-        auto norm_segm = AB / L;
-        //        double ux = dx / L;
-        //        double uy = dy / L;
-
-        // Участок с изменением скорости
-        double accelLength = canReach ? L_target : L;
-        double segLength = accelLength / n;
-
-        for (int i = 0; i < n; ++i) {
-            double nextV = std::sqrt(std::max(0.0, currentV * currentV + 2 * a * segLength));
-            if ((a > 0 && nextV > v1) || (a < 0 && nextV < v1))
-                nextV = v1;
-
-            QPointF nextEnd{currentStart.x() + norm_segm.x() * segLength,
-                            currentStart.y() + norm_segm.y() * segLength};
-
-            result.push_back({currentStart, nextEnd, currentV});
-
-            currentStart = nextEnd;
-            currentV = nextV;
-            remainingLength -= segLength;
-        }
-
-        // Остаток с постоянной скоростью
-        if (canReach && remainingLength > 1e-6) {
-            segLength = remainingLength / n; // можно выбрать другое кол-во сегментов
-            for (int i = 0; i < n; ++i) {
-                QPointF nextEnd{currentStart.x() + norm_segm.x() * segLength,
-                                currentStart.y() + norm_segm.y() * segLength};
-                result.push_back({currentStart, nextEnd, v1});
-                currentStart = nextEnd;
-            }
-        }
-
-        return result;
-    }
-
-    // TODO: Требуется проверка
-    QPointF move(double time) const override {
-        double distance = time * _speed;
-        return QPointF{A.x() + distance * sin(angle(B - A)), A.y() + distance * cos(angle(B - A))};
-    }
-
-    static std::vector<segment>
-    generateSpeedTransitionSegments(const QPointF &start, const QPointF &end, double v0, double v1, int n) {
-        std::vector<segment> result;
-
-        double totalLength = distance(start, end);
-        if (totalLength < 1e-9 || n <= 0)
-            return result;
-
-        // Направление движения
-        double dx = (end.x() - start.x()) / totalLength;
-        double dy = (end.y() - start.y()) / totalLength;
-
-        // Длина одного сегмента
-        double segLength = totalLength / n;
-
-        // Знак ускорения
-        double a = (v1 > v0) ? acceleration : -deceleration;
-
-        double currentV = v0;
-        QPointF currentStart = start;
-
-        for (int i = 0; i < n; ++i) {
-            // Расчёт скорости на следующем сегменте
-            double nextV = std::sqrt(std::max(0.0, currentV * currentV + 2 * a * segLength));
-            if ((a > 0 && nextV > v1) || (a < 0 && nextV < v1))
-                nextV = v1;
-
-            // Вычисление координат конца сегмента
-            QPointF nextEnd{
-                    currentStart.x() + dx * segLength,
-                    currentStart.y() + dy * segLength};
-
-            result.push_back({currentStart, nextEnd, currentV});
-
-            currentStart = nextEnd;
-            currentV = nextV;
-        }
-
-        return result;
-    }
-
-    void show() const override {
-        qDebug() << "Segment: A" << A << ", B" << B << ", speed: " << _speed;
-    }
-
-    double length() const override {
-        return std::hypot(A.x() - B.x(), A.y() - B.y());
-    }
-
-    void draw(QPainter &painter) override {
-        painter.drawLine(A, B);
-    }
-
-    QPointF start() const override {
-        return A;
-    }
-
-    QPointF end() const override {
-        return B;
-    }
-
-    double speed() const override {
-        return _speed;
-    }
-};
-
-class Arc : public Element {
-    QPointF A;
-    QPointF B;
-    QPointF C;
-    // TODO: radius можно рассчитать.
-
-    double _speed;
-    double radius;
-
-    bool _clockwise; // Направление обхода. TODO: Определять при построении
-
-public:
-    Arc(const QPointF &s, const QPointF &e, const QPointF &c, double sp, bool cw)
-            : A(s), B(e), C(c), _speed(sp), _clockwise(cw) {
-        radius = hypot(s.x() - c.x(), s.y() - c.y());
-    }
-
-    // TODO: Точка должна быть на дуге
-    void setEnd(const QPointF &pos) {
-        B = pos;
-    }
-
-    void setStart(const QPointF &pos) {
-        A = pos;
-    }
-
-    void setClockwise(bool value) {
-        _clockwise = value;
-    }
-
-    static Arc
-    createFromAngle(const QPointF &start, const QPointF &center, double radians, bool clockwise, double speed) {
-        double radius = std::hypot(start.x() - center.x(), start.y() - center.y());
-
-        // TODO: sin и cos поменять местами
-        QPointF end{center.x() + radius * std::cos(radians), center.y() + radius * std::sin(radians)};
-
-        return Arc{start, end, center, speed, clockwise};
-    }
-
-    QPointF setEnd(double offset) {
-        // TODO: необходимо проверить
-        double radians = _clockwise ? (startAngle() - endAngle()) : (endAngle() - startAngle());
-        double angle = radians + offset;
-
-        // нормализация в диапазон 0–2π
-        while (angle < 0)
-            angle += 2.0 * M_PI;
-        while (angle >= 2.0 * M_PI)
-            angle -= 2.0 * M_PI;
-
-        // TODO: sin и cos поменять местами
-        QPointF end{C.x() + radius * std::sin(angle), C.y() + radius * std::cos(angle)};
-
-        B = end;
-
-        return end;
-    }
-
-    double calculateAngle(const QPointF &point) const {
-        double dx = point.x() - C.x();
-        double dy = point.y() - C.y();
-
-        return std::atan2(dy, dx) * 180.0 / M_PI; // в градусах
-    }
-
-    QPointF calculatePointOnCircle(double angleDegrees) const {
-        double angleRadians = angleDegrees * M_PI / 180.0;
-        QPointF result{C.x() + radius * std::cos(angleRadians), C.y() + radius * std::sin(angleRadians)};
-
-        return result;
-    }
-
-    void addDegreesToStart(double degrees) {
-        double currentAngle = calculateAngle(A);
-        double newAngle = currentAngle + (_clockwise ? -degrees : degrees);
-
-        A = calculatePointOnCircle(newAngle);
-    }
-
-    // Метод для добавления градусов в конец дуги
-    void addDegreesToEnd(double degrees) {
-        double currentAngle = calculateAngle(B);
-        double newAngle = currentAngle + (_clockwise ? -degrees : degrees);
-
-        B = calculatePointOnCircle(newAngle);
-    }
-
-    QPointF setStart(double offset) {
-        // TODO: необходимо проверить
-        double radians = _clockwise ? (startAngle() - endAngle()) : (endAngle() - startAngle());
-        double angle = radians + offset;
-
-        // нормализация в диапазон 0–2π
-        while (angle < 0)
-            angle += 2.0 * M_PI;
-        while (angle >= 2.0 * M_PI)
-            angle -= 2.0 * M_PI;
-
-        // TODO: sin и cos поменять местами
-        QPointF end{C.x() + radius * std::cos(angle), C.y() + radius * std::sin(angle)};
-
-        B = end;
-
-        return end;
-    }
-
-
-    void show() const override {
-        qDebug() << "Arc: A" << A << ", B" << B << ", C" << C << ", speed: " << _speed;
-    }
-
-    /*!
-     * Разбить на сегменты.
-     * @param segments
-     * @return
-     */
-    std::vector<Arc> split(int segments) {
-        std::vector<Arc> result;
-
-        double a1 = atan2(A.y() - C.y(), A.x() - C.x());
-        double a2 = atan2(B.y() - C.y(), B.x() - C.x());
-
-        if (_clockwise) {
-            if (a2 < a1)
-                a2 += 2 * M_PI;
-        } else {
-            if (a1 < a2)
-                a1 += 2 * M_PI;
-        }
-
-        double angle_diff = _clockwise ? (a2 - a1) : (a1 - a2);
-        double step = angle_diff / segments;
-
-        auto start = A;
-
-        for (int i = 0; i <= segments; ++i) {
-            double angle = _clockwise ? (a1 + i * step) : (a1 - i * step);
-            QPointF end{C.x() + radius * cos(angle), C.y() + radius * sin(angle)};
-
-            result.emplace_back(start, end, C, _speed, _clockwise);
-            start = end;
-        }
-
-        return result;
-    }
-
-    // TODO: Проверить
-    QPointF move(double time) const override {
-        // Углы
-        double ang0 = std::atan2(A.y() - C.y(), A.x() - C.x());
-        double ang1 = std::atan2(B.y() - C.y(), B.x() - C.x());
-
-        ang0 = normalize(ang0);
-        ang1 = normalize(ang1);
-
-        // TODO: тоже часто считаем
-        double angle_full = ang1 - ang0;
-        if (_clockwise && angle_full > 0)
-            angle_full -= 2 * M_PI;
-        if (!_clockwise && angle_full < 0)
-            angle_full += 2 * M_PI;
-
-        double length = std::abs(radius * angle_full);
-        double sign = _clockwise ? -1.0 : 1.0;
-
-        // Пройденное расстояние по дуге
-        double distance = _speed * time;
-        // TODO: Должны проверять выше.
-        if (distance > length)
-            distance = length; // ограничение по длине дуги
-
-        double angle_offset = (distance / radius) * sign;
-        double theta = ang0 + angle_offset;
-
-        return {
-                C.x() + radius * std::cos(theta),
-                C.y() + radius * std::sin(theta)};
-    }
-
-    // TODO: категорически проверять
-    std::vector<Arc> split(double v0, double v1, int n) {
-        std::vector<Arc> result;
-
-        // TODO: Выделить в отдельную функцию?
-        double ang0 = std::atan2(A.y() - C.y(), A.x() - C.x());
-        double ang1 = std::atan2(B.y() - C.y(), B.x() - C.x());
-
-        ang0 = normalize(ang0);
-        ang1 = normalize(ang1);
-
-        double angle_full = ang1 - ang0;
-        if (_clockwise && angle_full > 0)
-            angle_full -= 2 * M_PI;
-        if (!_clockwise && angle_full < 0)
-            angle_full += 2 * M_PI;
-
-        double length = std::abs(radius * angle_full);
-        double a = (v1 > v0) ? acceleration : -deceleration;
-
-        double segLength = length / n;
-        double angle_step = angle_full / n;
-        double currentV = v0;
-        double currentAngle = ang0;
-
-        QPointF currentStart = A;
-
-        for (int i = 0; i < n; ++i) {
-            double nextV = std::sqrt(std::max(0.0, currentV * currentV + 2 * a * segLength));
-            if ((a > 0 && nextV > v1) || (a < 0 && nextV < v1))
-                nextV = v1;
-
-            double nextAngle = currentAngle + angle_step;
-            QPointF nextEnd{
-                    C.x() + radius * std::cos(nextAngle),
-                    C.y() + radius * std::sin(nextAngle)};
-
-            result.emplace_back(currentStart, nextEnd, C, _clockwise, currentV);
-
-            currentStart = nextEnd;
-            currentAngle = nextAngle;
-            currentV = nextV;
-        }
-
-        return result;
-    }
-
-    double length() const {
-        double angle = _clockwise ? (startAngle() - endAngle()) : (endAngle() - startAngle());
-
-        if (angle < 0)
-            angle += 2 * M_PI;
-
-        return radius * angle;
-    }
-
-    void draw(QPainter &painter) override {
-        // Вычисляем углы (в градусах от оси X по часовой стрелке в координатах Qt)
-        double startAngleDeg = -qRadiansToDegrees(qAtan2(A.y() - C.y(),
-                                                         A.x() - C.x()));
-        double endAngleDeg = -qRadiansToDegrees(qAtan2(B.y() - C.y(),
-                                                       B.x() - C.x()));
-
-        // Вычисляем дугу (в шестнадцатых долях градуса для drawArc)
-        double spanDeg;
-        if (_clockwise) {
-            spanDeg = fmod((endAngleDeg - startAngleDeg + 360), 360);
-        } else {
-            spanDeg = -(fmod((startAngleDeg - endAngleDeg + 360), 360));
-        }
-
-        QRectF rect(C.x() - radius, C.y() - radius, 2 * radius, 2 * radius);
-
-        painter.drawArc(rect, startAngleDeg * 16, spanDeg * 16);
-    }
-
-    bool clockwise() const {
-        return _clockwise;
-    }
-
-    QPointF center() const {
-        return C;
-    }
-
-    QPointF start() const override {
-        return A;
-    }
-
-    QPointF end() const override {
-        return B;
-    }
-
-    double speed() const override {
-        return _speed;
-    }
-
-    void swap() {
-        std::swap(A, B);
-        _clockwise = !_clockwise;
-    }
-
-    Arc(Arc &&) = default;
-
-    double startAngle() const {
-        return atan2(C.y() - A.y(), C.x() - B.x());
-        //        return atan2(A.x() - C.x(), A.y() - C.y());
-    }
-
-    double endAngle() const {
-        return atan2(C.y() - B.y(), C.x() - B.x());
-        //        return atan2(B.x() - C.x(), B.y() - C.y());
-    }
-};
 
 // Функция расчёта параметров циркуляции
 void calculateTurningParameters(double speed_knots, double turn_angle_deg, double turn_radius_m) {
@@ -599,312 +72,20 @@ int getTurnDirection(const QPointF &A, const QPointF &B, const QPointF &C) {
     }
 }
 
-#include <cmath>
-#include <iostream>
-
-// найти угол
-
-QPointF vector(const QPointF &p, double distance, double radians) {
-    double x = p.x() + distance * sin(radians);
-    double y = p.y() + distance * cos(radians);
-
-    return {std::fabs(x) < EPS ? 0 : x, std::fabs(y) < EPS ? 0 : y};
-}
-
-QPointF vector(double distance, double radians) {
-    return {std::fabs(distance * sin(radians)) < EPS ? 0 : (distance * sin(radians)),
-            std::fabs(distance * cos(radians)) < EPS ? 0 : distance * cos(radians)};
-}
-
 #include <QtMath>
-//
-//QPointF perpendicular(const QPointF& v, double distance, turn type)
-//{
-//    auto angle = M_PI / 2;
-//    if (type == turn::left)
-//    {
-//        angle *= -1;
-//    }
-//
-//    return v + vector(distance, angle);
-//}
 
-bool intersect(const QPointF &A, const QPointF &B, const QPointF &C, const QPointF &D) {
-    QPointF AB = vector(A, B);
-    QPointF AC = vector(A, C);
-    QPointF AD = vector(A, D);
-
-    QPointF CD = vector(C, D);
-    QPointF CA = vector(C, A);
-    QPointF CB = vector(C, B);
-
-    // Проверка с помощью векторных произведений
-    double cross1 = cross(AB, AC);
-    double cross2 = cross(AB, AD);
-    double cross3 = cross(CD, CA);
-    double cross4 = cross(CD, CB);
-
-    // Отрезки пересекаются, если знаки произведений разные
-    if (((cross1 * cross2) < 0) && ((cross3 * cross4) < 0)) {
-        return true;
-    }
-
-    // Дополнительная проверка, если отрезки коллинеарны или имеют общие вершины
-    if (cross1 == 0 && cross2 == 0 && cross3 == 0 && cross4 == 0) {
-        // Проверка наложения проекций
-        if (std::max(A.x(), B.x()) < std::min(C.x(), D.x()) ||
-            std::max(C.x(), D.x()) < std::min(A.x(), B.x()) ||
-            std::max(A.y(), B.y()) < std::min(C.y(), D.y()) ||
-            std::max(C.y(), D.y()) < std::min(A.y(), B.y())) {
-            return false;
-        }
-        return true;
-    }
-
-    return false;
-}
-
-// Найти точку пересечения (если есть)
-bool intersection(const QPointF &A, const QPointF &B, const QPointF &C, const QPointF &D, QPointF &intersection) {
-    if (!intersect(A, B, C, D)) {
-        return false;
-    }
-
-    // Параметрическое уравнение пересечения
-    double denom = (A.x() - B.x()) * (C.y() - D.y()) - (A.y() - B.y()) * (C.x() - D.x());
-
-    if (denom == 0) { // Отрезки параллельны или коллинеарны
-        return false;
-    }
-
-    double t = ((A.x() - C.x()) * (C.y() - D.y()) - (A.y() - C.y()) * (C.x() - D.x())) / denom;
-    intersection.setX(A.x() + t * (B.x() - A.x()));
-    intersection.setY(A.y() + t * (B.y() - A.y()));
-
-    return true;
-}
-
-QPointF project(const QPointF &A, const QPointF &B, const QPointF &P) {
-    QPointF AB = B - A; // Вектор AB
-    QPointF AP = P - A; // Вектор AP
-
-    double dot = AP.x() * AB.x() + AP.y() * AB.y();
-
-    double lengthAB = AB.x() * AB.x() + AB.y() * AB.y();
-
-    // A == B
-    if (lengthAB == 0) {
-        return A;
-    }
-
-    // Параметр t (если t < 0 → проекция вне отрезка ближе к A, если t > 1 → ближе к B)
-
-    double t = dot / lengthAB;
-
-    // Ограничиваем t, чтобы проекция была строго на отрезке (если нужно)
-    // t = std::max(0.0, std::min(1.0, t));  // ← раскомментировать, если нужна проекция только на отрезке
-
-    // Вычисляем проекцию P'
-    QPointF projection = A + t * AB;
-    return projection;
-}
-
-/*!
- * Проекция используя уравнение линии.
- * @param A
- * @param B
- * @param P
- * @return
- */
-QPointF projection(const QPointF &A, const QPointF &B, const QPointF &P) {
-    auto AB = vector(A, B);
-    auto AP = vector(A, P);
-
-    double dot = AP.x() * AB.x() + AP.y() * AB.y();
-
-    auto sq_len = AB.x() * AB.x() + AB.y() * AB.y();
-
-    auto t = dot / sq_len;
-
-    if (t < 0)
-        std::cout << "Отрицательн." << std::endl; // Точка не лежит на отрезке.
-
-    return QPointF{A.x() + t * AB.x(), A.y() + t * AB.y()};
-}
-
-#include <cmath>
-// Дуга ФК.
-
-int turnDirection(const QPointF &a, const QPointF &b) {
-    // Вправо
-    if (cross(a, b) < 0) {
-        //TODO: turnType::Right
-        return 1;
-    }
-        // Влево
-    else if (cross(a, b) > 0) {
-        //TODO: turnType::Left
-        return -1;
-    } else {
-        //TODO: turnType::UTurn
-        return 0;
-    }
-}
-
-// Прямые
-QPointF intersection(const QPointF &A, const QPointF &B, const QPointF &C, const QPointF &D) {
-    auto a1 = B.y() - A.y();
-    auto b1 = A.x() - B.x();
-    auto c1 = a1 * A.x() + b1 * A.y();
-
-    auto a2 = D.y() - C.y();
-    auto b2 = C.x() - D.x();
-    auto c2 = a2 * C.x() + b2 * C.y();
-
-    double det = a1 * b2 - a2 * b1;
-
-    if (det == 0) {
-        throw std::runtime_error("Прямые параллельны.");
-    }
-
-    return {(c1 * b2 - c2 * b1) / det, (a1 * c2 - a2 * c1) / det};
-}
-
-double to2pi(double a) {
-    a = fmod(a, TAU);
-
-    if (a < 0)
-        a += TAU;
-    return a;
-}
-
-#include "Arc.hpp"
-//
-//struct Arc
-//{
-//    QPointF A, B; // концы дуги
-//    QPointF C;    // центр окружности
-//    double R{0};  // радиус
-//    int s{+1};    // направление: +1 CCW, -1 CW
-//
-//    bool minor{true}; // true — малая дуга, false — большая
-//
-//    bool isContains(const Arc& arc, const QPointF& X, double eps = 1e-12)
-//    {
-//        if (std::fabs(std::hypot(C.x() - X.x(), C.y() - X.y()) - R) > eps)
-//        {
-//            // Не лежит на окружности.
-//            return false;
-//        }
-//
-//        double tA = angle(arc.C, arc.A);
-//        double tB = angle(arc.C, arc.B);
-//        double tX = angle(arc.C, X);
-//
-//        double Delta = to2pi(arc.s * (tB - tA));
-//        double deltaX = to2pi(arc.s * (tX - tA));
-//
-//        return (deltaX >= -eps && deltaX <= Delta + eps);
-//    }
-//};
-
-bool isAngleBetween(double angle, double start, double end) {
-    while (end < start)
-        end += 2 * M_PI;
-
-    while (angle < start)
-        angle += 2 * M_PI;
-
-    return angle <= end + EPS;
-}
-
-QPointF intersection(const QPointF &center, double radius, const QPointF &dir) {
-    // Направление от центра к точке dir
-    double dx = dir.x() - center.x();
-    double dy = dir.y() - center.y();
-
-    auto vec = normalize(vector(center, dir));
-
-    return vector(center, radius, angle(vec));
-}
-
-/*!
- * Дуга Заданного радиуса, Заданного сектора.
- * @param A Точка начала отрезка;
- * @param B Точка конца отрезков;
- * @param direction направление отрезка от которого строим;
- * @param radius
- * @param speed
- * @return
- */
-Arc calculateHalfCircleArc(const QPointF &A, const QPointF &B, double direction, double radius, double speed = 5) {
-    auto a = normalize(B - A); //! Вычисляем направление поворота.
-
-    QPointF offset;
-    bool cw = true;
-
-    if (angle(a) > 0) {
-        offset = vector(radius, direction + M_PI / 2);
-    } else {
-        cw = false;
-        offset = vector(radius, direction - M_PI / 2);
-    }
-
-    auto center = A + offset;
-    auto end = center + offset;
-
-    return Arc(A, end, center, speed, cw);
-}
-
-/*!
- * Если известно направление
- * @param start
- * @param radius
- * @param direction
- * @param type
- * @param speed
- * @return
- */
-Arc calculateHalfCircleArc(const QPointF &start, double radius, double direction, turnType type, double speed) {
-    QPointF offset;
-    bool cw = true;
-
-    if (type == turnType::right) {
-        offset = vector(radius, direction + M_PI / 2);
-    } else {
-        cw = false;
-        offset = vector(radius, direction - M_PI / 2);
-    }
-    qDebug() << angle(start);
-    qDebug() << angle(offset);
-
-    auto center = start + offset;
-    auto end = center + offset;
-
-    return Arc{start, end, center, speed, cw};
-}
-
-/*!
- * Дуга Заданного радиуса по касательным к отрезкам. A -> B -> C
- * @param A Точка начала первого отрезка;
- * @param B Точка конца первого и начала второго отрезков;
- * @param C Точка конца второго отрезка;
- * @param radius
- * @param speed
- * @return
- */
 Arc calculateTangentiallyArc(const QPointF &A, const QPointF &B, const QPointF &C, double radius, double speed = 5) {
     // 1. Определить сторону поворота
-    auto a = normalize(B - A);
-    auto b = normalize(C - B);
+    auto a = geometry::normalize(B - A);
+    auto b = geometry::normalize(C - B);
 
-    auto turn = turnDirection(a, b);
+    auto turn = geometry::turnDirection(a, b);
 
     // 2. Находим Отрезки
     // Добавочный вектор 1
-    auto a1 = vector(radius, angle(a) + turn * M_PI / 2);
+    auto a1 = geometry::vector(radius, geometry::angle(a) + turn * M_PI / 2);
     // Добавочный вектор 2
-    auto b1 = vector(radius, angle(b) + turn * M_PI / 2);
+    auto b1 = geometry::vector(radius, geometry::angle(b) + turn * M_PI / 2);
 
     auto A1 = A + a1;
     auto B1 = B + a1;
@@ -912,11 +93,11 @@ Arc calculateTangentiallyArc(const QPointF &A, const QPointF &B, const QPointF &
     auto C2 = C + b1;
 
     // 3. Находим пересечение.
-    QPointF inter = intersection(A1, B1, B2, C2);
+    QPointF inter = geometry::intersection(A1, B1, B2, C2);
 
     // 4. Находим точки начала и конца дуги
-    auto begin = projection(A, B, inter);
-    auto end = projection(B, C, inter);
+    auto begin = geometry::projection(A, B, inter);
+    auto end = geometry::projection(B, C, inter);
 
     return Arc(begin, end, inter, speed, turn > 0 ? true : false);
     //    arc.A = begin;
@@ -928,7 +109,7 @@ Arc calculateTangentiallyArc(const QPointF &A, const QPointF &B, const QPointF &
 
     // Находим точку пересечения Дуги и прямой из точек Центра окружности и точки поворота.
     // 1. Находим пересечение Дуги и прямой
-    auto point = intersection(inter, radius, B);
+    auto point = geometry::intersection(inter, radius, B);
 
     // Пока одну точку
     // 2. Получаем траекторию
@@ -1008,7 +189,8 @@ std::vector<WayPoint> upper_path(const double initialSpeed, double reachSpeed, d
 
         auto s = (v2 * v2 - v1 * v1) / (2 * acceleration);
 
-        result.push_back({vector(s, radians), v2});
+
+        result.push_back({geometry::vector(s, radians), v2});
     }
 
     auto full{0};
@@ -1053,7 +235,7 @@ std::vector<WayPoint> down_path(const double initialSpeed, double reachSpeed, do
 
         auto s = change_distance(v2, v1, deceleration);
 
-        result.push_back({vector(s, radians), v2});
+        result.push_back({geometry::vector(s, radians), v2});
         //        segments.push_back();
     }
 
@@ -1152,7 +334,7 @@ void calculate(std::vector<std::pair<QPointF, double>> data = {{{0,    0},    6}
     // Условные входные данные
 
     // 1. вычислить угол поворота (угол между отрезками)
-    auto turn = angle(data[0].first, data[1].first, data[2].first);
+    auto turn = geometry::angle(data[0].first, data[1].first, data[2].first);
     std::cout << "Угол поворота: " << turn << std::endl;
     if (turn >= M_PI / 2) {
     } else if (turn < M_PI / 2) {
@@ -1162,77 +344,10 @@ void calculate(std::vector<std::pair<QPointF, double>> data = {{{0,    0},    6}
     }
 }
 
-class Path {
-    std::vector<std::shared_ptr<Element>> _elements;
-
-public:
-    void add(const std::shared_ptr<segment> &segment) {
-        _elements.push_back(segment);
-    }
-
-    void add(const std::shared_ptr<Arc> &arc) {
-        _elements.push_back(arc);
-    }
-
-    void add(const Arc &arc) {
-        _elements.push_back(std::make_shared<Arc>(arc.start(), arc.end(), arc.center(), arc.speed(), arc.clockwise()));
-    }
-
-    void add(const segment &seg) {
-        _elements.push_back(std::make_shared<segment>(seg.start(), seg.end(), seg.speed()));
-    }
-
-    void add_range(const std::vector<std::shared_ptr<Element>> &elements) {
-        for (const auto &element: elements)
-            _elements.push_back(element);
-    }
-
-    std::vector<std::shared_ptr<Element>> elements() const {
-        return _elements;
-    }
-
-    void add(const Path &path) {
-        for (const auto &element: path._elements) {
-            _elements.push_back(element);
-        }
-    }
-
-    void add(const std::vector<WayPoint> &elements) {
-        QPointF start{};
-
-        if (!elements.empty()) {
-            start = _elements.back()->end();
-        }
-
-        for (const auto &element: elements) {
-            add(std::make_shared<segment>(start, start + element.position, element.speed));
-            start = _elements.back()->end();
-        }
-    }
-
-    void draw(QPainter &painter) {
-        for (const auto &element: _elements) {
-            element->draw(painter);
-        }
-    }
-
-    std::shared_ptr<Element> last() {
-        return _elements.back();
-    }
-
-    std::shared_ptr<Element> first() {
-        return _elements.front();
-    }
-
-    void show() const {
-        for (const auto &element: _elements) {
-            element->show();
-        }
-    }
-};
-
 #include <QPainter>
 #include <QWidget>
+#include "figures/Segment.hpp"
+#include "figures/Path.hpp"
 
 class DrawWidget : public QWidget {
 Q_OBJECT
@@ -1242,6 +357,7 @@ public:
 
     void paintEvent(QPaintEvent *event) {
         QPainter painter(this);
+        painter.translate(width() / 2.0, height() / 3.0);
         painter.setRenderHint(QPainter::Antialiasing); // Более плавная отрисовка, но наложение линий
 
         QPen pen(Qt::darkYellow);
@@ -1257,8 +373,8 @@ public:
     }
 
     void setSegments(const std::vector<std::pair<QPointF, double>> data) {
-        segments.first = segment(data[0].first, data[1].first, data[0].second);
-        segments.second = segment(data[1].first, data[2].first, data[1].second);
+        segments.first = Segment(data[0].first, data[1].first, data[0].second);
+        segments.second = Segment(data[1].first, data[2].first, data[1].second);
     }
 
     void setPath(Path path) {
@@ -1267,7 +383,7 @@ public:
 
 private:
     Path _path;
-    std::pair<segment, segment> segments;
+    std::pair<Segment, Segment> segments;
 };
 
 /*!
@@ -1285,7 +401,7 @@ Path figure6(const std::vector<std::pair<QPointF, double>> data) {
               << std::endl;
 
     // 2. Находим направление.
-    auto direction = angle(data[1].first - data[0].first);
+    auto direction = geometry::angle(data[1].first - data[0].first);
     std::cout << "Направление первого участка: " << direction << std::endl;
 
     // 3. Находим дугу Радиуса циркуляции
@@ -1295,15 +411,11 @@ Path figure6(const std::vector<std::pair<QPointF, double>> data) {
     Path path;
 
     // move(time), start(), end(), speed(), draw(QPainter)
-    path.add(std::make_shared<segment>(data[0].first, arc.start(), data[1].second)); // unique
-    path.add(std::make_shared<Arc>(arc.start(), arc.end(), arc.center(), arc.speed(), arc.clockwise()));
-    path.add(std::make_shared<segment>(arc.end(), data[2].first, data[2].second));
+    path.add(Segment(data[0].first, arc.start(), data[1].second)); // unique
+    path.add(Arc(arc.start(), arc.end(), arc.center(), arc.speed(), arc.clockwise()));
+    path.add(Segment(arc.end(), data[2].first, data[2].second));
 
     return path;
-}
-
-double distance(const QPointF &point) {
-    return std::hypot(point.x(), point.y());
 }
 
 /*!
@@ -1356,107 +468,6 @@ enum Side {
     _right
 };
 
-// Отражение точки P относительно прямой (O + t*v), v — единичный
-// TODO: Проверить
-/*!
- * Отражение нормали от прямой.
- * @param P
- * @param O
- * @param v
- * @return
- */
-QPointF reflectAcrossLine(const QPointF &P, const QPointF &O, const QPointF &v) {
-    QPointF n = {-v.y(), v.x()}; // единичная нормаль, т.к. v — unit
-    QPointF r = P - O;
-    double pv = dot(r, v);
-    double pn = dot(r, n);
-    return O + v * pv - n * pn;
-}
-
-/*!
- * Сдвиг вектора на угол.
- * @param a
- * @param ang
- * @return
- */
-QPointF shift(const QPointF &a, double ang) {
-    return {a.x() * cos(ang) - a.y() * sin(ang), a.x() * sin(ang) + a.y() * cos(ang)};
-}
-
-// Находим точку A на линии l: A(t) = A0 + t*v (v — unit), такую что |A - O| = L.
-// Возвращает флаг успеха и выбранную A. Берём «переднее» решение t = -proj + sqrt(...)
-static inline bool
-placeAlongLineAtDistanceFromO(const QPointF &O, const QPointF &A0, const QPointF &v, double L, QPointF &Aout) {
-    QPointF w0 = A0 - O;
-    double proj = dot(w0, v);
-    double d2 = fmax(0.0, dot(w0, w0) - proj * proj); // перпендикуляр до O
-
-    if (L * L + 1e-12 < d2)
-        return false; // нет решения
-
-    double s = sqrt(fmax(0.0, L * L - d2));
-    double t = -proj + s; // выбираем «вперёд» по v
-    Aout = A0 + v * t;
-
-    return true;
-}
-
-/*!
- * Проверка точки на луче.
- * @param O
- * @param u_unit
- * @param A
- * @param angleDeg
- * @param Q
- * @return
- */
-bool pointOnRayByAngle(const QPointF &O, const QPointF &u_unit, const QPointF &A, double radians, QPointF &Q) {
-    // Направления d1,d2 от Q к A (то есть Q = A - t*d, t >= 0), образующие нужный угол с u
-    QPointF d1 = shift(u_unit, +radians);
-    QPointF d2 = shift(u_unit, -radians);
-
-    auto tryDir = [&](const QPointF &d, QPointF &Qcand) -> bool {
-        double det = cross(d, u_unit);
-        if (fabs(det) < 1e-12)
-            return false; // параллельны — решения нет
-        QPointF r = A - O;
-        // Решаем r = t*d + s*u => t = cross(r,u)/cross(d,u), s = cross(d,r)/cross(d,u)
-        double t = cross(r, u_unit) / det;
-        double s = cross(d, r) / det;
-        if (t >= -1e-12 && s >= -1e-12) { // допускаем маленькие погрешности
-            if (t < 0)
-                t = 0;
-            if (s < 0)
-                s = 0;
-            Qcand = O + u_unit * s;
-            return true;
-        }
-        return false;
-    };
-
-    QPointF Q1, Q2;
-    bool ok1 = tryDir(d1, Q1);
-    bool ok2 = tryDir(d2, Q2);
-
-    if (!ok1 && !ok2)
-        return false;
-    if (ok1 && !ok2) {
-        Q = Q1;
-        return true;
-    }
-    if (!ok1 && ok2) {
-        Q = Q2;
-        return true;
-    }
-
-    // Если обе годятся — берём ближнюю к A
-    double d1len = distance(A - Q1);
-    double d2len = distance(A - Q2);
-    Q = (d1len <= d2len ? Q1 : Q2);
-
-    return true;
-}
-
 /*!
  * Фигура 2. Поворот на острый угол, построение по точкам отрезка.
  * @param data
@@ -1477,16 +488,16 @@ Path figure1(const std::vector<std::pair<QPointF, double>> data) // TODO: (A,B,C
     std::cout << "Радиус циркуляции: " << radius << std::endl;
     //! 2. Расчет пути для сброса скорости к номинальной.
     // 2.1 Находим направление.
-    auto direction = angle(data[1].first - data[0].first);
+    auto direction = geometry::angle(data[1].first - data[0].first);
 
     // Направление внешней биссектрисы
     auto AB = B - A;
     auto CB = B - C;
 
-    auto nAB = normalize(AB);
-    auto nCB = normalize(CB);
+    auto nAB = geometry::normalize(AB);
+    auto nCB = geometry::normalize(CB);
 
-    auto bisector = normalize(nCB + nAB); //! Направление биссектрисы
+    auto bisector = geometry::normalize(nCB + nAB); //! Направление биссектрисы
 
     // Точки биссектрисы
     auto b1 = B;
@@ -1507,16 +518,16 @@ Path figure1(const std::vector<std::pair<QPointF, double>> data) // TODO: (A,B,C
     // Решение по известным точкам на отрезках допустим 3/5 от начала
     auto k = 3. / 5.;
     //! Найти точки на отрезках 1. отрезок торможение, 2. отрезок разгона
-    auto AB_range = distance(B - A);
-    auto BC_range = distance(C - B);
+    auto AB_range = geometry::distance(B - A);
+    auto BC_range = geometry::distance(C - B);
 
-    auto AB_point = A + normalize(B - A) * AB_range *
+    auto AB_point = A + geometry::normalize(B - A) * AB_range *
                         k;                                                              //vector(AB_range * k, angle(B - A));
-    auto BC_point = C + normalize(B - C) * BC_range *
+    auto BC_point = C + geometry::normalize(B - C) * BC_range *
                         k;                                                              //    vector(BC_range * k, angle(B - C));
-    qDebug() << "Длина AB: " << AB_range * 3 / 5 << ", направление A-B: " << angle(B - A) << ", точка: "
+    qDebug() << "Длина AB: " << AB_range * 3 / 5 << ", направление A-B: " << geometry::angle(B - A) << ", точка: "
              << AB_point; //!
-    qDebug() << "Длина BC: " << BC_range * 3 / 5 << ", направление C-B: " << angle(B - C) << ", точка: "
+    qDebug() << "Длина BC: " << BC_range * 3 / 5 << ", направление C-B: " << geometry::angle(B - C) << ", точка: "
              << BC_point; //!
 
     // Переносим параллельно правую и левую части
@@ -1577,15 +588,15 @@ Path figure1(const std::vector<std::pair<QPointF, double>> data) // TODO: (A,B,C
 
     //! Сводим всю схему
     auto _arc1 = calculateTangentiallyArc(A, AB_point, _arc2.start(), radius, speed);
-    auto _seg1 = segment{_arc1.end(), _arc2.start(), speed};
+    auto _seg1 = Segment{_arc1.end(), _arc2.start(), speed};
 
-    auto _begin_seg = segment{A, _arc1.start(), speed};
+    auto _begin_seg = Segment{A, _arc1.start(), speed};
 
     auto _arc3 = calculateTangentiallyArc(_arc2.end(), BC_point, C, radius, speed);
 
-    auto _seg2 = segment{_arc2.end(), _arc3.start(), speed};
+    auto _seg2 = Segment{_arc2.end(), _arc3.start(), speed};
 
-    auto _end_seg = segment{_arc3.end(), C, speed};
+    auto _end_seg = Segment{_arc3.end(), C, speed};
 
     //! Разбить схему на скоростные участки.
 
@@ -1600,23 +611,7 @@ Path figure1(const std::vector<std::pair<QPointF, double>> data) // TODO: (A,B,C
     return path;
 }
 
-QPointF bisector(const QPointF &A, const QPointF &B, const QPointF &C, bool inner = true) {
-    QPointF a, b;
-    if (inner) {
-        a = A - B;
-        b = C - B;
-    } else {
-        a = B - A;
-        b = B - C;
-
-    }
-    auto norm_a = normalize(a);
-    auto norm_b = normalize(b);
-
-    auto bis = normalize(norm_a + norm_b); //! Направление биссектрисы
-
-    return bis;
-}
+#include "figures/geometry.hpp"
 
 // TODO: Фигура должна быть устойчива при изменении частей.
 /*!
@@ -1636,33 +631,113 @@ Path figure3(const std::vector<std::pair<QPointF, double>> data) {
     auto A = data[0].first;
     auto B = data[1].first;
     auto C = data[2].first;
+    auto search_velocity1 = data[0].second;
+    auto search_velocity2 = data[1].second;
 
     auto AB = normalize(B - A); //! Направление первого галса
 
-    // Первый вектор в последнюю очередь.
-
-    // построение просто фигуры
-
     // Проверка высоты дуг
     auto ab_direction = B - A;
+
     auto A1 = A + vector(100, angle(ab_direction));
+    auto A1_shift = A1 + vector(1000, angle(ab_direction) - M_PI / 4);
+    auto arc3 = calculateTangentiallyArc(A, A1, A1_shift, radius, search_speed);
+    arc3.swap();
 
-    qDebug() << angle(A);
-    auto A2 = A1 + vector(100, angle(A) - M_PI / 4);
-    auto arc3 = calculateTangentiallyArc(A, A1, A2, radius, search_speed);
-    auto arc3_height = distance(projection(A, A1, arc3.end()), arc3.end());
+    // Прямая для малых дуг
+    auto A_shift = A + vector(2 * radius, angle(ab_direction) - M_PI / 2);
+    auto B_shift = B + vector(2 * radius, angle(ab_direction) - M_PI / 2);
+    auto inter = intersection(A1, A1_shift, A_shift, B_shift);
+    auto arc2 = calculateTangentiallyArc(B_shift, inter, A1, radius, search_speed);
 
-    qDebug() << arc3_height;
+    // Смещаем к {0,0}
+    auto _shift = arc3.end();
+    arc2.translate(-_shift.x(), -_shift.y());
+    arc3.translate(-_shift.x(), -_shift.y());
+
+    //! Отрезок 1
+    auto seg1 = Segment{geometry::vector(arc2.start(), radius, angle(ab_direction)), arc2.start()};
+
+    Segment seg2{arc2.end(), arc3.start(), search_speed};
+
+    // 1. Строим Дугу разворота
+    // принимаем центр дуги как 0,0
+    QPointF arc1_B = seg1.start();
+
+    auto offset = vector(radius, angle(ab_direction) + M_PI / 2);
+
+    auto arc1_C = arc1_B + offset;
+    auto arc1_A = arc1_C + offset;
+
+    Arc arc1{arc1_A, arc1_B, arc1_C, search_speed, false};
+
+    //! Сброс на первой дуге
+    auto arcs1 = arc1.down(search_velocity1, u_turn_velocity, split_factor);
+    auto v = arcs1.back().speed();
+    std::cout << "Скорость после дуги 1: " << v << std::endl;
+
+    auto segs1 = seg1.upper(v, search_velocity2, split_factor);
+    v = segs1.back().speed();
+    std::cout << "Скорость после отрезка 1: " << v << std::endl;
+
+    auto arcs2 = arc2.down(v, turn_velocity, split_factor);
+    v = arcs2.back().speed();
+    std::cout << "Скорость после дуги 2: " << v << std::endl;
+
+    auto segs2 = seg2.upper(v, search_velocity2, split_factor);
+    v = segs2.back().speed();
+    std::cout << "Скорость после отрезка 2: " << v << std::endl;
+
+    auto arcs3 = arc3.down(v, turn_velocity, split_factor);
+    v = arcs3.back().speed();
+    std::cout << "Скорость после дуги 3: " << v << std::endl;
+
+    auto s = (search_velocity2 * search_velocity2 - v * v) / (2 * acceleration);
+    auto seg3 = Segment{vector(s, geometry::angle(ab_direction) - M_PI), arc3.end()};
+
+    auto segs3 = seg3.upper(v, search_velocity2, split_factor);
+    v = segs3.back().speed();
+    std::cout << "Скорость после отрезка 3: " << v << std::endl;
+
+    path.add(arcs1);
+    path.add(segs1);
+    path.add(arcs2);
+    path.add(segs2);
+    path.add(arcs3);
+    path.add(segs3);
+
+    std::cout << "Длина от начала дуги разворота до начала фигуры: " << distance(segs3.back().start(), arc1.start())
+              << std::endl;
+
+    // если больше половины длины второго галса, начинаем от половины,
+    // Совмещаем конечную точку первого галса и линию центра разворота.
 
 
-    path.add(arc3);
 
-    path.add(segment(A, arc3.start()));
+
+
+
+
+    // Разбиваем дугу 1 От поисковой скорости первого участка
+    //auto split_arc1 = arc1.down(data[0].second, u_turn_velocity, split_factor);
+
+    //! Пока нет расчета торможения и разгона
+    // Фиксированные значения
+    //! 1. Посчитать сброс на дуге1 , будем считать фиксированное замедление или до скорости которая поддердивается на дуге например 4.5-5 м/с
+    // 2. какой сброс на дуге2 и дуге 3.
+    // 3. какой набор на отрезке 3.
+    // Переменные значения Длина отрезка 1, длина отрезка 2, длина отрезка 4.
+    // Длина отрезка 2 минимальна. Он влияет на длину отрезка 1 непосредственно
+    // Основной набор осуществляется на отрезке 4. его начало не должно быть ближе половины сегмента
+    // и точка 0,0 не должна быть дальше точки разворота
+
+
+    // Надо посчитать сколько скинет на дуге 2, наберет на отрезке 3, скинет на дуге 3
+
+
 
     return path;
 }
-
-
 
 // TODO: Фигура должна быть устойчива при изменении частей.
 /*!
@@ -1689,6 +764,7 @@ Path figure2(const std::vector<std::pair<QPointF, double>> data) {
 
     auto bisect = bisector(A, B, C, false); //!
 
+    // TODO: Обработать направление дуг
     QPointF b1 = B;
 
     if (distance(A, B) < radius * 3 / 2 || distance(B, C) < radius * 3 / 2) {
@@ -1756,11 +832,11 @@ Path figure2(const std::vector<std::pair<QPointF, double>> data) {
     arc0.addDegreesToStart(bisect_seg01 * RAD_TO_DEG);
     arc0.addDegreesToEnd(bisect_seg02 * RAD_TO_DEG);
 
-    auto seg01 = segment{acr1_l.end(), arc0.start(), search_speed};
-    auto seg02 = segment{arc0.end(), acr2_r.start(), search_speed};
+    auto seg01 = Segment{acr1_l.end(), arc0.start(), search_speed};
+    auto seg02 = Segment{arc0.end(), acr2_r.start(), search_speed};
 
-    auto begin_seg = segment{A, acr1_l.start(), search_speed};
-    auto end_seg = segment{acr2_r.end(), C, search_speed};
+    auto begin_seg = Segment{A, acr1_l.start(), search_speed};
+    auto end_seg = Segment{acr2_r.end(), C, search_speed};
 
 // ! Распределить участки разгона
     path.add(begin_seg);
@@ -1775,31 +851,6 @@ Path figure2(const std::vector<std::pair<QPointF, double>> data) {
     path.add(end_seg);
 
     return path;
-}
-
-#include <QApplication>
-
-#include <iostream>
-#include <cmath>
-#include <vector>
-
-// Нормализация 2D вектора
-void normalizeVector2D(std::vector<double> &vec) {
-    double length = std::sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
-    if (length > 0) {
-        vec[0] /= length;
-        vec[1] /= length;
-    }
-}
-
-// Псевдоскалярное произведение для 2D (z-компонента векторного произведения)
-double crossProduct2D(const std::vector<double> &a, const std::vector<double> &b) {
-    return a[0] * b[1] - a[1] * b[0];
-}
-
-// Скалярное произведение
-double dotProduct2D(const std::vector<double> &a, const std::vector<double> &b) {
-    return a[0] * b[0] + a[1] * b[1];
 }
 
 int main(int argc, char *argv[]) {
@@ -1827,10 +878,20 @@ int main(int argc, char *argv[]) {
             {{1000, 1000}, 6},
             {{1000, 100},  6}};
 
-    auto path = figure3(data);
+    //auto path = figure6(data);
+//    Path path;
+//   Arc arc{{100, 100}, {900, 100}, {500, 100}, 5, true};
+//
+//   arc.down(6, 3.3, 10);
+//
+//    Segment seg{{0, 0}, {1000, 0}, 5};
+//
+//    seg.upper(3.5, 6, 10);
 
+//    path.add(arc);
     //
-//    Path path = figure2(data);
+    // Path path = figure2(data);
+    Path path = figure3(data);
 //    return 0;
     QApplication app(argc, argv);
     DrawWidget window;

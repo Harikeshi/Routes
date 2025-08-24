@@ -11,8 +11,10 @@ constexpr inline auto TAU = M_PI * 2.0;
 
 constexpr inline size_t sampling_factor = 10; // Коэффициент дискретизации
 
+constexpr inline size_t split_factor = 10; // Количество разбиений.
+
 constexpr inline auto acceleration = 0.015; // Коэффициент ускорения 0.005-0.015
-constexpr inline auto deceleration = 0.01;  // Коэффициент замедления
+constexpr inline auto deceleration = 0.015;  // Коэффициент замедления
 
 constexpr inline auto L = 60.0;    // Длина судна, м
 constexpr inline auto Beam = 15.0; // Ширина судна, м
@@ -24,5 +26,5 @@ constexpr inline auto K = 2.;      // коэффициент маневренн�
 // Угловая скорость при радиусе циркуляции 100-250 -> 0.015 - 0.04
 constexpr inline auto omega = 0.02;          // Угловая скорость, не является константой, рад/с
 constexpr inline auto velocity = 5.0;        // Средняя допустимая скорость судна, используется для поворотов >= 90.
-constexpr inline auto turn_velocity = 6.0;   // Минимальная скорость, для поворотов < 90
-constexpr inline auto u_turn_velocity = 1.0; // Скорость разворота.
+constexpr inline auto turn_velocity = 4.5;   // Минимальная скорость, для поворотов < 90
+constexpr inline auto u_turn_velocity = 4.5; // Скорость разворота.
