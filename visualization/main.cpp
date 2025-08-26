@@ -64,108 +64,112 @@
 #include "figures/Path.hpp"
 #include "figures/figures.hpp"
 
-void calculate(const std::vector<QPointF> points, const std::vector<double> velocities)
-{
+Path calculate(const std::vector<QPointF> points, const std::vector<double> velocities) {
     if (points.size() < 2)
         throw std::runtime_error("Длина пути не может быть меньше двух точек.");
-    if (points.size() == 2)
-        return;
 
     Path path; // Общий путь
+
+    if (points.size() == 2)
+        return path;
+
     QPointF A = points[0];
     QPointF B = points[1];
-    for (size_t i = 2, j = 0; i < points.size() && j < velocities.size(); ++i, ++j)
-    {
+    for (size_t i = 2, j = 0; i < points.size() && j < velocities.size(); ++i, ++j) {
         // 1. вычислить угол поворота (угол между отрезками)
         auto turn = geometry::angle(A, B, points[i]);
         std::cout << "Угол поворота: " << turn << std::endl;
 
         // TODO: Точки A и B вывод из предыдущего решения
         // Точка A следующая будет C предыдущая, а B следующую высчитываем в фигуре.
-        if (turn >= M_PI / 2)
-        {
+
+        if (std::fabs(turn) == 0) {
+            // figure Разворот
+            path.add(figure2L(A, B, points[i], velocities[j], velocities[j + 1]));
+        } else if (std::fabs(turn) >= M_PI / 2) {
             // figure Тупой угол
             // Общий api
-            //path.add(figure(&A, &B, C, speed1, speed2));
-        }
-        else if (turn < M_PI / 2)
-        {
+            path.add(figure0(A, B, points[i], velocities[j], velocities[j + 1]));
+        } else if (std::fabs(turn) < M_PI / 2) {
             // figure Острый угол
-            path.add(figure1A(A, B, points[i], velocities[j], velocities[j + 1]));
-        }
-        else
-        {
-            // figure Разворот
-            //            path.add(figure2L(A, B, points[i], velocities[j], velocities[j + 1]));
+            path.add(figure1A0(A, B, points[i], velocities[j], velocities[j + 1]));
+        } else {
         }
     }
+    path.add(Segment{A, B, velocities.at(points.size() - 1)});
+
+    return path;
 }
 
 #include "figures/Segment.hpp"
 #include <QPainter>
 #include <QWidget>
 
-class DrawWidget : public QWidget
-{
+class DrawWidget : public QWidget {
     Q_OBJECT
+
 public:
-    DrawWidget(QWidget* parent = nullptr) : QWidget{parent}
-    {
+    DrawWidget(QWidget *parent = nullptr) : QWidget{parent} {
     }
 
-    void paintEvent(QPaintEvent* event)
-    {
+    void paintEvent(QPaintEvent *event) {
         QPainter painter(this);
 
-        painter.scale(0.5, 0.5);
+        painter.scale(0.2, 0.2);
         painter.translate(width() / 2.0, height() / 3.0);
         painter.setRenderHint(QPainter::Antialiasing); // Более плавная отрисовка, но наложение линий
 
-        QPen pen(Qt::darkYellow);
+        QPen pen(Qt::red, 3);
         pen.setStyle(Qt::DotLine);
         painter.setPen(pen);
 
-        painter.drawLine(segments.first.start(), segments.first.end());
-        painter.drawLine(segments.second.start(), segments.second.end());
+        for (size_t i = 0; i < points.size() - 1; ++i) {
+            painter.drawLine(points[i], points[i + 1]);
+        }
 
         // Path
         painter.setPen(QPen(Qt::blue, 2));
         _path.draw(painter);
     }
 
-    void setSegments(const std::vector<std::pair<QPointF, double>> data)
-    {
-        segments.first = Segment(data[0].first, data[1].first, data[0].second);
-        segments.second = Segment(data[1].first, data[2].first, data[1].second);
+    void setSegments(const std::vector<QPointF> data) {
+        points = data;
     }
 
-    void setPath(Path path)
-    {
+    void setPath(Path path) {
         _path = path;
     }
 
 private:
     Path _path;
-    std::pair<Segment, Segment> segments;
+    std::vector<QPointF> points;
 };
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char *argv[]) {
     QPointF A{100, 100};
-    QPointF B{100, 1000};
-    QPointF C{-500, 100};
+    QPointF B{100, 1000}; //! Разворот при маленьком галсе
+    QPointF C{100, 100};
+
+    auto _A = A;
+    auto _B = B;
     double speed1 = 6;
     double speed2 = 6;
 
-    //    Path path = figure2L(A, B, C, speed1, speed2);
-    auto radius = 250;
-    Path path = figure1A(A, B, C, speed1, speed2, radius);
+    std::vector<QPointF> points{
+        {0, 0}, {1000, 500}, {2000, 200}, {3000, 1000}, {4500, 700}, {5000, 1400}
+    }; //, {5500, 1000}};
+    std::vector<double> velocities(20, 6);
+
+    auto path = calculate(points, velocities);
+
+    //    Path path = figure0(A, B, C, speed1, speed2);
+    // Path path = figure2L(A, B, C, speed1, speed2);
 
     //    return 0;
     QApplication app(argc, argv);
     DrawWidget window;
     window.resize(2000, 2000);
-    window.setSegments(std::vector<std::pair<QPointF, double>>{{A, speed1}, {B, speed1}, {C, speed1}});
+    window.setSegments(points);
     window.setPath(path);
     window.show();
     return app.exec();

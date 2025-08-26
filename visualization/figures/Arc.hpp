@@ -305,6 +305,15 @@ public:
         C.setY(C.y() + dy);
     }
 
+    void transform(const QPointF& from, const QPointF& to) override
+    {
+        QPointF offset = to - from;
+
+        A += offset;
+        B += offset;
+        C += offset;
+    }
+
     /*!
  * Метод разбиения дуги на дуги, с понижением скорости до заданной с понижением.
  * @param v0 начальная скорость.

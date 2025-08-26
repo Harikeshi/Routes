@@ -22,6 +22,8 @@ public:
 
     virtual QPointF move(double time) const = 0;
 
+    virtual void transform(const QPointF& from, const QPointF& to) = 0;
+
     Element()
     {
     }

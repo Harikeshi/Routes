@@ -11,21 +11,18 @@
  * но можем поделить Дугу в зависимости от ускорения/замедления.
  * Отрезок можем использовать для составления отрезков для ускорения/замедления.
  */
-class Segment : public Element
-{
+class Segment : public Element {
     QPointF A;
     QPointF B;
 
     double _speed;
 
 public:
-    Segment(const QPointF& a = QPointF{}, const QPointF& b = QPointF{}, double s = 0)
-        : Element(), A(a), B(b), _speed(s)
-    {
+    Segment(const QPointF &a = QPointF{}, const QPointF &b = QPointF{}, double s = 0)
+        : Element(), A(a), B(b), _speed(s) {
     }
 
-    bool contains(const QPointF& point, double eps = 1e-09)
-    {
+    bool contains(const QPointF &point, double eps = 1e-09) {
         // Векторные координаты
         QPointF AP = point - A;
         QPointF AB = B - A;
@@ -47,6 +44,17 @@ public:
         return true;
     }
 
+    void transform(const QPointF &from, const QPointF &to) override {
+        QPointF offset = to - from;
+
+        //qDebug() << "from:" << from << ", to: " << to;
+
+        //        qDebug() << "Было А:" << A << ", B: " << B;
+        A += offset;
+        B += offset;
+        //        qDebug() << "Стало А:" << A << ", B: " << B;
+    }
+
     /*!
      * Смещение на отрезке от from на расстояние range.
      * @param from
@@ -54,10 +62,8 @@ public:
      * @param range
      * @return
      */
-    QPointF shift(const QPointF& from, double range)
-    {
-        if (range > length())
-        {
+    QPointF shift(const QPointF &from, double range) {
+        if (range > length()) {
             throw std::runtime_error("Расстояние больше длины отрезка!");
         }
 
@@ -69,29 +75,26 @@ public:
         QPointF result(geometry::vector(from, range, direction));
 
         //        qDebug() << result;
-        if (!contains(result))
-        {
+        if (!contains(result)) {
+            qDebug() << "Отрезок от: " << A << ", До: " << B << ", " << result;
             throw std::runtime_error("Полученная точка выходит за границы отрезка!");
         }
 
         return result;
     }
 
-    std::vector<Segment> upper(double from, double to, size_t number)
-    {
+    std::vector<Segment> upper(double from, double to, size_t number) {
         std::vector<Segment> result;
 
         auto range = (to * to - from * from) / (2 * acceleration);
 
-        if (range >= length())
-        {
+        if (range >= length()) {
             range = length();
         }
 
         QPointF start = A;
         auto step = range / (number);
-        for (size_t i = 0; i != number; ++i)
-        {
+        for (size_t i = 0; i != number; ++i) {
             auto end = shift(start, step);
 
             auto to = std::sqrt(std::fabs(from * from + step * 2 * acceleration));
@@ -100,8 +103,7 @@ public:
             start = end;
         }
         // TODO: Последний участок
-        if (range < length())
-        {
+        if (range < length()) {
             result.emplace_back(result.back().B, B, to);
         }
 
@@ -109,8 +111,7 @@ public:
     }
 
     // TODO: Не тестировал толком, надо проверять
-    std::vector<Segment> split(double v0, double v1, int n)
-    {
+    std::vector<Segment> split(double v0, double v1, int n) {
         std::vector<Segment> result;
 
         //        double dx = original.end.x - original.start.x;
@@ -135,14 +136,15 @@ public:
         double accelLength = canReach ? L_target : L;
         double segLength = accelLength / n;
 
-        for (int i = 0; i < n; ++i)
-        {
+        for (int i = 0; i < n; ++i) {
             double nextV = std::sqrt(std::max(0.0, currentV * currentV + 2 * a * segLength));
             if ((a > 0 && nextV > v1) || (a < 0 && nextV < v1))
                 nextV = v1;
 
-            QPointF nextEnd{currentStart.x() + norm_segm.x() * segLength,
-                            currentStart.y() + norm_segm.y() * segLength};
+            QPointF nextEnd{
+                currentStart.x() + norm_segm.x() * segLength,
+                currentStart.y() + norm_segm.y() * segLength
+            };
 
             result.push_back({currentStart, nextEnd, currentV});
 
@@ -152,13 +154,13 @@ public:
         }
 
         // Остаток с постоянной скоростью
-        if (canReach && remainingLength > 1e-6)
-        {
+        if (canReach && remainingLength > 1e-6) {
             segLength = remainingLength / n; // можно выбрать другое кол-во сегментов
-            for (int i = 0; i < n; ++i)
-            {
-                QPointF nextEnd{currentStart.x() + norm_segm.x() * segLength,
-                                currentStart.y() + norm_segm.y() * segLength};
+            for (int i = 0; i < n; ++i) {
+                QPointF nextEnd{
+                    currentStart.x() + norm_segm.x() * segLength,
+                    currentStart.y() + norm_segm.y() * segLength
+                };
                 result.push_back({currentStart, nextEnd, v1});
                 currentStart = nextEnd;
             }
@@ -168,15 +170,13 @@ public:
     }
 
     // TODO: Требуется проверка
-    QPointF move(double time) const override
-    {
+    QPointF move(double time) const override {
         double distance = time * _speed;
         return QPointF{A.x() + distance * sin(geometry::angle(B - A)), A.y() + distance * cos(geometry::angle(B - A))};
     }
 
     static std::vector<Segment>
-    generateSpeedTransitionSegments(const QPointF& start, const QPointF& end, double v0, double v1, int n)
-    {
+    generateSpeedTransitionSegments(const QPointF &start, const QPointF &end, double v0, double v1, int n) {
         std::vector<Segment> result;
 
         double totalLength = geometry::distance(start, end);
@@ -196,8 +196,7 @@ public:
         double currentV = v0;
         QPointF currentStart = start;
 
-        for (int i = 0; i < n; ++i)
-        {
+        for (int i = 0; i < n; ++i) {
             // Расчёт скорости на следующем сегменте
             double nextV = std::sqrt(std::max(0.0, currentV * currentV + 2 * a * segLength));
             if ((a > 0 && nextV > v1) || (a < 0 && nextV < v1))
@@ -206,7 +205,8 @@ public:
             // Вычисление координат конца сегмента
             QPointF nextEnd{
                 currentStart.x() + dx * segLength,
-                currentStart.y() + dy * segLength};
+                currentStart.y() + dy * segLength
+            };
 
             result.push_back({currentStart, nextEnd, currentV});
 
@@ -217,33 +217,27 @@ public:
         return result;
     }
 
-    void show() const override
-    {
+    void show() const override {
         qDebug() << "Segment: A" << A << ", B" << B << ", speed: " << _speed;
     }
 
-    double length() const override
-    {
+    double length() const override {
         return std::hypot(A.x() - B.x(), A.y() - B.y());
     }
 
-    void draw(QPainter& painter) override
-    {
+    void draw(QPainter &painter) override {
         painter.drawLine(A, B);
     }
 
-    QPointF start() const override
-    {
+    QPointF start() const override {
         return A;
     }
 
-    QPointF end() const override
-    {
+    QPointF end() const override {
         return B;
     }
 
-    double speed() const override
-    {
+    double speed() const override {
         return _speed;
     }
 };
