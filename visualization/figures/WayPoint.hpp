@@ -2,7 +2,8 @@
 
 #include <QPointF>
 
-struct WayPoint {
+struct WayPoint
+{
     QPointF position;
     double speed;
 };

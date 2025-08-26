@@ -10,11 +10,12 @@ constexpr inline auto EPS = 1e-9;
 constexpr inline auto TAU = M_PI * 2.0;
 
 constexpr inline size_t sampling_factor = 10; // Коэффициент дискретизации
+const auto max_distance = 5000;               //! Максимальная длина отрезков для нахождения пересечения
 
 constexpr inline size_t split_factor = 10; // Количество разбиений.
 
 constexpr inline auto acceleration = 0.015; // Коэффициент ускорения 0.005-0.015
-constexpr inline auto deceleration = 0.015;  // Коэффициент замедления
+constexpr inline auto deceleration = 0.015; // Коэффициент замедления
 
 constexpr inline auto L = 60.0;    // Длина судна, м
 constexpr inline auto Beam = 15.0; // Ширина судна, м

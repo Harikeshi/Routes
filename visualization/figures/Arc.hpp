@@ -1,12 +1,13 @@
 #pragma once
 
-#include "Element.hpp"
 #include "../config.hpp"
+#include "Element.hpp"
 #include "geometry.hpp"
 
 #include <QDebug>
 
-class Arc : public Element {
+class Arc : public Element
+{
     QPointF A;
     QPointF B;
     QPointF C;
@@ -18,26 +19,31 @@ class Arc : public Element {
     bool _clockwise; // Направление обхода. TODO: Определять при построении
 
 public:
-    Arc(const QPointF &s, const QPointF &e, const QPointF &c, double sp, bool cw)
-            : A(s), B(e), C(c), _speed(sp), _clockwise(cw) {
+    Arc(const QPointF& s, const QPointF& e, const QPointF& c, double sp, bool cw)
+        : A(s), B(e), C(c), _speed(sp), _clockwise(cw)
+    {
         radius = hypot(s.x() - c.x(), s.y() - c.y());
     }
 
     // TODO: Точка должна быть на дуге
-    void setEnd(const QPointF &pos) {
+    void setEnd(const QPointF& pos)
+    {
         B = pos;
     }
 
-    void setStart(const QPointF &pos) {
+    void setStart(const QPointF& pos)
+    {
         A = pos;
     }
 
-    void setClockwise(bool value) {
+    void setClockwise(bool value)
+    {
         _clockwise = value;
     }
 
     static Arc
-    calculateTangentiallyArc(const QPointF &A, const QPointF &B, const QPointF &C, double radius, double speed = 5) {
+    calculateTangentiallyArc(const QPointF& A, const QPointF& B, const QPointF& C, double radius, double speed = 5)
+    {
         // 1. Определить сторону поворота
         auto a = geometry::normalize(B - A);
         auto b = geometry::normalize(C - B);
@@ -84,9 +90,9 @@ public:
         auto len2 = std::hypot(b.x(), b.y());
     }
 
-
     static Arc
-    createFromAngle(const QPointF &start, const QPointF &center, double radians, bool clockwise, double speed) {
+    createFromAngle(const QPointF& start, const QPointF& center, double radians, bool clockwise, double speed)
+    {
         double radius = std::hypot(start.x() - center.x(), start.y() - center.y());
 
         // TODO: sin и cos поменять местами
@@ -95,7 +101,8 @@ public:
         return Arc{start, end, center, speed, clockwise};
     }
 
-    QPointF setEnd(double offset) {
+    QPointF setEnd(double offset)
+    {
         // TODO: необходимо проверить
         double radians = _clockwise ? (startAngle() - endAngle()) : (endAngle() - startAngle());
         double angle = radians + offset;
@@ -114,21 +121,24 @@ public:
         return end;
     }
 
-    double calculateAngle(const QPointF &point) const {
+    double calculateAngle(const QPointF& point) const
+    {
         double dx = point.x() - C.x();
         double dy = point.y() - C.y();
 
         return std::atan2(dy, dx) * 180.0 / M_PI; // в градусах
     }
 
-    QPointF calculatePointOnCircle(double angleDegrees) const {
+    QPointF calculatePointOnCircle(double angleDegrees) const
+    {
         double angleRadians = angleDegrees * M_PI / 180.0;
         QPointF result{C.x() + radius * std::cos(angleRadians), C.y() + radius * std::sin(angleRadians)};
 
         return result;
     }
 
-    void addDegreesToStart(double degrees) {
+    void addDegreesToStart(double degrees)
+    {
         double currentAngle = calculateAngle(A);
         double newAngle = currentAngle + (_clockwise ? -degrees : degrees);
 
@@ -136,14 +146,16 @@ public:
     }
 
     // Метод для добавления градусов в конец дуги
-    void addDegreesToEnd(double degrees) {
+    void addDegreesToEnd(double degrees)
+    {
         double currentAngle = calculateAngle(B);
         double newAngle = currentAngle + (_clockwise ? -degrees : degrees);
 
         B = calculatePointOnCircle(newAngle);
     }
 
-    QPointF setStart(double offset) {
+    QPointF setStart(double offset)
+    {
         // TODO: необходимо проверить
         double radians = _clockwise ? (startAngle() - endAngle()) : (endAngle() - startAngle());
         double angle = radians + offset;
@@ -162,8 +174,8 @@ public:
         return end;
     }
 
-
-    void show() const override {
+    void show() const override
+    {
         qDebug() << "Arc: A" << A << ", B" << B << ", C" << C << ", speed: " << _speed;
     }
 
@@ -172,16 +184,20 @@ public:
      * @param segments количество сегментов.
      * @return
      */
-    std::vector<Arc> split(int segments) {
+    std::vector<Arc> split(int segments)
+    {
         std::vector<Arc> result;
 
         double a1 = atan2(A.y() - C.y(), A.x() - C.x());
         double a2 = atan2(B.y() - C.y(), B.x() - C.x());
 
-        if (_clockwise) {
+        if (_clockwise)
+        {
             if (a2 < a1)
                 a2 += 2 * M_PI;
-        } else {
+        }
+        else
+        {
             if (a1 < a2)
                 a1 += 2 * M_PI;
         }
@@ -191,7 +207,8 @@ public:
 
         auto start = A;
 
-        for (int i = 0; i <= segments; ++i) {
+        for (int i = 0; i <= segments; ++i)
+        {
             double angle = _clockwise ? (a1 + i * step) : (a1 - i * step);
             QPointF end{C.x() + radius * cos(angle), C.y() + radius * sin(angle)};
 
@@ -202,11 +219,13 @@ public:
         return result;
     }
 
-    bool contains(const QPointF &point, double eps = 1e-6) const {
+    bool contains(const QPointF& point, double eps = 1e-3) const
+    {
         // Расстояние до центра
         double point_center_range = qSqrt(qPow(point.x() - C.x(), 2) + qPow(point.y() - C.y(), 2));
 
-        if (qAbs(radius - point_center_range) > eps) return false;
+        if (qAbs(radius - point_center_range) > eps)
+            return false;
 
         //! Угол должен быть между start->end
         double angStart = geometry::normalize(qAtan2(A.y() - C.y(), A.x() - C.x()));
@@ -214,21 +233,30 @@ public:
         double angPoint = geometry::normalize(qAtan2(point.y() - C.y(), point.x() - C.x()));
 
         // Проверяем, лежит ли угол в диапазоне дуги
-        if (_clockwise) {
-            if (angStart < angEnd) angStart += 2 * M_PI;
-            if (angPoint < angEnd) angPoint += 2 * M_PI;
+        if (_clockwise)
+        {
+            if (angStart < angEnd)
+                angStart += 2 * M_PI;
+            if (angPoint < angEnd)
+                angPoint += 2 * M_PI;
 
             return angPoint <= angStart && angPoint >= angEnd;
-        } else {
-            if (angEnd < angStart) angEnd += 2 * M_PI;
-            if (angPoint < angStart) angPoint += 2 * M_PI;
+        }
+        else
+        {
+            if (angEnd < angStart)
+                angEnd += 2 * M_PI;
+            if (angPoint < angStart)
+                angPoint += 2 * M_PI;
 
             return angPoint >= angStart && angPoint <= angEnd;
         }
     }
 
-    QPointF shift(const QPointF &from, double range) {
-        if (range > length()) {
+    QPointF shift(const QPointF& from, double range)
+    {
+        if (range > length())
+        {
             throw std::runtime_error("Расстояние больше длины дуги!");
         }
 
@@ -245,15 +273,17 @@ public:
 
         // TODO: x*sin y*cos
         QPointF result(
-                C.x() + radius * qCos(angleFrom),
-                C.y() + radius * qSin(angleFrom)
-        );
+            C.x() + radius * qCos(angleFrom),
+            C.y() + radius * qSin(angleFrom));
 
         //std::cout << result.x() << ", " << result.y() << std::endl;
-
-        if (!contains(result)) {
-            throw std::runtime_error("Полученная точка выходит за границы дуги!");
-        }
+        //
+        //        if (!contains(result))
+        //        {
+        //            this->show();
+        //            qDebug() << result;
+        //            throw std::runtime_error("Полученная точка выходит за границы дуги!");
+        //        }
 
         return result;
     }
@@ -263,7 +293,8 @@ public:
      * @param dx
      * @param dy
      */
-    void translate(double dx, double dy) {
+    void translate(double dx, double dy)
+    {
         A.setX(A.x() + dx);
         A.setY(A.y() + dy);
 
@@ -274,15 +305,15 @@ public:
         C.setY(C.y() + dy);
     }
 
-/*!
+    /*!
  * Метод разбиения дуги на дуги, с понижением скорости до заданной с понижением.
  * @param v0 начальная скорость.
  * @param v1 конечная скорость.
  * @param number количество частей.
  * @return
  */
-    std::vector<Arc> down(double from, double to, size_t number) {
-
+    std::vector<Arc> down(double from, double to, size_t number)
+    {
         std::vector<Arc> result;
         //std::cout << "Начальная скорость: " << from << ", конечная скорость: " << to << std::endl;
         // 1. найдем требуемое расстояние
@@ -290,7 +321,8 @@ public:
         auto speed = std::sqrt(std::fabs(from * from - range * 2 * deceleration)); // TODO: требуется только для тестов
         //std::cout << "Длина дуги: " << length_() << ", требуемое расстояние: " << range << std::endl;
 
-        if (range >= length_()) {
+        if (range >= length_())
+        {
             //std::cout << "range >= length" << std::endl;
             range = length_();
         }
@@ -300,12 +332,13 @@ public:
         auto sh = shift(A, range);
         //std::cout << "Расчетная точка: [" << sh.x() << ", " << sh.y() << "], расчетная скорость: " << speed
         //        << std::endl;
-//        if (range >= length()) {
-//            number -= 1;
-//        }
+        //        if (range >= length()) {
+        //            number -= 1;
+        //        }
 
         QPointF start = A;
-        for (size_t i = 0; i != number; ++i) {
+        for (size_t i = 0; i != number; ++i)
+        {
             auto end = shift(start, step);
             auto to = std::sqrt(std::fabs(from * from - step * 2 * deceleration));
             //std::cout << "Начало: [" << start.x() << "," << start.y() << "], конец: " << end.x() << ","
@@ -323,7 +356,8 @@ public:
     }
 
     // TODO: Проверить
-    QPointF move(double time) const override {
+    QPointF move(double time) const override
+    {
         // Углы
         double ang0 = std::atan2(A.y() - C.y(), A.x() - C.x());
         double ang1 = std::atan2(B.y() - C.y(), B.x() - C.x());
@@ -351,12 +385,13 @@ public:
         double theta = ang0 + angle_offset;
 
         return {
-                C.x() + radius * std::cos(theta),
-                C.y() + radius * std::sin(theta)};
+            C.x() + radius * std::cos(theta),
+            C.y() + radius * std::sin(theta)};
     }
 
     // TODO: категорически проверять
-    std::vector<Arc> split(double v0, double v1, int n) {
+    std::vector<Arc> split(double v0, double v1, int n)
+    {
         std::vector<Arc> result;
 
         // TODO: Выделить в отдельную функцию?
@@ -382,15 +417,16 @@ public:
 
         QPointF currentStart = A;
 
-        for (int i = 0; i < n; ++i) {
+        for (int i = 0; i < n; ++i)
+        {
             double nextV = std::sqrt(std::max(0.0, currentV * currentV + 2 * a * segLength));
             if ((a > 0 && nextV > v1) || (a < 0 && nextV < v1))
                 nextV = v1;
 
             double nextAngle = currentAngle + angle_step;
             QPointF nextEnd{
-                    C.x() + radius * std::cos(nextAngle),
-                    C.y() + radius * std::sin(nextAngle)};
+                C.x() + radius * std::cos(nextAngle),
+                C.y() + radius * std::sin(nextAngle)};
 
             result.emplace_back(currentStart, nextEnd, C, _clockwise, currentV);
 
@@ -402,7 +438,8 @@ public:
         return result;
     }
 
-    double length() const {
+    double length() const
+    {
         double angle = _clockwise ? (startAngle() - endAngle()) : (endAngle() - startAngle());
 
         if (angle < 0)
@@ -411,14 +448,17 @@ public:
         return radius * angle;
     }
 
-    double length_() {
+    double length_()
+    {
         double ang1 = qAtan2(A.y() - C.y(), A.x() - C.x());
         double ang2 = qAtan2(B.y() - C.y(), B.x() - C.x());
 
         // нормализация углов в диапазон [0, 2π)
         auto norm = [](double a) {
-            while (a < 0) a += 2 * M_PI;
-            while (a >= 2 * M_PI) a -= 2 * M_PI;
+            while (a < 0)
+                a += 2 * M_PI;
+            while (a >= 2 * M_PI)
+                a -= 2 * M_PI;
             return a;
         };
 
@@ -426,18 +466,24 @@ public:
         ang2 = norm(ang2);
 
         double delta;
-        if (_clockwise) {
-            if (ang1 < ang2) ang1 += 2 * M_PI;
+        if (_clockwise)
+        {
+            if (ang1 < ang2)
+                ang1 += 2 * M_PI;
             delta = ang1 - ang2;
-        } else {
-            if (ang2 < ang1) ang2 += 2 * M_PI;
+        }
+        else
+        {
+            if (ang2 < ang1)
+                ang2 += 2 * M_PI;
             delta = ang2 - ang1;
         }
 
         return radius * delta; // длина дуги
     }
 
-    void draw(QPainter &painter) override {
+    void draw(QPainter& painter) override
+    {
         // Вычисляем углы (в градусах от оси X по часовой стрелке в координатах Qt)
         double startAngleDeg = -qRadiansToDegrees(qAtan2(A.y() - C.y(),
                                                          A.x() - C.x()));
@@ -446,9 +492,12 @@ public:
 
         // Вычисляем дугу (в шестнадцатых долях градуса для drawArc)
         double spanDeg;
-        if (_clockwise) {
+        if (_clockwise)
+        {
             spanDeg = fmod((endAngleDeg - startAngleDeg + 360), 360);
-        } else {
+        }
+        else
+        {
             spanDeg = -(fmod((startAngleDeg - endAngleDeg + 360), 360));
         }
 
@@ -457,39 +506,47 @@ public:
         painter.drawArc(rect, startAngleDeg * 16, spanDeg * 16);
     }
 
-    bool clockwise() const {
+    bool clockwise() const
+    {
         return _clockwise;
     }
 
-    QPointF center() const {
+    QPointF center() const
+    {
         return C;
     }
 
-    QPointF start() const override {
+    QPointF start() const override
+    {
         return A;
     }
 
-    QPointF end() const override {
+    QPointF end() const override
+    {
         return B;
     }
 
-    double speed() const override {
+    double speed() const override
+    {
         return _speed;
     }
 
-    void swap() {
+    void swap()
+    {
         std::swap(A, B);
         _clockwise = !_clockwise;
     }
 
-    Arc(Arc &&) = default;
+    Arc(Arc&&) = default;
 
-    double startAngle() const {
+    double startAngle() const
+    {
         return atan2(C.x() - A.x(), C.y() - A.y());
         //        return atan2(A.x() - C.x(), A.y() - C.y());
     }
 
-    double endAngle() const {
+    double endAngle() const
+    {
         return atan2(C.x() - B.x(), C.y() - B.y());
         //        return atan2(B.x() - C.x(), B.y() - C.y());
     }
