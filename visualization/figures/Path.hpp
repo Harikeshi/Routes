@@ -4,6 +4,7 @@
 #include "Element.hpp"
 #include "Segment.hpp"
 
+namespace geometry {
 class Path
 {
     std::vector<std::shared_ptr<Element>> _elements;
@@ -103,3 +104,4 @@ public:
         }
     }
 };
+} // namespace geometry

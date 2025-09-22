@@ -6,6 +6,7 @@
 
 #include <QDebug>
 
+namespace geometry {
 class Arc : public Element
 {
     QPointF A;
@@ -176,14 +177,14 @@ public:
 
     void show() const override
     {
-        qDebug() << "Arc: A" << A << ", B" << B << ", C" << C << ", speed: " << _speed;
+        qDebug() << "Arc: A" << A << ", B" << B << ", C" << C << ", CW: " << _clockwise << ", speed: " << _speed;
     }
 
     /*!
-     * Разбить на сегменты.
-     * @param segments количество сегментов.
-     * @return
-     */
+         * Разбить на сегменты.
+         * @param segments количество сегментов.
+         * @return
+         */
     std::vector<Arc> split(int segments)
     {
         std::vector<Arc> result;
@@ -289,10 +290,10 @@ public:
     }
 
     /*!
-     * Смещение на dx, dy
-     * @param dx
-     * @param dy
-     */
+         * Смещение на dx, dy
+         * @param dx
+         * @param dy
+         */
     void translate(double dx, double dy)
     {
         A.setX(A.x() + dx);
@@ -315,12 +316,12 @@ public:
     }
 
     /*!
- * Метод разбиения дуги на дуги, с понижением скорости до заданной с понижением.
- * @param v0 начальная скорость.
- * @param v1 конечная скорость.
- * @param number количество частей.
- * @return
- */
+     * Метод разбиения дуги на дуги, с понижением скорости до заданной с понижением.
+     * @param v0 начальная скорость.
+     * @param v1 конечная скорость.
+     * @param number количество частей.
+     * @return
+     */
     std::vector<Arc> down(double from, double to, size_t number)
     {
         std::vector<Arc> result;
@@ -428,7 +429,7 @@ public:
 
         for (int i = 0; i < n; ++i)
         {
-            double nextV = std::sqrt(std::max(0.0, currentV * currentV + 2 * a * segLength));
+            double nextV = std::sqrt(qMax(0.0, currentV * currentV + 2 * a * segLength));
             if ((a > 0 && nextV > v1) || (a < 0 && nextV < v1))
                 nextV = v1;
 
@@ -560,3 +561,4 @@ public:
         //        return atan2(B.x() - C.x(), B.y() - C.y());
     }
 };
+} // namespace geometry

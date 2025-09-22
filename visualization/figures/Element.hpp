@@ -3,6 +3,7 @@
 #include <QPainter>
 #include <QPointF>
 
+namespace geometry {
 class Element
 {
     // draw
@@ -30,3 +31,4 @@ public:
 
     ~Element() = default;
 };
+} // namespace geometry

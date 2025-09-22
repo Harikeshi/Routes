@@ -25,7 +25,9 @@
 
 #include "../Scene/Actors/InRegion.hpp"
 #include "../Scene/Actors/Spiral.hpp"
-
+#include "../Scene/Capsules.hpp"
+#include "../Scene/HeatmapWidget.hpp"
+#include "../Scene/SmoothHeatmapWidget.hpp"
 namespace Widgets {
 /*!
      * Класс отображения сцены.
@@ -61,41 +63,41 @@ class SceneWidget final : public QWidget
 
 protected:
     // TODO: Добавляем    comboBox = new QComboBox(this);
-    //         comboBox->addItem("Scheme 1");
-    //         comboBox->addItem("Scheme 2");
+    //        comboBox->addItem("Scheme 1");
+    //        comboBox->addItem("Scheme 2");
     //        comboBox->setFixedWidth(200);
-    // и Кнопку вниз
     // Widgets
-    // TODO: Вверху Справа
-    QComboBox* actorChoose;
-
     // TODO: Внизу справа
     QPushButton* metricChoose;
     TimeWidget* timeWidget;
-
-    Grid* grid; // Сетка
+    // TODO: Вверху Справа
+    QComboBox* actorChoose;
 
     CoordinateSystem cs; // Система координат
     Limits limits;       // Крайние значения по осям
 
     // Элементы отрисовки цели.
     Routes* routes_;
+
+    HeatmapWidget* heatmap = new HeatmapWidget(this);
+    //SmoothHeatmapWidget* sHeatmap = new SmoothHeatmapWidget(this);
+    //Capsules* capsules = new Capsules(this);
+
     Targets* target;
-
     PathWidget* targetPath;
-    Actor* actor;
-
     bool drawing; // Разрешить отрисовку цели
 
-    double speedMultiplier{1}; // Множитель скорости
+    Actor* actor; //! Вспомогательные элементы цели. Всегда остается.
 
     // time block
     double fullTime{0}; //! Общее время схемы. Принимается максимальное время из маршрутов.
     double currentTime{0};
     double targetStartTime{0};
-
     QTimer* timer;
 
+    double speedMultiplier{1}; // Множитель скорости
+
+    Grid* grid;               //! Сетка
     const double margin = 5.; // Отступы от каждой стороны в процентах
     const double pointPercent = 0.005;
 
@@ -183,7 +185,7 @@ public:
         drawing = false;
         speedMultiplier = 1;
 
-        this->resize(800, 800);
+        this->resize(100, 100);
 
         // Чтобы не было диких цифр при загрузке
         limitesToRect();
@@ -674,6 +676,9 @@ protected:
         painter.drawImage(rect(), grid->getImage());
         painter.setTransform(cs.getTransform());
 
+        //capsules->draw(painter);
+        heatmap->draw(painter);
+        //sHeatmap->draw(painter);
         //! Отрисовка Объектов
         actor->draw(painter);
 

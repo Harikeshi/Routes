@@ -1,0 +1,89 @@
+Понял, у вас ситуация, когда **отрисовка идёт в `paintEvent()` главного окна**, а сам «виджет» (или логика движения) уже получает готовый `QPainter` извне — то есть он не сам создаёт `QPainter`, а рисует в том, что ему передали.  
+
+В таком случае принцип «закрашивать по мере продвижения» остаётся тем же, просто хранить и обновлять путь (`QPainterPath`) нужно **в объекте, который отвечает за движение**, а в `paintEvent()` главного окна вы:
+
+1. Создаёте `QPainter` на `this` (главное окно).
+2. Передаёте его в метод вашего «анимированного» виджета/класса, например `draw(QPainter&)`.
+3. Внутри `draw()` рисуете накопленный путь и текущий круг.
+
+---
+
+### Пример структуры
+
+```cpp
+// Класс, который хранит траекторию и пройденный путь
+class MovingCircle {
+public:
+    void setRadius(qreal r) { m_r = r; }
+    void setTrajectory(const QVector<QPointF>& pts);
+    void advance(qreal dt); // обновить позицию
+    void draw(QPainter& p); // нарисовать текущий путь и круг
+
+private:
+    QVector<QPointF> m_pts;
+    QVector<qreal> m_segLen;
+    qreal m_totalLen = 0;
+    qreal m_s = 0;
+    qreal m_r = 10;
+    QPainterPath m_pathCovered;
+
+    QPointF pointAt(qreal s) const;
+};
+```
+
+```cpp
+void MovingCircle::advance(qreal dt) {
+    qreal prevS = m_s;
+    m_s = std::min(m_totalLen, m_s + dt * 100); // скорость 100 px/s
+
+    QPointF prevP = pointAt(prevS);
+    QPointF currP = pointAt(m_s);
+
+    if (m_pathCovered.isEmpty())
+        m_pathCovered.moveTo(prevP);
+
+    m_pathCovered.lineTo(currP);
+}
+
+void MovingCircle::draw(QPainter& p) {
+    // Полоса
+    QPainterPathStroker stroker;
+    stroker.setWidth(2*m_r);
+    stroker.setCapStyle(Qt::RoundCap);
+    stroker.setJoinStyle(Qt::RoundJoin);
+    QPainterPath filled = stroker.createStroke(m_pathCovered);
+    p.fillPath(filled, QColor(60,140,255,180));
+
+    // Круг
+    QPointF c = pointAt(m_s);
+    p.setBrush(Qt::white);
+    p.setPen(Qt::NoPen);
+    p.drawEllipse(QRectF(c.x()-m_r, c.y()-m_r, 2*m_r, 2*m_r));
+}
+```
+
+---
+
+### В главном окне
+
+```cpp
+void MainWindow::paintEvent(QPaintEvent*) {
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    movingCircle.draw(painter);
+}
+```
+
+А таймер (`QTimer`) в главном окне или в контроллере вызывает `movingCircle.advance(dt)` и `update()` главного окна.
+
+---
+
+💡 **Ключевой момент:**  
+Путь (`m_pathCovered`) хранится в объекте движения, а не в `paintEvent`.  
+`paintEvent` просто каждый раз рисует его текущее состояние.  
+Так вы легко добьётесь эффекта «полоса растёт по мере движения» даже если рисуете всё в одном `QPainter` на главном окне.
+
+---
+
+Если хотите, я могу прямо переписать ваш текущий `paintEvent` так, чтобы он принимал готовый `QPainter` и рисовал растущую полосу без изменения вашей архитектуры. Хотите, чтобы я сделал такой адаптированный вариант?

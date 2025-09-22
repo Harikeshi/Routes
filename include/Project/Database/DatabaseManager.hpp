@@ -29,7 +29,7 @@ public:
     {
         //!
         //    QString connectionString = "host=127.0.0.1 dbname=requests_reports user=viz_user password=1 connect_timeout=3";
-        QString connectionString = "host=192.168.50.52 dbname=requests_reports user=viz_user password=1 connect_timeout=3";
+        QString connectionString = "host=192.168.50.52 dbname=requests_reports user=viz_user password=1 connect_timeout=1";
         //        QString connectionString = "host=192.168.205.130 dbname=requests_reports user=viz_user password=1 connect_timeout=3";
         try
         {

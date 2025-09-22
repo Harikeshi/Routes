@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include <QPointF>
+#include <QtMath>
 
 namespace geometry {
 
@@ -182,10 +183,10 @@ inline bool intersect(const QPointF& A, const QPointF& B, const QPointF& C, cons
     if (cross1 == 0 && cross2 == 0 && cross3 == 0 && cross4 == 0)
     {
         // Проверка наложения проекций
-        if (std::max(A.x(), B.x()) < std::min(C.x(), D.x()) ||
-            std::max(C.x(), D.x()) < std::min(A.x(), B.x()) ||
-            std::max(A.y(), B.y()) < std::min(C.y(), D.y()) ||
-            std::max(C.y(), D.y()) < std::min(A.y(), B.y()))
+        if (qMax(A.x(), B.x()) < qMin(C.x(), D.x()) ||
+            qMax(C.x(), D.x()) < qMin(A.x(), B.x()) ||
+            qMax(A.y(), B.y()) < qMin(C.y(), D.y()) ||
+            qMax(C.y(), D.y()) < qMin(A.y(), B.y()))
         {
             return false;
         }

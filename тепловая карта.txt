@@ -1,0 +1,84 @@
+Да, можно — и именно так обычно и делают, если нужно оценить количество проходов в каждой точке.
+По сути, ты превращаешь полигон (или набор полос, которые образуются при движении круга) в растровую карту покрытия — двумерную матрицу, где каждая ячейка соответствует пикселю, а значение — числу проходов.
+
+---
+
+🔹 Как это реализовать в Qt
+
+1. Создаём буфер‑карту покрытия
+Это `QImage` или двумерный массив `QVector<QVector<int>>`, размером в пиксели твоей сцены.
+2. При каждом шаге движения• Строишь `QPainterPath` полосы (ширина = 2r) для текущего сегмента.
+• Рисуешь его в `QImage` с режимом “накопления”: не просто заливаешь цвет, а увеличиваешь счётчик в каждой затронутой ячейке.
+
+3. После завершения всех проходов• У тебя есть матрица `passCount[y][x]` — количество проходов через каждый пиксель.
+• Можно построить итоговую картинку, где цвет зависит от `passCount`.
+
+
+
+---
+
+🔹 Пример на `QImage` (накопление проходов)
+
+QImage coverage(width, height, QImage::Format_ARGB32);
+coverage.fill(Qt::transparent);
+
+// Массив счётчиков
+QVector<QVector<int>> passCount(height, QVector<int>(width, 0));
+
+// При каждом шаге:
+QPainter imgPainter(&coverage);
+imgPainter.setRenderHint(QPainter::Antialiasing);
+
+// path — полоса текущего сегмента
+QPainterPathStroker stroker;
+stroker.setWidth(2.0 * r);
+stroker.setCapStyle(Qt::RoundCap);
+stroker.setJoinStyle(Qt::RoundJoin);
+QPainterPath filled = stroker.createStroke(segmentPath);
+
+// Обновляем счётчики
+QRect bounds = filled.boundingRect().toRect();
+for (int y = bounds.top(); y <= bounds.bottom(); ++y) {
+    for (int x = bounds.left(); x <= bounds.right(); ++x) {
+        if (filled.contains(QPointF(x, y))) {
+            passCount[y][x]++;
+        }
+    }
+}
+
+
+---
+
+🔹 Построение итоговой «тепловой карты»
+
+QImage heatmap(width, height, QImage::Format_ARGB32);
+for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+        int count = passCount[y][x];
+        QColor color;
+        if (count == 0) {
+            color = Qt::transparent;
+        } else {
+            // Чем больше count, тем темнее/ярче
+            int intensity = std::min(255, count * 40);
+            color = QColor(255 - intensity, 0, 0, 180); // красный градиент
+        }
+        heatmap.setPixelColor(x, y, color);
+    }
+}
+
+
+---
+
+🔹 Почему этот способ удобен
+
+• Точная статистика — можно в любой момент узнать, сколько раз проходили через конкретную точку.
+• Гибкая визуализация — можно отрисовать как тепловую карту, градиент, изолинии и т.д.
+• Просто анализировать — матрица легко сохраняется в файл, обрабатывается, усредняется.
+
+
+---
+
+💡 Если хочешь, я могу сделать для тебя полный рабочий пример, где круг движется по траектории, а в конце строится тепловая карта проходов по пикселям. Это будет наглядно и сразу даст матрицу для анализа.
+
+Хочешь, чтобы я подготовил такой пример?

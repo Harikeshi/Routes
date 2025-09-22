@@ -5,6 +5,7 @@
 #include <QToolTip>
 #include <QWidget>
 
+#include "../Capsules.hpp"
 #include "./ModelObject.hpp"
 #include "./SegmentObject.hpp"
 #include "Project/Models/Object.hpp"
@@ -441,6 +442,10 @@ protected:
     QVector<SegmentObject*> segments; // Логический путь
     ModelObject* head;                // Головной объект
     QColor color;                     // TODO: Перенести в сегмент
+
+    // TODO: Рассчитывать все капсулы при загрузке, и крайнюю капсулу рассчитывать перед отрисовкой.
+    //    Capsules capsules_;
+    // TODO: при изменении капсул высылать sendChangedCapsules
 
     size_t currentSegmentIndex; // Индекс текущего сегмента
 

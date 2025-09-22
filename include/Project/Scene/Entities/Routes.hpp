@@ -10,6 +10,7 @@
 #include "Project/Models/Object.hpp"
 #include "Project/Scene/Objects/PointWidget.hpp"
 
+#include "../Capsules.hpp"
 #include "./Limits.hpp"
 
 namespace Scene::Entities {
@@ -35,6 +36,7 @@ class Routes final : public QWidget
     Object parameters; // Возможно построение routes делать из ViWidget
 
     QVector<RouteObject*> routes{};
+    
     size_t numberRoutes; // количество не законченных
 
 signals:
@@ -70,9 +72,9 @@ public:
         {
             route->draw(painter);
 
-            //    /*    sendIntersectionResult(QString("Target Position: [" + QString("%1, %2").arg(target->getCurrentPosition().x()).arg(target->getCurrentPosition().y()) + ", Ship[" +
+            // sendIntersectionResult(QString("Target Position: [" + QString("%1, %2").arg(target->getCurrentPosition().x()).arg(target->getCurrentPosition().y()) + ", Ship[" +
             //                                       QString("] position:") + QString("%1, %2").arg(route->getCurrentPosition().x()).arg(route->getCurrentPosition().y()) +
-            //                                      QString(", Radius: ") + QString("%1").arg(route->getRadius())));*/
+            //                                      QString(", Radius: ") + QString("%1").arg(route->getRadius())));
         }
     }
 
@@ -105,6 +107,9 @@ public:
         parameters = params;
     }
 
+    /*!
+     * Метод смены координат  X<->Y
+     */
     void swapCoordinates()
     {
         //! Пути
