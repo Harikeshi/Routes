@@ -23,14 +23,14 @@ target_link_libraries(${PROJECT_NAME} PUBLIC Routes)
 #    )
 #else ()
 #    message(STATUS "Falling back to Qt5")
-#    find_package(Qt5 COMPONENTS Widgets DataVisualization REQUIRED)
+    find_package(Qt5 COMPONENTS Widgets DataVisualization REQUIRED)
 #    add_executable(QtSurfaceDemo
 #            main.cpp
 #    )
-#    target_link_libraries(QtSurfaceDemo PRIVATE
-#            Qt5::Widgets
-#            Qt5::DataVisualization
-#    )
+    target_link_libraries(Visualization PUBLIC
+            Qt5::Widgets
+            Qt5::DataVisualization
+    )
 #endif ()
 
 if (MSVC)
