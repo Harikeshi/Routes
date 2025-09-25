@@ -10,6 +10,10 @@ add_executable(${PROJECT_NAME} main.cpp)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC Routes)
 
+if (MSVC)
+    set(Qt5_DIR "C:/Qt/5.15.17-msvc2019/lib/cmake/Qt5")
+endif ()
+
 message(STATUS "Falling back to Qt5")
 find_package(Qt5 COMPONENTS Widgets
         DataVisualization
