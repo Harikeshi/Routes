@@ -11,12 +11,12 @@ enum StateType
     Full
 };
 
-class RouteState
+class State
 {
     StateType state;
 
 public:
-    RouteState(const StateType& state)
+    State(const StateType& state)
         : state{state}
     {
     }
@@ -28,15 +28,15 @@ public:
 
     // TODO: Добавить индекс текущего сегмента чтобы не считались все
     virtual void draw(QPainter& painter, const QVector<SegmentObject*>& segments, const QColor& color) = 0;
-    virtual ~RouteState() = default;
+    virtual ~State() = default;
 };
 
 // Без отрисовки nullptr
-class WithOutDrawState : public RouteState
+class WithOutDrawState : public State
 {
 public:
     WithOutDrawState()
-        : RouteState(StateType::Clean)
+        : State(StateType::Clean)
     {
     }
 
@@ -49,11 +49,11 @@ public:
     }
 };
 
-class CurrentDrawState : public RouteState
+class CurrentDrawState : public State
 {
 public:
     CurrentDrawState()
-        : RouteState(StateType::Current)
+        : State(StateType::Current)
     {
     }
     // todo: общая функция draw и drawPoints drawSegments
@@ -66,11 +66,11 @@ public:
     }
 };
 
-class FullDrawState : public RouteState
+class FullDrawState : public State
 {
 public:
     FullDrawState()
-        : RouteState(StateType::Full)
+        : State(StateType::Full)
     {
     }
 
@@ -88,11 +88,11 @@ public:
 // Memento
 class Memento
 {
-    RouteState* state;
+    State* state;
     Qt::Key key;
 
 public:
-    Memento(RouteState* state_, Qt::Key key)
+    Memento(State* state_, Qt::Key key)
         : state(state_), key(key)
     {
     }
@@ -102,7 +102,7 @@ public:
         return key;
     }
 
-    RouteState* getState() const
+    State* getState() const
     {
         return state;
     }

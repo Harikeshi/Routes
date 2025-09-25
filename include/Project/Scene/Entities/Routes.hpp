@@ -18,7 +18,7 @@ namespace Scene::Entities {
 class Routes final : public QWidget
 {
     using StateType = Objects::StateType;
-    using RouteState = Objects::RouteState;
+    using RouteState = Objects::State;
     using RouteObject = Objects::RouteObject;
     using Object = Models::Object;
     using ShipParameters = Models::Object;
@@ -36,7 +36,7 @@ class Routes final : public QWidget
     Object parameters; // Возможно построение routes делать из ViWidget
 
     QVector<RouteObject*> routes{};
-    
+
     size_t numberRoutes; // количество не законченных
 
 signals:

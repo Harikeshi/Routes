@@ -15,7 +15,7 @@
 #include <complex>
 
 namespace Scene::Objects {
-class RouteState;
+class State;
 class WithOutDrawState;
 class FullDrawState;
 class CurrentDrawState;
@@ -24,7 +24,7 @@ class RouteObject : public QWidget
 {
     // Q_OBJECT
 public:
-    RouteObject(QWidget* parent = nullptr, RouteState* state = new CurrentDrawState())
+    RouteObject(QWidget* parent = nullptr, State* state = new CurrentDrawState())
         : QWidget(parent), state(state), head(new ModelObject())
     {
         // setMouseTracking(true);
@@ -112,6 +112,8 @@ public:
             // Увеличиваем накопленное время
             accumulatedTime += segmentTime;
         }
+
+        //TODO: До currentSegmentIndex
 
         return true;
     }
@@ -273,7 +275,7 @@ public:
         return state->type();
     }
 
-    void setState(RouteState* state)
+    void setState(State* state)
     {
         this->state = state;
     }
@@ -437,14 +439,14 @@ public:
 
 protected:
     // Memento
-    RouteState* state; // Текущее состояние
+    State* state; // Текущее состояние
 
     QVector<SegmentObject*> segments; // Логический путь
     ModelObject* head;                // Головной объект
     QColor color;                     // TODO: Перенести в сегмент
 
     // TODO: Рассчитывать все капсулы при загрузке, и крайнюю капсулу рассчитывать перед отрисовкой.
-    //    Capsules capsules_;
+    CapsulesPath capsules_;
     // TODO: при изменении капсул высылать sendChangedCapsules
 
     size_t currentSegmentIndex; // Индекс текущего сегмента
