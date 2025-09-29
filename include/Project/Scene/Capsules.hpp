@@ -101,9 +101,20 @@ public:
             unifiedPath_ = unifiedPath_.simplified();
             return;
         }
-
         for (const auto &segment: segments) {
             QPainterPath cap = Capsule::make(segment->getStart(), segment->getCurrentPoint(), R_);
+            unifiedPath_ = unifiedPath_.united(cap);
+        }
+
+        unifiedPath_ = unifiedPath_.simplified();
+    }
+
+    void makePath(const QVector<QPointF> &points) {
+        if (points.isEmpty()) return;
+
+        unifiedPath_.clear();
+        for (size_t i = 0; i < points.size() - 1; ++i) {
+            QPainterPath cap = Capsule::make(points[i], points[i + 1], R_);
             unifiedPath_ = unifiedPath_.united(cap);
         }
 
@@ -115,17 +126,46 @@ public:
     }
 
     //! TODO: Подавать move в качестве аргумента
-    void draw(QPainter &p) {
+    void draw(QPainter &p, QVector<QPointF> &points) {
         p.save();
 
-        p.setPen(Qt::NoPen);
-        p.setBrush(QColor(100, 180, 240, 180));
-        p.drawPath(unifiedPath_);
+        // p.setPen(Qt::NoPen);
+        // p.setBrush(QColor(100, 180, 240, 180));
+        // makePath(points);
+        // p.drawPath(unifiedPath_);
+
+        if (points.empty()) {
+            p.restore();
+            return;
+        }
+        // строим путь из точек
+        QPainterPath path;
+        if (!points.empty()) {
+            path.moveTo(points[0]);
+            for (size_t i = 1; i < points.size(); ++i)
+                path.lineTo(points[i]);
+        }
+
+        // утолщаем путь
+        QPainterPathStroker stroker;
+        stroker.setWidth(R_ * 2.0); // толщина = диаметр
+        stroker.setCapStyle(Qt::RoundCap);
+        stroker.setJoinStyle(Qt::RoundJoin);
+
+        QPainterPath thickPath = stroker.createStroke(path);
+
+        // закрашиваем толстый путь
+        p.fillPath(thickPath, QColor(100, 150, 255, 180));
+
+        // рисуем исходную линию
+        // p.setPen(QPen(Qt::black, 2));
+        p.drawPath(path);
+
 
         p.restore();
     }
 
 private:
-    qreal R_;
+    qreal R_ = 500;
     QPainterPath unifiedPath_;
 };

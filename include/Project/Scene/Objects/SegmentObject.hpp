@@ -3,143 +3,174 @@
 #include <QPainter>
 #include <QPointF>
 #include <QWidget>
-
+#include <QPainterPath>
+#include <QtMath>
 #include "Project/Models/Segment.hpp"
 
 namespace Scene::Objects {
-/*!
- * Класс отображения отрезка пути.
- */
-class SegmentObject final : public QObject
-{
-    using Segment = Models::Segment;
+    /*!
+     * Класс отображения отрезка пути.
+     */
+    class SegmentObject final : public QObject {
+        using Segment = Models::Segment;
 
-public:
-    explicit SegmentObject(QObject* parent = nullptr, const Segment& segment = {})
-        : QObject(parent),
-          segment{segment},
-          current{segment.getStart()}
-    {
-        this->segment = segment;
-    }
-    explicit SegmentObject(const QPointF& start, const QPointF& end, double speed, QObject* parent = nullptr)
-        : segment{0, start, end, speed},
-          current{start}, QObject(parent)
-    {
-    }
+    public:
+        explicit SegmentObject(QObject *parent = nullptr, const Segment &segment = {})
+            : QObject(parent),
+              segment{segment},
+              current{segment.getStart()} {
+            this->segment = segment;
+        }
 
-    void clear()
-    {
-        current = segment.getStart();
-    }
+        explicit SegmentObject(const QPointF &start, const QPointF &end, double speed, QObject *parent = nullptr)
+            : segment{0, start, end, speed},
+              current{start}, QObject(parent) {
+        }
 
-    void initialize(const Segment& segment)
-    {
-        this->segment = segment;
-        current = segment.getStart();
-    }
+        void clear() {
+            current = segment.getStart();
+        }
 
-    void drawCurrent(QPainter& painter, const QColor& color) const
-    {
-        setPen(painter, color);
+        void initialize(const Segment &segment) {
+            this->segment = segment;
+            current = segment.getStart();
+        }
 
-        painter.drawLine(segment.getStart(), current);
-    }
+        QPainterPath makeCapsule(const QPointF &a, const QPointF &b, qreal R) const {
+            QPainterPath path;
+            if (a == b) {
+                path.addEllipse(a, R, R);
+                return path;
+            }
+            QPointF v = b - a;
+            qreal L = std::hypot(v.x(), v.y());
+            QPointF dir(v.x() / L, v.y() / L);
+            QPointF n(-dir.y(), dir.x());
 
-    void drawFull(QPainter& painter, const QColor& color) const
-    {
-        setPen(painter, color);
+            QPointF aL = a + n * R;
+            QPointF aR = a - n * R;
+            QPointF bL = b + n * R;
+            QPointF bR = b - n * R;
 
-        painter.drawLine(segment.getStart(), segment.getEnd());
-    }
+            path.moveTo(aL);
+            path.lineTo(bL);
+            path.lineTo(bR);
+            path.lineTo(aR);
+            path.closeSubpath();
 
-    double getSpeed() const
-    {
-        return segment.getSpeed();
-    }
+            QRectF arcRectA(a.x() - R, a.y() - R, 2 * R, 2 * R);
+            QRectF arcRectB(b.x() - R, b.y() - R, 2 * R, 2 * R);
 
-    QPointF getEnd() const
-    {
-        return segment.getEnd();
-    }
+            QPainterPath capA;
+            capA.moveTo(aR);
+            capA.arcTo(arcRectA, std::atan2(-(aR.y() - a.y()), aR.x() - a.x()) * 180 / M_PI, 180);
+            QPainterPath capB;
+            capB.moveTo(bL);
+            capB.arcTo(arcRectB, std::atan2(-(bL.y() - b.y()), bL.x() - b.x()) * 180 / M_PI, 180);
 
-    QPointF getStart() const
-    {
-        return segment.getStart();
-    }
+            path = path.united(capA);
+            path = path.united(capB);
 
-    void show() const
-    {
-        segment.show();
-    }
+            return path;
+        }
 
-    double length() const
-    {
-        return segment.length();
-    }
+        void drawCurrent(QPainter &painter, const QColor &color, bool line = true, double radius = 500) const {
+            //TODO: Отрисовка капсул вместо пути
 
-    double currentLength() const
-    {
-        return std::hypot(current.x() - segment.getStart().x(), current.y() - segment.getStart().y());
-    }
+            if (line) {
+                if (segment.start == current) return;
+                auto path = makeCapsule(segment.start, current, radius);
+                painter.fillPath(path, QColor(100, 150, 255, 180));
+            } else {
+                setPen(painter, color);
 
-    void setCurrentPoint(const QPointF& point)
-    {
-        current = point;
-    }
+                painter.drawLine(segment.start, current);
+            }
+        }
 
-    QPointF getCurrentPoint() const
-    {
-        return current;
-    }
+        void drawFull(QPainter &painter, const QColor &color, bool line = true, double radius = 500) const {
+            if (line) {
+                auto path = makeCapsule(segment.start, segment.end, radius);
+                painter.fillPath(path, QColor(100, 150, 255, 180));
+            } else {
+                setPen(painter, color);
 
-    double getCurrentTime() const
-    {
-        return currentLength() / segment.getSpeed();
-    }
+                painter.drawLine(segment.start, segment.end);
+            }
+        }
 
-    double getFullTime() const
-    {
-        return segment.time();
-    }
+        double getSpeed() const {
+            return segment.getSpeed();
+        }
 
-    Segment getSegment() const
-    {
-        return segment;
-    }
+        QPointF getEnd() const {
+            return segment.getEnd();
+        }
 
-    void setCurrent(const QPoint& curr)
-    {
-        current = curr;
-    }
+        QPointF getStart() const {
+            return segment.getStart();
+        }
 
-    void setSegment(const Segment& seg)
-    {
-        segment = seg;
-    }
+        void show() const {
+            segment.show();
+        }
 
-private:
-    void setPen(QPainter& painter, const QColor& color) const
-    {
-        QPen pen = QPen(color, 2);
-        pen.setCosmetic(true);
+        double length() const {
+            return segment.length();
+        }
 
-        painter.setPen(pen);
-    }
+        double currentLength() const {
+            return std::hypot(current.x() - segment.getStart().x(), current.y() - segment.getStart().y());
+        }
 
-public:
-    void swapCoordinates()
-    {
-        segment.swapCoordinates();
-        auto x = current.x();
+        void setCurrentPoint(const QPointF &point) {
+            current = point;
+        }
 
-        current.setX(current.y());
-        current.setY(x);
-    }
+        QPointF getCurrentPoint() const {
+            return current;
+        }
 
-private:
-    Segment segment;
+        double getCurrentTime() const {
+            return currentLength() / segment.getSpeed();
+        }
 
-    QPointF current;
-};
+        double getFullTime() const {
+            return segment.time();
+        }
+
+        Segment getSegment() const {
+            return segment;
+        }
+
+        void setCurrent(const QPoint &curr) {
+            current = curr;
+        }
+
+        void setSegment(const Segment &seg) {
+            segment = seg;
+        }
+
+    private:
+        void setPen(QPainter &painter, const QColor &color) const {
+            QPen pen = QPen(color, 2);
+            pen.setCosmetic(true);
+
+            painter.setPen(pen);
+        }
+
+    public:
+        void swapCoordinates() {
+            segment.swapCoordinates();
+            auto x = current.x();
+
+            current.setX(current.y());
+            current.setY(x);
+        }
+
+    private:
+        Segment segment;
+
+        QPointF current;
+    };
 } // namespace Scene::Objects

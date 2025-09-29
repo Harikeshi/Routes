@@ -5,7 +5,7 @@
 #include <QToolTip>
 #include <QWidget>
 
-// #include "../Capsules.hpp"
+#include "../Capsules.hpp"
 #include "./ModelObject.hpp"
 #include "./SegmentObject.hpp"
 #include "Project/Models/Object.hpp"
@@ -15,447 +15,399 @@
 #include <complex>
 
 namespace Scene::Objects {
-class State;
-class WithOutDrawState;
-class FullDrawState;
-class CurrentDrawState;
+    class State;
+    class WithOutDrawState;
+    class FullDrawState;
+    class CurrentDrawState;
 
-class RouteObject : public QWidget
-{
-    // Q_OBJECT
-public:
-    RouteObject(QWidget* parent = nullptr, State* state = new CurrentDrawState())
-        : QWidget(parent), state(state), head(new ModelObject())
-    {
-        // setMouseTracking(true);
-    }
-
-    void mousePressEvent(QMouseEvent* event, const QPointF& point)
-    {
-        // if (pointsWidget.isEmpty())
-        //     return;
-
-        // TODO: Не верно распознает
-        // int pointIndex = findPointAt(point, pointsWidget[0]->getRadius());
-
-        // if (pointIndex != -1)
-        // {
-        //     QString tooltipText = QString("Point %1 :[ X: %2, Y: %3 ]")
-        //                               .arg(pointIndex + 1)
-        //                               .arg(pointsWidget[pointIndex]->x())
-        //                               .arg(pointsWidget[pointIndex]->y());
-        //     QToolTip::showText(event->globalPos(), tooltipText, this);
-        // }
-
-        // update();
-    }
-    /*!
-     *
-     * @param pos
-     * @param radius
-     * @return
-     */
-    int findPointAt(const QPointF& pos, double radius)
-    {
-        // for (int i = 0; i < numberPointsForDisplay(); ++i)
-        // {
-        //     // Расстояние от центра должно быть не больше радиуса + 5%
-
-        //     int dx = pos.x() - pointsWidget.at(i)->x();
-        //     int dy = pos.y() - pointsWidget.at(i)->y();
-
-        //     // if (dx * dx + dy * dy <= (radius + radius * 0.05) * (radius + radius * 0.05))
-        //     if (std::hypot(dx, dy) <= (radius + radius * 0.05))
-        //     {
-        //         qDebug() << "pos: " << pos << ", point: " << pointsWidget.at(i)->getPoint();
-        //         qDebug() << i << ":, hypot: " << std::hypot(dx, dy) << "dx: " << dx << ", dy: " << dy << radius;
-
-        //         return i;
-        //     }
-        // }
-
-        return -1;
-    }
-
-    // Вычислить текущую точку,
-    // time = time * muliplier
-    bool move(double time)
-    {
-        if (currentSegmentIndex >= segments.size())
-        {
-            return false;
+    class RouteObject : public QWidget {
+        // Q_OBJECT
+    public:
+        RouteObject(QWidget *parent = nullptr, State *state = new CurrentDrawState())
+            : QWidget(parent), state(state), head(new ModelObject()) {
+            // setMouseTracking(true);
         }
 
-        double accumulatedTime = 0.0;
+        void mousePressEvent(QMouseEvent *event, const QPointF &point) {
+            // if (pointsWidget.isEmpty())
+            //     return;
 
-        for (size_t i = 0; i < segments.size(); ++i)
-        {
-            double dx = segments[i]->getEnd().x() - segments[i]->getStart().x();
-            double dy = segments[i]->getEnd().y() - segments[i]->getStart().y();
+            // TODO: Не верно распознает
+            // int pointIndex = findPointAt(point, pointsWidget[0]->getRadius());
 
-            double segmentTime = segments[i]->length() / segments[i]->getSpeed();
-            currentSegmentIndex = i;
-            // Проверяем, находится ли нужное время в этом сегменте
-            if (time <= accumulatedTime + segmentTime)
-            {
-                // Вычисляем прогресс прохождения сегмента (0..1)
-                double progress = (time - accumulatedTime) / segmentTime;
+            // if (pointIndex != -1)
+            // {
+            //     QString tooltipText = QString("Point %1 :[ X: %2, Y: %3 ]")
+            //                               .arg(pointIndex + 1)
+            //                               .arg(pointsWidget[pointIndex]->x())
+            //                               .arg(pointsWidget[pointIndex]->y());
+            //     QToolTip::showText(event->globalPos(), tooltipText, this);
+            // }
 
-                // Меняем точку
-                segments[i]->setCurrentPoint(QPointF{segments[i]->getStart().x() + progress * dx,
-                                                     segments[i]->getStart().y() + progress * dy});
-                break;
+            // update();
+        }
+
+        /*!
+         *
+         * @param pos
+         * @param radius
+         * @return
+         */
+        int findPointAt(const QPointF &pos, double radius) {
+            // for (int i = 0; i < numberPointsForDisplay(); ++i)
+            // {
+            //     // Расстояние от центра должно быть не больше радиуса + 5%
+
+            //     int dx = pos.x() - pointsWidget.at(i)->x();
+            //     int dy = pos.y() - pointsWidget.at(i)->y();
+
+            //     // if (dx * dx + dy * dy <= (radius + radius * 0.05) * (radius + radius * 0.05))
+            //     if (std::hypot(dx, dy) <= (radius + radius * 0.05))
+            //     {
+            //         qDebug() << "pos: " << pos << ", point: " << pointsWidget.at(i)->getPoint();
+            //         qDebug() << i << ":, hypot: " << std::hypot(dx, dy) << "dx: " << dx << ", dy: " << dy << radius;
+
+            //         return i;
+            //     }
+            // }
+
+            return -1;
+        }
+
+        // Вычислить текущую точку,
+        // time = time * muliplier
+        bool move(double time) {
+            if (currentSegmentIndex >= segments.size()) {
+                return false;
             }
 
-            // считаем, что отрезок пройден
-            segments[i]->setCurrentPoint(segments[i]->getEnd());
-            // Увеличиваем накопленное время
-            accumulatedTime += segmentTime;
-        }
+            double accumulatedTime = 0.0;
 
-        //TODO: До currentSegmentIndex
+            for (size_t i = 0; i < segments.size(); ++i) {
+                double dx = segments[i]->getEnd().x() - segments[i]->getStart().x();
+                double dy = segments[i]->getEnd().y() - segments[i]->getStart().y();
 
-        return true;
-    }
+                double segmentTime = segments[i]->length() / segments[i]->getSpeed();
+                currentSegmentIndex = i;
+                // Проверяем, находится ли нужное время в этом сегменте
+                if (time <= accumulatedTime + segmentTime) {
+                    // Вычисляем прогресс прохождения сегмента (0..1)
+                    double progress = (time - accumulatedTime) / segmentTime;
 
-    // TODO: position заменить
-    QPointF getCurrentPosition() const
-    {
-        if (segments.isEmpty())
-        {
-            return QPointF{}; // QPointF{0, 0};
-        }
+                    // Меняем точку
+                    segments[i]->setCurrentPoint(QPointF{
+                        segments[i]->getStart().x() + progress * dx,
+                        segments[i]->getStart().y() + progress * dy
+                    });
+                    break;
+                }
 
-        // Проверку, если путь закончен то последнюю точку, в остальных случаях сегмент[current].getCurrent()
-        if (currentSegmentIndex >= segments.size())
-        {
-            return segments.back()->getCurrentPoint();
-        }
-
-        return segments[currentSegmentIndex]->getCurrentPoint();
-    }
-
-    // TODO: Пересмотреть
-    void initialize(const QVector<Models::Segment>& segments, const QColor& color, const Models::Object& parameters, double pointSize)
-    {
-        //! Установить Первую точку
-        // if (!segments.isEmpty())
-        // {
-        //     pointsWidget.push_back(new PointWidget(segments.at(0).getStart(), pointSize, color));
-        // }
-
-        for (const auto& segment : segments)
-        {
-            // pointsWidget.push_back(new PointWidget(segment.getEnd(), pointSize, color)); //! Точки
-
-            this->segments.push_back(new SegmentObject(this, segment));
-            length += segment.length();
-        }
-
-        this->setColor(color);
-        this->setRadius(parameters.detection_range);
-
-        this->head->initialize(parameters);
-
-        clear();
-    }
-
-    double getLength() const
-    {
-        return length;
-    }
-
-    void reset()
-    {
-        length = 0;
-        currentSegmentIndex = 0; // Выбран первый отрезок
-        segments.clear();        // TODO: это reset
-
-        // state = new CurrentDrawState(); // Текущее состояние
-
-        head = new ModelObject(); // Головной объект
-
-        // color = Qt::black;
-
-        // pointsWidget.clear();
-
-        showPoints = true;
-    }
-
-    /*!
-     * Метод сброса текущей точки к стартовой.
-     */
-    void clear()
-    {
-        // Сброс к начальным значениям пути
-        length = 0;
-        currentSegmentIndex = 0; // Выбран первый отрезок
-
-        if (!segments.isEmpty())
-        {
-            for (const auto& segment : segments)
-            {
-                segment->clear();
-            }
-        }
-    }
-
-    /* get/set */
-    size_t getCurrentIndex() const
-    {
-        return currentSegmentIndex;
-    }
-
-    void addSegment(QPointF start, QPointF end, double speed)
-    {
-        SegmentObject* segment = new SegmentObject(this, {0, start, end, speed});
-
-        segments.push_back(segment);
-    }
-
-    QColor getColor() const
-    {
-        return color;
-    }
-
-    void setColor(const QColor& c)
-    {
-        color = c;
-    }
-    const QVector<SegmentObject*> getSegments() const
-    {
-        return segments;
-    }
-
-    double getRadius() const
-    {
-        return head->getRadius();
-    }
-
-    void setRadius(const double& radius)
-    {
-        head->setRadius(radius);
-    }
-
-    bool isEmpty() const
-    {
-        return segments.isEmpty();
-    }
-
-    void show() const
-    {
-        head->show();
-
-        for (const auto& segment : segments)
-        {
-            segment->show();
-        }
-    }
-
-    double getSpeed() const
-    {
-        if (segments.size() != 0 && currentSegmentIndex < segments.size())
-        {
-            return segments[currentSegmentIndex]->getSpeed();
-        }
-
-        return segments.back()->getSpeed();
-    }
-
-protected:
-    static void setNull(QPointF& position)
-    {
-        position.setX(-1e30);
-        position.setY(-1e30);
-    }
-
-public:
-    StateType getStateType() const
-    {
-        return state->type();
-    }
-
-    void setState(State* state)
-    {
-        this->state = state;
-    }
-
-    size_t numberPointsForDisplay() const
-    {
-        auto type = getStateType();
-
-        if (type == StateType::Current)
-        {
-            return currentSegmentIndex + 1;
-        }
-        else if (type == StateType::Full)
-        {
-            return segments.size() + 1;
-        }
-
-        return 0;
-    }
-
-    /*!
-    *   QFont font("Arial", 50, QFont::Bold); // Размер 50
-    *   painter.setFont(font);
-    *
-    *   // Рисуем цифру "5" в позиции (50, 70)
-    *   painter.drawText(50, 70, "5");
-    * @param painter
-     */
-
-    void printNumber(QPainter& painter, const QPointF& real, size_t number)
-    {
-        painter.setRenderHint(QPainter::Antialiasing);
-
-        QFont font("Arial", 1, QFont::Bold); // Размер 50
-        painter.setFont(font);
-
-        painter.drawText(real.x(), real.y(), QString("%1").arg(number));
-    }
-
-    void drawPoints(QPainter& painter)
-    {
-        // if (pointsWidget.isEmpty())
-        //     return;
-
-        // if (currentSegmentIndex == 0)
-        //     return;
-
-        // if (currentSegmentIndex > 0)
-        // {
-        //     pointsWidget.at(0)->draw(painter, 1);
-        // }
-
-        // if (pointsWidget.size() == 1)
-        //     return;
-
-        // for (size_t i = 1; i < numberPointsForDisplay(); ++i)
-        // {
-        //     pointsWidget.at(i)->draw(painter, i + 1);
-        // }
-    }
-
-    // QVector<PointWidget*> getPointsWidget()
-    // {
-    //     return pointsWidget;
-    // }
-
-    void draw(QPainter& painter)
-    {
-        // Отрисовка пути
-        state->draw(painter, segments, color);
-
-        if (showPoints)
-            drawPoints(painter);
-
-        // Отрисовка Объекта
-        if (state->type() != StateType::Clean)
-        {
-            drawHead(painter);
-        }
-    }
-
-    void drawHead(QPainter& painter)
-    {
-        // Отрисовка Объекта
-        if (!segments.isEmpty() && currentSegmentIndex <= segments.size())
-        {
-            auto index = currentSegmentIndex;
-
-            // Если достигли конечной точки
-            if (currentSegmentIndex >= segments.size())
-            {
-                --index;
+                // считаем, что отрезок пройден
+                segments[i]->setCurrentPoint(segments[i]->getEnd());
+                // Увеличиваем накопленное время
+                accumulatedTime += segmentTime;
             }
 
-            head->draw(painter, *segments.at(index), color);
-        }
-    }
-
-    // Сохраняет текущее состояние в Memento
-    Memento* saveState(const Qt::Key& key) const
-    {
-        return new Memento(state, key);
-    }
-
-    // Восстанавливает состояние из Memento
-    void restoreState(Memento* memento)
-    {
-        state = memento->getState();
-    }
-
-    void initHead(const Models::Object parameters)
-    {
-        head->initialize(parameters);
-    }
-
-    void initHead(const Models::Target& target)
-    {
-        head->initialize(target);
-    }
-
-    // Objects перечисление
-    bool setModel(const Objects object, const double radius, const double size = 100)
-    {
-        if (head != nullptr)
-        {
-            head->setModel(object, size);
-            head->setRadius(radius);
+            //TODO: До currentSegmentIndex
 
             return true;
         }
 
-        return false;
-    }
+        // TODO: position заменить
+        QPointF getCurrentPosition() const {
+            if (segments.isEmpty()) {
+                return QPointF{}; // QPointF{0, 0};
+            }
 
-    void swapCoordinates()
-    {
-        for (size_t i = 0; i != segments.size(); ++i)
-        {
-            segments[i]->swapCoordinates();
+            // Проверку, если путь закончен то последнюю точку, в остальных случаях сегмент[current].getCurrent()
+            if (currentSegmentIndex >= segments.size()) {
+                return segments.back()->getCurrentPoint();
+            }
+
+            return segments[currentSegmentIndex]->getCurrentPoint();
         }
 
-        // for (auto& point : pointsWidget)
-        //     point->swapCoordinates();
+        // TODO: Пересмотреть
+        void initialize(const QVector<Models::Segment> &segments, const QColor &color, const Models::Object &parameters,
+                        double pointSize) {
+            //! Установить Первую точку
+            // if (!segments.isEmpty())
+            // {
+            //     pointsWidget.push_back(new PointWidget(segments.at(0).getStart(), pointSize, color));
+            // }
 
-        //head->swapCoordinates();
-    }
+            for (const auto &segment: segments) {
+                // pointsWidget.push_back(new PointWidget(segment.getEnd(), pointSize, color)); //! Точки
 
-    double getFullTime() const
-    {
-        double time{0};
-        for (const auto& segment : segments)
-            time += segment->getFullTime();
+                this->segments.push_back(new SegmentObject(this, segment));
+                length += segment.length();
+            }
 
-        return time;
-    }
+            this->setColor(color);
+            this->setRadius(parameters.detection_range);
 
-    void changeShowPoints()
-    {
-        showPoints = !showPoints;
-    }
+            this->head->initialize(parameters);
 
-protected:
-    // Memento
-    State* state; // Текущее состояние
+            clear();
+        }
 
-    QVector<SegmentObject*> segments; // Логический путь
-    ModelObject* head;                // Головной объект
-    QColor color;                     // TODO: Перенести в сегмент
+        double getLength() const {
+            return length;
+        }
 
-    // TODO: Рассчитывать все капсулы при загрузке, и крайнюю капсулу рассчитывать перед отрисовкой.
-    // CapsulesPath capsules_;
-    // TODO: при изменении капсул высылать sendChangedCapsules
+        void reset() {
+            length = 0;
+            currentSegmentIndex = 0; // Выбран первый отрезок
+            segments.clear(); // TODO: это reset
 
-    size_t currentSegmentIndex; // Индекс текущего сегмента
+            // state = new CurrentDrawState(); // Текущее состояние
 
-    // TODO: Точки не зашли
-    // QVector<PointWidget*> pointsWidget;
+            head = new ModelObject(); // Головной объект
 
-    double length{0};
+            // color = Qt::black;
 
-    bool showPoints = true;
-};
+            // pointsWidget.clear();
+
+            showPoints = true;
+        }
+
+        /*!
+         * Метод сброса текущей точки к стартовой.
+         */
+        void clear() {
+            // Сброс к начальным значениям пути
+            length = 0;
+            currentSegmentIndex = 0; // Выбран первый отрезок
+
+            if (!segments.isEmpty()) {
+                for (const auto &segment: segments) {
+                    segment->clear();
+                }
+            }
+        }
+
+        /* get/set */
+        size_t getCurrentIndex() const {
+            return currentSegmentIndex;
+        }
+
+        void addSegment(QPointF start, QPointF end, double speed) {
+            SegmentObject *segment = new SegmentObject(this, {0, start, end, speed});
+
+            segments.push_back(segment);
+        }
+
+        QColor getColor() const {
+            return color;
+        }
+
+        void setColor(const QColor &c) {
+            color = c;
+        }
+
+        const QVector<SegmentObject *> getSegments() const {
+            return segments;
+        }
+
+        double getRadius() const {
+            return head->getRadius();
+        }
+
+        void setRadius(const double &radius) {
+            head->setRadius(radius);
+        }
+
+        bool isEmpty() const {
+            return segments.isEmpty();
+        }
+
+        void show() const {
+            head->show();
+
+            for (const auto &segment: segments) {
+                segment->show();
+            }
+        }
+
+        double getSpeed() const {
+            if (segments.size() != 0 && currentSegmentIndex < segments.size()) {
+                return segments[currentSegmentIndex]->getSpeed();
+            }
+
+            return segments.back()->getSpeed();
+        }
+
+    protected:
+        static void setNull(QPointF &position) {
+            position.setX(-1e30);
+            position.setY(-1e30);
+        }
+
+    public:
+        StateType getStateType() const {
+            return state->type();
+        }
+
+        void setState(State *state) {
+            this->state = state;
+        }
+
+        size_t numberPointsForDisplay() const {
+            auto type = getStateType();
+
+            if (type == StateType::Current) {
+                return currentSegmentIndex + 1;
+            } else if (type == StateType::Full) {
+                return segments.size() + 1;
+            }
+
+            return 0;
+        }
+
+        /*!
+        *   QFont font("Arial", 50, QFont::Bold); // Размер 50
+        *   painter.setFont(font);
+        *
+        *   // Рисуем цифру "5" в позиции (50, 70)
+        *   painter.drawText(50, 70, "5");
+        * @param painter
+         */
+
+        void printNumber(QPainter &painter, const QPointF &real, size_t number) {
+            painter.setRenderHint(QPainter::Antialiasing);
+
+            QFont font("Arial", 1, QFont::Bold); // Размер 50
+            painter.setFont(font);
+
+            painter.drawText(real.x(), real.y(), QString("%1").arg(number));
+        }
+
+        void drawPoints(QPainter &painter) {
+            // if (pointsWidget.isEmpty())
+            //     return;
+
+            // if (currentSegmentIndex == 0)
+            //     return;
+
+            // if (currentSegmentIndex > 0)
+            // {
+            //     pointsWidget.at(0)->draw(painter, 1);
+            // }
+
+            // if (pointsWidget.size() == 1)
+            //     return;
+
+            // for (size_t i = 1; i < numberPointsForDisplay(); ++i)
+            // {
+            //     pointsWidget.at(i)->draw(painter, i + 1);
+            // }
+        }
+
+        // QVector<PointWidget*> getPointsWidget()
+        // {
+        //     return pointsWidget;
+        // }
+
+        void draw(QPainter &painter) {
+            // Отрисовка пути
+            state->draw(painter, segments, color);
+
+            //capsules_.draw(painter, points);
+
+            if (showPoints)
+                drawPoints(painter);
+
+            // Отрисовка Объекта
+            if (state->type() != StateType::Clean) {
+                drawHead(painter);
+            }
+        }
+
+        void drawHead(QPainter &painter) {
+            // Отрисовка Объекта
+            if (!segments.isEmpty() && currentSegmentIndex <= segments.size()) {
+                auto index = currentSegmentIndex;
+
+                // Если достигли конечной точки
+                if (currentSegmentIndex >= segments.size()) {
+                    --index;
+                }
+
+                head->draw(painter, *segments.at(index), color);
+            }
+        }
+
+        // Сохраняет текущее состояние в Memento
+        Memento *saveState(const Qt::Key &key) const {
+            return new Memento(state, key);
+        }
+
+        // Восстанавливает состояние из Memento
+        void restoreState(Memento *memento) {
+            state = memento->getState();
+        }
+
+        void initHead(const Models::Object parameters) {
+            head->initialize(parameters);
+        }
+
+        void initHead(const Models::Target &target) {
+            head->initialize(target);
+        }
+
+        // Objects перечисление
+        bool setModel(const Objects object, const double radius, const double size = 100) {
+            if (head != nullptr) {
+                head->setModel(object, size);
+                head->setRadius(radius);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        void swapCoordinates() {
+            for (size_t i = 0; i != segments.size(); ++i) {
+                segments[i]->swapCoordinates();
+            }
+
+            // for (auto& point : pointsWidget)
+            //     point->swapCoordinates();
+
+            //head->swapCoordinates();
+        }
+
+        double getFullTime() const {
+            double time{0};
+            for (const auto &segment: segments)
+                time += segment->getFullTime();
+
+            return time;
+        }
+
+        void changeShowPoints() {
+            showPoints = !showPoints;
+        }
+
+    protected:
+        // Memento
+        State *state; // Текущее состояние
+
+        QVector<SegmentObject *> segments; // Логический путь
+        ModelObject *head; // Головной объект
+        QColor color; // TODO: Перенести в сегмент
+
+        // TODO: Рассчитывать все капсулы при загрузке, и крайнюю капсулу рассчитывать перед отрисовкой.
+        // TODO: при изменении капсул высылать sendChangedCapsules
+
+        size_t currentSegmentIndex; // Индекс текущего сегмента
+
+        // TODO: Точки не зашли
+        // QVector<PointWidget*> pointsWidget;
+
+        double length{0};
+
+        bool showPoints = true;
+    };
 } // namespace Scene::Objects
