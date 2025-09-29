@@ -4,6 +4,9 @@
 #include <QPointF>
 #include <vector>
 
+/*!
+ * Матрица наложения
+ */
 class HeatMatrix {
 public:
     static QVector<QVector<int> > calculate(const QVector<QPainterPath> &capsules, const QRectF &totalBBox,
