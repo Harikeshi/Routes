@@ -20,6 +20,8 @@
 #include "./Widgets/InformationWidget.hpp"
 #include "./Widgets/ManageWidget.hpp"
 #include "./Widgets/SubWidget.hpp"
+#include "./Widgets/MatrixViewWidget.hpp"
+
 #include "Project/Widgets/UpdateProgress.hpp"
 
 #include "Project/Database/DatabaseManager.hpp"
@@ -32,6 +34,7 @@ class MainWindow : public QMainWindow
     using SceneWidget = Widgets::SceneWidget;
     using DataWidget = Widgets::DataWidget;
     using CustomTable = Widgets::CustomTable;
+    using MatrixViewWidget = Widgets::MatrixViewWidget;
     using ManageWidget = Widgets::ManageWidget;
     using SubWidget = Widgets::SubWidget;
     using InformationWidget = Widgets::InformationWidget;
@@ -70,9 +73,25 @@ public:
 
         //! Виджеты для правой вертикальной панели
         dataWidget = new DataWidget(this); // TODO: this
+
+        //! Вкладки под первым справа
+        QTabWidget *tabs = new QTabWidget(this);
+
+        // Первый виджет
         table = new CustomTable(this);
+        QVBoxLayout *layout1 = new QVBoxLayout(table);
+
+        // Второй виджет
+        matrix = new Widgets::MatrixViewWidget(this);
+        QVBoxLayout *layout2 = new QVBoxLayout(matrix);
+
+        // Добавляем вкладки
+        tabs->addTab(table, "Таблица БЭНК");
+        tabs->addTab(matrix, "Гистограмма");
+
         rightVerticalSplitter->addWidget(dataWidget);
-        rightVerticalSplitter->addWidget(table);
+        rightVerticalSplitter->addWidget(tabs);
+        // rightVerticalSplitter->addWidget(table);
 
         //! Горизонтальный splitter нижний
         auto* innerHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
@@ -304,8 +323,9 @@ private slots:
      */
     void setRequestReportFromIds(size_t report_id, size_t request_id)
     {
-        Models::Request request = datamanager->getRequest(request_id);
-        Models::Report report = datamanager->getReport(report_id);
+
+        auto request = datamanager->getRequest(request_id);
+        auto report = datamanager->getReport(report_id);
 
         if (!report.scheme.isEmpty())
             scene->setActor(report.scheme, request);
@@ -321,6 +341,11 @@ private slots:
         catch (std::exception& ex)
         {
             infoWidget->addMessage(ex.what(), MessageType::Error);
+        }
+
+        if(report._routes.isEmpty()){
+            infoWidget->addMessage("Report не содержит пути.", MessageType::Error);
+            return;
         }
 
         try
@@ -372,6 +397,9 @@ private slots:
         }
 
         infoWidget->addMessage("Report был загружен полностью.", MessageType::Success);
+
+        //! Загрузка в Гистограмму
+        matrix->loadReport(report);
     }
 
 public:
@@ -566,6 +594,7 @@ private:
     UpdateProgressBar* progress;
     DataWidget* dataWidget;
     CustomTable* table;
+    MatrixViewWidget* matrix;
     ManageWidget* manage;
     SubWidget* sub;
 

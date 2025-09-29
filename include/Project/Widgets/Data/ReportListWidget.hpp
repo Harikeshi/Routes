@@ -1,5 +1,6 @@
 #pragma once
 
+//! TODO: Структура
 //#include "core/*.hpp"
 //#include "ui/*.hpp"
 

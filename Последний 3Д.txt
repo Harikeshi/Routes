@@ -1,0 +1,240 @@
+
+
+#include <fstream>
+#include <QVector>
+
+#include "Project/Models/Request.hpp"
+#include <QtWidgets>
+#include <QtDataVisualization/Q3DSurface>
+#include <QtDataVisualization/Q3DBars>
+#include <QtDataVisualization/QSurface3DSeries>
+#include <QtDataVisualization/QBar3DSeries>
+#include <QtDataVisualization/QSurfaceDataProxy>
+#include <QtDataVisualization/QBarDataProxy>
+#include <cmath>
+#include <vector>
+using namespace QtDataVisualization;
+
+// ---------- Circle + SpatialGrid ----------
+struct Circle {
+    QPointF center;
+    qreal radius;
+    QRectF bounds;
+
+    Circle(const QPointF &c, qreal r)
+        : center(c), radius(r), bounds(c.x() - r, c.y() - r, 2 * r, 2 * r) {
+    }
+
+    bool contains(const QPointF &pt) const {
+        if (!bounds.contains(pt)) return false;
+        qreal dx = pt.x() - center.x();
+        qreal dy = pt.y() - center.y();
+        return dx * dx + dy * dy <= radius * radius;
+    }
+};
+
+class SpatialGrid {
+public:
+    SpatialGrid(const QRectF &bounds, int cols, int rows)
+        : bounds_(bounds), cols_(cols), rows_(rows) {
+        grid_.resize(rows_);
+        for (auto &row: grid_) row.resize(cols_);
+    }
+
+    void insert(const Circle &c, int index) {
+        QRectF b = c.bounds;
+        int x0 = clamp((b.left() - bounds_.left()) / bounds_.width() * cols_, 0, cols_ - 1);
+        int x1 = clamp((b.right() - bounds_.left()) / bounds_.width() * cols_, 0, cols_ - 1);
+        int y0 = clamp((b.top() - bounds_.top()) / bounds_.height() * rows_, 0, rows_ - 1);
+        int y1 = clamp((b.bottom() - bounds_.top()) / bounds_.height() * rows_, 0, rows_ - 1);
+        for (int y = y0; y <= y1; ++y)
+            for (int x = x0; x <= x1; ++x)
+                grid_[y][x].push_back(index);
+    }
+
+    std::vector<int> query(const QPointF &pt) const {
+        int x = clamp((pt.x() - bounds_.left()) / bounds_.width() * cols_, 0, cols_ - 1);
+        int y = clamp((pt.y() - bounds_.top()) / bounds_.height() * rows_, 0, rows_ - 1);
+        return grid_[y][x];
+    }
+
+private:
+    QRectF bounds_;
+    int cols_, rows_;
+    std::vector<std::vector<std::vector<int> > > grid_;
+
+    static int clamp(double v, int min, int max) {
+        return std::max(min, std::min(static_cast<int>(v), max));
+    }
+};
+
+// ---------- Построение матрицы по ломаной ----------
+std::vector<std::vector<double> > buildMatrix(const std::vector<QPointF> &polyline,
+                                              double step, double R,
+                                              int gridW, int gridH,
+                                              int samplesPerCell,
+                                              QRectF &bboxOut) {
+    // bbox
+    QRectF bbox(polyline[0], QSizeF(1, 1));
+    for (auto &pt: polyline)
+        bbox = bbox.united(QRectF(pt.x() - R, pt.y() - R, 2 * R, 2 * R));
+    bboxOut = bbox;
+
+    // spatial grid
+    int gridCols = std::max(1, static_cast<int>(bbox.width() / (2.5 * R)));
+    int gridRows = std::max(1, static_cast<int>(bbox.height() / (2.5 * R)));
+    SpatialGrid grid(bbox, gridCols, gridRows);
+
+    // центры окружностей вдоль всех сегментов
+    std::vector<QPointF> centers;
+    for (size_t i = 0; i + 1 < polyline.size(); ++i) {
+        QPointF A = polyline[i];
+        QPointF B = polyline[i + 1];
+        QPointF v = B - A;
+        qreal L = std::hypot(v.x(), v.y());
+        if (L < 1e-6) {
+            centers.push_back(A);
+            continue;
+        }
+        QPointF dir(v.x() / L, v.y() / L);
+        int nSteps = static_cast<int>(std::floor(L / step));
+        centers.push_back(A);
+        for (int s = 1; s <= nSteps; ++s)
+            centers.push_back(A + dir * (s * step));
+        centers.push_back(B);
+    }
+
+    for (size_t i = 0; i < centers.size(); ++i)
+        grid.insert(Circle(centers[i], R), static_cast<int>(i));
+
+    // матрица
+    std::vector<std::vector<double> > matrix(gridH, std::vector<double>(gridW, 0.0));
+    double cellW = bbox.width() / gridW;
+    double cellH = bbox.height() / gridH;
+    double stepX = cellW / samplesPerCell;
+    double stepY = cellH / samplesPerCell;
+
+    for (int y = 0; y < gridH; ++y) {
+        for (int x = 0; x < gridW; ++x) {
+            double sum = 0.0;
+            for (int sy = 0; sy < samplesPerCell; ++sy) {
+                for (int sx = 0; sx < samplesPerCell; ++sx) {
+                    QPointF pt(bbox.left() + x * cellW + (sx + 0.5) * stepX,
+                               bbox.top() + y * cellH + (sy + 0.5) * stepY);
+                    int count = 0;
+                    for (int idx: grid.query(pt)) {
+                        QPointF c = centers[idx];
+                        qreal dx = pt.x() - c.x();
+                        qreal dy = pt.y() - c.y();
+                        if (dx * dx + dy * dy <= R * R) ++count;
+                    }
+                    sum += count;
+                }
+            }
+            matrix[y][x] = sum / (samplesPerCell * samplesPerCell);
+        }
+    }
+    return matrix;
+}
+
+// ---------- Виджет с Surface и Bars ----------
+class Matrix3DView : public QWidget {
+    Q_OBJECT
+
+public:
+    Matrix3DView(const std::vector<std::vector<double> > &matrix, QWidget *parent = nullptr)
+        : QWidget(parent) {
+        stacked_ = new QStackedLayout(this);
+
+        // --- Surface ---
+        surface_ = new Q3DSurface();
+        QWidget *surfContainer = QWidget::createWindowContainer(surface_);
+        stacked_->addWidget(surfContainer);
+
+        QSurfaceDataArray *dataArray = new QSurfaceDataArray;
+        dataArray->reserve(matrix.size());
+        for (int y = 0; y < (int) matrix.size(); ++y) {
+            QSurfaceDataRow *row = new QSurfaceDataRow(matrix[y].size());
+            for (int x = 0; x < (int) matrix[y].size(); ++x)
+                (*row)[x].setPosition(QVector3D(x, matrix[y][x], y));
+            *dataArray << row;
+        }
+        QSurfaceDataProxy *proxy = new QSurfaceDataProxy();
+        proxy->resetArray(dataArray);
+        QSurface3DSeries *series = new QSurface3DSeries(proxy);
+        series->setDrawMode(QSurface3DSeries::DrawSurface);
+        series->setFlatShadingEnabled(false);
+        surface_->addSeries(series);
+
+        // Цветовой градиент
+        surface_->activeTheme()->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
+        surface_->activeTheme()->setBaseColors({Qt::blue, Qt::cyan, Qt::green, Qt::yellow, Qt::red});
+        // --- Bars ---
+        bars_ = new Q3DBars();
+        QWidget *barsContainer = QWidget::createWindowContainer(bars_);
+        stacked_->addWidget(barsContainer);
+
+        QBarDataArray *barArray = new QBarDataArray;
+        barArray->reserve(matrix.size());
+        for (int y = 0; y < (int) matrix.size(); ++y) {
+            QBarDataRow *row = new QBarDataRow(matrix[y].size());
+            for (int x = 0; x < (int) matrix[y].size(); ++x)
+                (*row)[x].setValue(matrix[y][x]);
+            *barArray << row;
+        }
+        QBarDataProxy *barProxy = new QBarDataProxy();
+        barProxy->resetArray(barArray);
+        QBar3DSeries *barSeries = new QBar3DSeries(barProxy);
+        bars_->addSeries(barSeries);
+        bars_->activeTheme()->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
+        bars_->activeTheme()->setBaseColors({Qt::blue, Qt::green, Qt::red});
+    }
+
+public slots:
+    void showSurface() { stacked_->setCurrentIndex(0); }
+    void showBars() { stacked_->setCurrentIndex(1); }
+
+private:
+    QStackedLayout *stacked_;
+    Q3DSurface *surface_;
+    Q3DBars *bars_;
+};
+
+class MainWindow : public QWidget {
+    Q_OBJECT
+
+public:
+    MainWindow() {
+        // Пример ломаной
+        std::vector<QPointF> polyline = {{50, 150}, {200, 100}, {350, 180}, {450, 80}};
+        QRectF bbox;
+        auto matrix = buildMatrix(polyline, 60.0, 25.0, 60, 30, 3, bbox);
+
+        auto layout = new QVBoxLayout(this);
+        view_ = new Matrix3DView(matrix);
+        layout->addWidget(view_, 1);
+
+        auto controls = new QHBoxLayout;
+        auto btnSurf = new QPushButton("Surface");
+        auto btnBars = new QPushButton("Bars");
+        controls->addWidget(btnSurf);
+        controls->addWidget(btnBars);
+        layout->addLayout(controls);
+
+        connect(btnSurf, &QPushButton::clicked, view_, &Matrix3DView::showSurface);
+        connect(btnBars, &QPushButton::clicked, view_, &Matrix3DView::showBars);
+    }
+
+private:
+    Matrix3DView *view_;
+};
+
+int main(int argc, char **argv) {
+    QApplication app(argc, argv);
+    MainWindow w;
+    w.resize(900, 600);
+    w.show();
+    return app.exec();
+}
+
+#include "main.moc"

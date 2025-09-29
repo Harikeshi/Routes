@@ -15,7 +15,6 @@ namespace Operations {
     inline QJsonObject jsonFromFile(const QString &path) {
         QByteArray array;
 
-        qDebug() << path;
         if (!path.isEmpty()) {
             QFile file(path);
 

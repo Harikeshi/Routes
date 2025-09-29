@@ -6,15 +6,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #find_package(Qt5 REQUIRED COMPONENTS Widgets Sql Concurrent)
 
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME} main.cpp MatrixViewWidget.hpp)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC Routes)
 
 if (MSVC)
-    set(Qt5_DIR "C:/Qt/5.15.17-msvc2019/lib/cmake/Qt5")
+    set(Qt5_DIR "C:/Qt/5.15.17-msvc2019_64/lib/cmake/Qt5")
 endif ()
 
-message(STATUS "Falling back to Qt5")
+message(STATUS "Try loading Qt5")
 find_package(Qt5 COMPONENTS Widgets
         DataVisualization
         REQUIRED)
@@ -52,3 +52,5 @@ endif ()
 #qt5_add_resources(RESOURCES resources.qrc)
 #
 #target_link_libraries(${PROJECT_NAME} PUBLIC Routes Qt5::Widgets Qt5::Sql Qt5::Concurrent)
+
+

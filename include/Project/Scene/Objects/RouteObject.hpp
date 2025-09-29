@@ -5,7 +5,7 @@
 #include <QToolTip>
 #include <QWidget>
 
-#include "../Capsules.hpp"
+// #include "../Capsules.hpp"
 #include "./ModelObject.hpp"
 #include "./SegmentObject.hpp"
 #include "Project/Models/Object.hpp"
@@ -32,22 +32,22 @@ public:
 
     void mousePressEvent(QMouseEvent* event, const QPointF& point)
     {
-        if (pointsWidget.isEmpty())
-            return;
+        // if (pointsWidget.isEmpty())
+        //     return;
 
         // TODO: Не верно распознает
-        int pointIndex = findPointAt(point, pointsWidget[0]->getRadius());
+        // int pointIndex = findPointAt(point, pointsWidget[0]->getRadius());
 
-        if (pointIndex != -1)
-        {
-            QString tooltipText = QString("Point %1 :[ X: %2, Y: %3 ]")
-                                      .arg(pointIndex + 1)
-                                      .arg(pointsWidget[pointIndex]->x())
-                                      .arg(pointsWidget[pointIndex]->y());
-            QToolTip::showText(event->globalPos(), tooltipText, this);
-        }
+        // if (pointIndex != -1)
+        // {
+        //     QString tooltipText = QString("Point %1 :[ X: %2, Y: %3 ]")
+        //                               .arg(pointIndex + 1)
+        //                               .arg(pointsWidget[pointIndex]->x())
+        //                               .arg(pointsWidget[pointIndex]->y());
+        //     QToolTip::showText(event->globalPos(), tooltipText, this);
+        // }
 
-        update();
+        // update();
     }
     /*!
      *
@@ -57,22 +57,22 @@ public:
      */
     int findPointAt(const QPointF& pos, double radius)
     {
-        for (int i = 0; i < numberPointsForDisplay(); ++i)
-        {
-            // Расстояние от центра должно быть не больше радиуса + 5%
+        // for (int i = 0; i < numberPointsForDisplay(); ++i)
+        // {
+        //     // Расстояние от центра должно быть не больше радиуса + 5%
 
-            int dx = pos.x() - pointsWidget.at(i)->x();
-            int dy = pos.y() - pointsWidget.at(i)->y();
+        //     int dx = pos.x() - pointsWidget.at(i)->x();
+        //     int dy = pos.y() - pointsWidget.at(i)->y();
 
-            // if (dx * dx + dy * dy <= (radius + radius * 0.05) * (radius + radius * 0.05))
-            if (std::hypot(dx, dy) <= (radius + radius * 0.05))
-            {
-                qDebug() << "pos: " << pos << ", point: " << pointsWidget.at(i)->getPoint();
-                qDebug() << i << ":, hypot: " << std::hypot(dx, dy) << "dx: " << dx << ", dy: " << dy << radius;
+        //     // if (dx * dx + dy * dy <= (radius + radius * 0.05) * (radius + radius * 0.05))
+        //     if (std::hypot(dx, dy) <= (radius + radius * 0.05))
+        //     {
+        //         qDebug() << "pos: " << pos << ", point: " << pointsWidget.at(i)->getPoint();
+        //         qDebug() << i << ":, hypot: " << std::hypot(dx, dy) << "dx: " << dx << ", dy: " << dy << radius;
 
-                return i;
-            }
-        }
+        //         return i;
+        //     }
+        // }
 
         return -1;
     }
@@ -139,14 +139,14 @@ public:
     void initialize(const QVector<Models::Segment>& segments, const QColor& color, const Models::Object& parameters, double pointSize)
     {
         //! Установить Первую точку
-        if (!segments.isEmpty())
-        {
-            pointsWidget.push_back(new PointWidget(segments.at(0).getStart(), pointSize, color));
-        }
+        // if (!segments.isEmpty())
+        // {
+        //     pointsWidget.push_back(new PointWidget(segments.at(0).getStart(), pointSize, color));
+        // }
 
         for (const auto& segment : segments)
         {
-            pointsWidget.push_back(new PointWidget(segment.getEnd(), pointSize, color)); //! Точки
+            // pointsWidget.push_back(new PointWidget(segment.getEnd(), pointSize, color)); //! Точки
 
             this->segments.push_back(new SegmentObject(this, segment));
             length += segment.length();
@@ -177,7 +177,7 @@ public:
 
         // color = Qt::black;
 
-        pointsWidget.clear();
+        // pointsWidget.clear();
 
         showPoints = true;
     }
@@ -317,30 +317,30 @@ public:
 
     void drawPoints(QPainter& painter)
     {
-        if (pointsWidget.isEmpty())
-            return;
+        // if (pointsWidget.isEmpty())
+        //     return;
 
-        if (currentSegmentIndex == 0)
-            return;
+        // if (currentSegmentIndex == 0)
+        //     return;
 
-        if (currentSegmentIndex > 0)
-        {
-            pointsWidget.at(0)->draw(painter, 1);
-        }
+        // if (currentSegmentIndex > 0)
+        // {
+        //     pointsWidget.at(0)->draw(painter, 1);
+        // }
 
-        if (pointsWidget.size() == 1)
-            return;
+        // if (pointsWidget.size() == 1)
+        //     return;
 
-        for (size_t i = 1; i < numberPointsForDisplay(); ++i)
-        {
-            pointsWidget.at(i)->draw(painter, i + 1);
-        }
+        // for (size_t i = 1; i < numberPointsForDisplay(); ++i)
+        // {
+        //     pointsWidget.at(i)->draw(painter, i + 1);
+        // }
     }
 
-    QVector<PointWidget*> getPointsWidget()
-    {
-        return pointsWidget;
-    }
+    // QVector<PointWidget*> getPointsWidget()
+    // {
+    //     return pointsWidget;
+    // }
 
     void draw(QPainter& painter)
     {
@@ -417,8 +417,8 @@ public:
             segments[i]->swapCoordinates();
         }
 
-        for (auto& point : pointsWidget)
-            point->swapCoordinates();
+        // for (auto& point : pointsWidget)
+        //     point->swapCoordinates();
 
         //head->swapCoordinates();
     }
@@ -446,12 +446,13 @@ protected:
     QColor color;                     // TODO: Перенести в сегмент
 
     // TODO: Рассчитывать все капсулы при загрузке, и крайнюю капсулу рассчитывать перед отрисовкой.
-    CapsulesPath capsules_;
+    // CapsulesPath capsules_;
     // TODO: при изменении капсул высылать sendChangedCapsules
 
     size_t currentSegmentIndex; // Индекс текущего сегмента
 
-    QVector<PointWidget*> pointsWidget;
+    // TODO: Точки не зашли
+    // QVector<PointWidget*> pointsWidget;
 
     double length{0};
 

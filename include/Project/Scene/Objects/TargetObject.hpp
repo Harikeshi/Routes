@@ -34,8 +34,8 @@ public:
     void initialize(const Models::Target& parameters, double pointSize, const QColor& color = Qt::black)
     {
         //! Установить Первую точку
-        pointsWidget.clear();
-        pointsWidget.push_back(new PointWidget(parameters.detectionPoint, pointSize, color));
+        // pointsWidget.clear();
+        // pointsWidget.push_back(new PointWidget(parameters.detectionPoint, pointSize, color));
 
         segments.clear();
         this->segments.push_back(new SegmentObject(parameters.detectionPoint, parameters.detectionPoint, parameters.currentVelocity, this));

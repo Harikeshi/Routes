@@ -19,9 +19,9 @@ add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES}
 
 find_package(Git)
 
-#if (MSVC)
-#    set(Qt5_DIR "C:/Qt/5.15.17-msvc2019/lib/cmake/Qt5")
-#endif ()
+if (MSVC)
+   set(Qt5_DIR "C:/Qt/5.15.17-msvc2019_64/lib/cmake/Qt5")
+endif ()
 
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
 

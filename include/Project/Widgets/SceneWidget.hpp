@@ -79,7 +79,8 @@ protected:
     // Элементы отрисовки цели.
     Routes* routes_;
 
-    HeatmapWidget* heatmap = new HeatmapWidget(this);
+    // TODO: Если вдруг задумаю продолжить делать
+    // HeatmapWidget* heatmap = new HeatmapWidget(this);
     //SmoothHeatmapWidget* sHeatmap = new SmoothHeatmapWidget(this);
     //Capsules* capsules = new Capsules(this);
 
@@ -677,7 +678,7 @@ protected:
         painter.setTransform(cs.getTransform());
 
         //capsules->draw(painter);
-        heatmap->draw(painter);
+        // heatmap->draw(painter);
         //sHeatmap->draw(painter);
         //! Отрисовка Объектов
         actor->draw(painter);

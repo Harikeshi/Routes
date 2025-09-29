@@ -1,0 +1,183 @@
+
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QLabel>
+
+#include <QtDataVisualization/Q3DSurface>
+#include <QtDataVisualization/QSurfaceDataProxy>
+#include <QtDataVisualization/QSurface3DSeries>
+#include <QtDataVisualization/Q3DTheme>
+#include <QtDataVisualization/Q3DCamera>
+
+#include <QTimer>
+#include <QVector>
+#include <QtMath>
+#include <limits>
+
+using namespace QtDataVisualization;
+
+enum class EaseType { Linear, Cosine, Smoothstep, Quadratic, Cubic };
+
+static float ease(EaseType type, float t) {
+    switch (type) {
+        case EaseType::Linear:
+            return t;
+        case EaseType::Cosine:
+            return 0.5f * (1.0f - std::cos(M_PI * t));
+        case EaseType::Smoothstep:
+            return t * t * (3 - 2 * t);
+        case EaseType::Quadratic:
+            return (t < 0.5f) ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        case EaseType::Cubic:
+            return t * t * t * (t * (t * 6 - 15) + 10); // quintic smoothstep
+    }
+    return t;
+}
+
+class SurfaceWidget : public QWidget {
+    Q_OBJECT
+
+public:
+    SurfaceWidget(QWidget *parent = nullptr)
+        : QWidget(parent), alpha(1.0), easeType(EaseType::Cosine) {
+        surface = new Q3DSurface();
+        auto *container = QWidget::createWindowContainer(surface, this);
+
+        proxy = new QSurfaceDataProxy();
+        series = new QSurface3DSeries(proxy);
+        series->setFlatShadingEnabled(false);
+        surface->addSeries(series);
+
+        surface->setReflection(false);
+        // surface->setFloorVisible(false);
+        surface->setShadowQuality(QAbstract3DGraph::ShadowQualitySoftHigh);
+
+        connect(&animTimer, &QTimer::timeout, this, &SurfaceWidget::stepAnimation);
+        animTimer.setInterval(30);
+
+        // UI панель справа
+        auto *combo = new QComboBox;
+        combo->addItem("Linear", QVariant::fromValue((int) EaseType::Linear));
+        combo->addItem("Cosine", QVariant::fromValue((int) EaseType::Cosine));
+        combo->addItem("Smoothstep", QVariant::fromValue((int) EaseType::Smoothstep));
+        combo->addItem("Quadratic", QVariant::fromValue((int) EaseType::Quadratic));
+        combo->addItem("Cubic", QVariant::fromValue((int) EaseType::Cubic));
+        combo->setCurrentIndex(1); // Cosine по умолчанию
+        connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [=](int idx) {
+            easeType = (EaseType) combo->itemData(idx).toInt();
+        });
+
+        auto *sideLayout = new QVBoxLayout;
+        sideLayout->addWidget(new QLabel("Ease Function:"));
+        sideLayout->addWidget(combo);
+        sideLayout->addStretch();
+
+        auto *mainLayout = new QHBoxLayout(this);
+        mainLayout->setContentsMargins(0, 0, 0, 0);
+        mainLayout->addWidget(container, 1);
+        mainLayout->addLayout(sideLayout);
+    }
+
+    void setNewMatrix(const QVector<QVector<float> > &M) {
+        if (current.isEmpty()) {
+            current = M;
+            target = M;
+            updateProxy(current);
+            return;
+        }
+        target = M;
+        alpha = 0.0;
+        animTimer.start();
+    }
+
+private slots:
+    void stepAnimation() {
+        alpha += 0.05;
+        if (alpha >= 1.0) {
+            alpha = 1.0;
+            animTimer.stop();
+        }
+        float eased = ease(easeType, alpha);
+        QVector<QVector<float> > blended = interpolate(current, target, eased);
+        updateProxy(blended);
+        if (alpha == 1.0) current = target;
+    }
+
+private:
+    QVector<QVector<float> > interpolate(const QVector<QVector<float> > &A,
+                                         const QVector<QVector<float> > &B,
+                                         float t) {
+        int H = A.size();
+        int W = H ? A[0].size() : 0;
+        QVector<QVector<float> > R(H, QVector<float>(W));
+        for (int y = 0; y < H; ++y)
+            for (int x = 0; x < W; ++x)
+                R[y][x] = (1 - t) * A[y][x] + t * B[y][x];
+        return R;
+    }
+
+    void updateProxy(const QVector<QVector<float> > &M) {
+        auto *dataArray = new QSurfaceDataArray;
+        dataArray->reserve(M.size());
+        for (int y = 0; y < M.size(); ++y) {
+            auto *row = new QSurfaceDataRow(M[y].size());
+            for (int x = 0; x < M[y].size(); ++x)
+                (*row)[x].setPosition(QVector3D(x, M[y][x], y));
+            *dataArray << row;
+        }
+        proxy->resetArray(dataArray);
+
+        float vmin = std::numeric_limits<float>::infinity();
+        float vmax = -std::numeric_limits<float>::infinity();
+        for (auto &row: M)
+            for (float v: row) {
+                vmin = std::min(vmin, v);
+                vmax = std::max(vmax, v);
+            }
+        if (vmin == vmax) {
+            vmin -= 1;
+            vmax += 1;
+        }
+        surface->axisY()->setRange(vmin, vmax);
+        surface->axisX()->setRange(0, M[0].size() - 1);
+        surface->axisZ()->setRange(0, M.size() - 1);
+    }
+
+    Q3DSurface *surface;
+    QSurfaceDataProxy *proxy;
+    QSurface3DSeries *series;
+
+    QVector<QVector<float> > current, target;
+    float alpha;
+    QTimer animTimer;
+    EaseType easeType;
+};
+
+int main(int argc, char **argv) {
+    QApplication app(argc, argv);
+
+    SurfaceWidget w;
+    w.resize(1000, 600);
+    w.show();
+
+    QTimer timer;
+    QObject::connect(&timer, &QTimer::timeout, [&]() {
+        int W = 40, H = 30;
+        QVector<QVector<float> > M(H, QVector<float>(W));
+        static float phase = 0;
+        phase += 0.3f;
+        for (int y = 0; y < H; ++y)
+            for (int x = 0; x < W; ++x)
+                M[y][x] = std::sin(x * 0.2f + phase) * std::cos(y * 0.2f) * 5.0f
+                          + std::exp(-0.02f * ((x - 20) * (x - 20) + (y - 15) * (y - 15))) * 10.0f;
+        w.setNewMatrix(M);
+    });
+    timer.start(2000);
+
+    return app.exec();
+}
+
+#include "main.moc"
