@@ -30,6 +30,8 @@
 #include "../Scene/HeatmapWidget.hpp"
 #include "../Scene/SmoothHeatmapWidget.hpp"
 
+#include "../Scene/Capsules.hpp"
+
 namespace Widgets {
     /*!
          * Класс отображения сцены.
@@ -123,6 +125,8 @@ namespace Widgets {
         Grid *grid; //! Сетка
         const double margin = 5.; // Отступы от каждой стороны в процентах
         const double pointPercent = 0.005;
+
+        bool showWidthPath = false;
 
         // Расположение осей
         // TODO: Оси будут меняться (X-Y), (Ш-Д)
@@ -267,6 +271,12 @@ namespace Widgets {
         void schemeChanged(const QString &);
 
     public:
+        void changeShowWidthPath() {
+            showWidthPath = !showWidthPath;
+
+            update();
+        }
+
         int getActorType() const {
             return actorChoose->currentIndex();
         }
@@ -437,6 +447,27 @@ namespace Widgets {
             emit sceneStarted();
         }
 
+        QVector<QImage> fonts = QVector<QImage>(2);
+
+        void draw_full_segments(QPainter &painter) {
+            // При загрузке route
+            if (routes_->isEmpty()) return;
+
+            for (auto const &segment: routes_->getRoutes().first()->getSegments()) {
+                segment->cDrawFull(painter, routes_->getRadius());
+            }
+        }
+
+        void current_segments(QPainter &painter) {
+            if (routes_->isEmpty()) return;
+
+            auto index = routes_->getRoutes().first()->getCurrentIndex();
+            for (size_t i = 0; i < index; ++i) {
+                routes_->getRoutes().first()->getSegments().at(i)->cDrawCurrent(painter, routes_->getRadius());
+            }
+            routes_->getRoutes().first()->getSegments().at(index)->cDrawCurrent(painter, routes_->getRadius());
+        }
+
         // Сброс к началу
         void clear() {
         }
@@ -458,6 +489,7 @@ namespace Widgets {
 
         // Полный показ/Текущий показ
         void full() {
+            //if ()
             if (routes_->getStateType() == Scene::Objects::StateType::Full) {
                 routes_->setStateType(new Scene::Objects::CurrentDrawState());
             } else {
@@ -495,7 +527,8 @@ namespace Widgets {
             update();
         }
 
-    public slots:
+    public
+    slots:
         void changeShowRoutesPoints() {
             routes_->changeShowPoints();
 
@@ -648,7 +681,8 @@ namespace Widgets {
             update();
         }
 
-    protected:
+    protected
+    :
         /*!
          * Метод определяет, что надо отображать.
          * @param event
@@ -658,16 +692,18 @@ namespace Widgets {
             QPainter painter(this);
             painter.setRenderHint(QPainter::Antialiasing); // Более плавная отрисовка, но наложение линий
             painter.drawImage(rect(), grid->getImage());
+
             painter.setTransform(cs.getTransform());
 
-            //capsules->draw(painter);
-            // heatmap->draw(painter);
-            //sHeatmap->draw(painter);
             //! Отрисовка Объектов
-            actor->draw(painter);
-
+            if (showWidthPath) {
+                current_segments(painter);
+            }
+            painter.save();
             routes_->draw(painter);
-
+            painter.restore();
+            actor->draw(painter);
+            // draw_full_segments(painter);
             target->draw(painter);
 
             targetPath->draw(painter);
@@ -720,7 +756,8 @@ namespace Widgets {
             update();
         }
 
-    public:
+    public
+    :
         /*!
          *
          * @param event
@@ -744,7 +781,8 @@ namespace Widgets {
             update();
         }
 
-    public:
+    public
+    :
         /*!
          * Метод расчета новых позиций перемещения для всех объектов.
          * @param time Текущее время.

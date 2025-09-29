@@ -6,6 +6,9 @@
 #include <QPainterPath>
 #include <QtMath>
 #include "Project/Models/Segment.hpp"
+#include "../Capsules.hpp"
+#include "Project/Scene/Capsules.hpp"
+#include "Project/Scene/Capsules.hpp"
 
 namespace Scene::Objects {
     /*!
@@ -36,7 +39,7 @@ namespace Scene::Objects {
             current = segment.getStart();
         }
 
-        QPainterPath makeCapsule(const QPointF &a, const QPointF &b, qreal R) const {
+        QPainterPath create(const QPointF &a, const QPointF &b, qreal R) {
             QPainterPath path;
             if (a == b) {
                 path.addEllipse(a, R, R);
@@ -74,29 +77,28 @@ namespace Scene::Objects {
             return path;
         }
 
-        void drawCurrent(QPainter &painter, const QColor &color, bool line = true, double radius = 500) const {
-            //TODO: Отрисовка капсул вместо пути
+        void cDrawFull(QPainter &painter, double radius,
+                       const QColor &color = QColor(100, 150, 255, 180)) {
+            auto capsule = create(segment.start, segment.end, radius);
 
-            if (line) {
-                if (segment.start == current) return;
-                auto path = makeCapsule(segment.start, current, radius);
-                painter.fillPath(path, QColor(100, 150, 255, 180));
-            } else {
-                setPen(painter, color);
-
-                painter.drawLine(segment.start, current);
-            }
+            painter.fillPath(capsule, color);
         }
 
-        void drawFull(QPainter &painter, const QColor &color, bool line = true, double radius = 500) const {
-            if (line) {
-                auto path = makeCapsule(segment.start, segment.end, radius);
-                painter.fillPath(path, QColor(100, 150, 255, 180));
-            } else {
-                setPen(painter, color);
+        void cDrawCurrent(QPainter &painter, double radius, const QColor &color = QColor(100, 150, 255, 180)) {
+            auto capsule = create(segment.start, current, radius);
 
-                painter.drawLine(segment.start, segment.end);
-            }
+            painter.fillPath(capsule, color);
+        }
+
+        void drawCurrent(QPainter &painter, const QColor &color) const {
+            setPen(painter, color);
+            painter.drawLine(segment.start, current);
+        }
+
+        void drawFull(QPainter &painter, const QColor &color) const {
+            setPen(painter, color);
+
+            painter.drawLine(segment.start, segment.end);
         }
 
         double getSpeed() const {
