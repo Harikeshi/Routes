@@ -6,40 +6,47 @@
 
 #include <map>
 
-#include "./Models/Object.hpp"
-#include "./Models/Target.hpp"
 #include "./SegmentObject.hpp"
+#include "Project/Models/Object.hpp"
+#include "Project/Models/Target.hpp"
 
-namespace Scene {
-namespace Objects {
+namespace Scene::Objects {
 enum Objects
 {
     Arrow,
     Enemy,
     Ship
 };
-
-class ModelObject : public QObject
+/*!
+ * Класс, который определяет, как будет отображаться Объект.
+ */
+class ModelObject final : public QObject
 {
     using Segment = SegmentObject;
 
-    // TODO: Класс движушегося объекта
+    // TODO: Класс движущегося объекта
     // Точка берется с Route
-    // ObjectWidget только отрисовывает
+    // ObjectWidget только для изображения
     QPolygonF model; // Это форма объекта
 
-    std::map<Objects, std::function<QPolygonF(const double)>> models;
+    std::map<Objects, std::function<QPolygonF(double)>> models;
 
     double radiusHAS; // Радиус ГАС
 
-    double currentVelocity;
-    double maxVelocity;
+    double currentVelocity{0};
+    double maxVelocity{0};
 
 public:
     ModelObject(QObject* parent = nullptr)
         : QObject(parent)
     {
         registerModels();
+    }
+
+    void show() const
+    {
+        qDebug() << "Model: QPolygonF:" << model;
+        qDebug() << "Model: Radius: " << radiusHAS;
     }
 
     void swapCoordinates()
@@ -64,16 +71,16 @@ public:
 
     void initialize(const Models::Object& parameters)
     {
-        radiusHAS = parameters.detectionRange;
-        currentVelocity = parameters.currentVelocity;
-        currentVelocity = parameters.maxVelocity;
+        radiusHAS = parameters.detection_range;
+        currentVelocity = parameters.search_velocity;
+        maxVelocity = parameters.max_velocity;
     }
 
     void initialize(const Models::Target& target)
     {
         radiusHAS = target.maxNoiseReduced; // detectionRange;
         currentVelocity = target.currentVelocity;
-        currentVelocity = target.maxVelocity;
+        maxVelocity = target.maxVelocity;
     }
 
     void registerModels()
@@ -109,7 +116,7 @@ public:
         drawModel(painter, segment, color);
     }
 
-    void drawHas(QPainter& painter, const QPointF& center)
+    void drawHas(QPainter& painter, const QPointF& center) const
     {
         // TODO: Color?
         painter.setBrush(Qt::NoBrush);
@@ -122,7 +129,7 @@ public:
         model = polygon;
     }
 
-    // TODO: initmodel
+    // TODO: init_model
     bool setModel(const Objects object, const double size = 100)
     {
         auto mod = models.find(object);
@@ -157,5 +164,4 @@ public:
         std::swap(model, temp);
     }
 };
-} // namespace Objects
-} // namespace Scene
+} // namespace Scene::Objects

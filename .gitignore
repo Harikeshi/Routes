@@ -1,7 +1,10 @@
 build/
+cmake-*
 .vscode
 .vs
+.idea
 out
 *.md
 *.json
 *.user*
+*.rar

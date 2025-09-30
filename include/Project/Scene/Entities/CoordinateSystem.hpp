@@ -3,18 +3,15 @@
 #include <QRect>
 #include <QTransform>
 
-#include <cmath>
+#include "Limits.hpp"
 
-#include "./Limits.hpp"
-
-namespace Scene {
-namespace Entities {
+namespace Scene::Entities {
 class CoordinateSystem
 {
 public:
     CoordinateSystem() = default;
 
-    // TODO: 1 какой логический путь пройден за тик -> вернуть из функции апдейт, далее реальный путь разделить на текущую скорость с ускорением и прибавить к общему времени
+    // TODO: 1 какой логический путь пройден за тик -> вернуть из функции update, далее реальный путь разделить на текущую скорость с ускорением и прибавить к общему времени
     // TODO: узнать сколько реально проходит с той или иной цифрой скорости
     // TODO: берем шаг в 0.1 минуты, считаем реально сколько проходит за такой шаг, далее откладываем на сегменте это расстояние в переводе на экранное расстояние
     // TODO: множитель увеличивает 0.1 на какое-то значение и рассчитывается с учетом этого множителя
@@ -30,14 +27,14 @@ public:
         width = std::fabs(limits.maxX - limits.minX);
 
         //TODO: для реализации отступов margin
-        QRectF contentRect = QRectF(
+        const auto contentRect = QRectF(
             0,
             0,
             rect.width(),
             rect.height());
 
-        auto scaleX = contentRect.width() / width;   //maxX - minX;
-        auto scaleY = contentRect.height() / height; //maxY - minY;
+        const auto scaleX = contentRect.width() / width;   //maxX - minX;
+        const auto scaleY = contentRect.height() / height; //maxY - minY;
 
         // qDebug() << "------------------------------------------------------------";
         // qDebug() << "Данные ширины: " << contentRect.width() << "(" << width << ")";
@@ -67,5 +64,4 @@ private:
     double height;
     double width;
 };
-} // namespace Entities
-} // namespace Scene
+} // namespace Scene::Entities

@@ -1,0 +1,7 @@
+-deploy
+- Положить актуальную библиотеку libTask.so в папку libs.
+- Скомпилировать Visualization, должен быть по пути /build/visualization
+- Запустить скрипт make-deb.sh
+
+-install
+- на целевой машине запускаем sudo -i visualization-X.X.X-AMD64.deb

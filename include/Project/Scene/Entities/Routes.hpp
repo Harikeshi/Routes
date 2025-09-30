@@ -1,182 +1,197 @@
 #pragma once
 
 #include <QColor>
-#include <QPainter>
 #include <QPointF>
 #include <QTimer>
 #include <QVector>
 #include <QWidget>
 
-#include "../Objects/Models/Object.hpp"
 #include "../Objects/RouteObject.hpp"
+#include "Project/Models/Object.hpp"
+#include "Project/Scene/Objects/PointWidget.hpp"
 
+#include "../Capsules.hpp"
 #include "./Limits.hpp"
 
-namespace Scene {
-namespace Entities {
-// QObject
-class Routes : public QWidget
-{
-    using StateType = Objects::StateType;
-    using RouteState = Objects::RouteState;
-    using RouteObject = Objects::RouteObject;
-    using Object = Objects::Models::Object;
-    using ShipParameters = Objects::Models::Object;
-    using Limits = Entities::Limits;
-    using Route = Objects::Models::Route;
-    using Objects = Objects::Objects;
+namespace Scene::Entities {
+    // QObject
+    class Routes final : public QWidget {
+        using StateType = Objects::StateType;
+        using RouteState = Objects::State;
+        using RouteObject = Objects::RouteObject;
+        using Object = Models::Object;
+        using ShipParameters = Models::Object;
+        using Limits = Entities::Limits;
+        using Route = Models::Route;
+        using Objects = Objects::Objects;
+        using PointWidget = Scene::Objects::PointWidget;
 
-    Q_OBJECT
+        Q_OBJECT
 
-    // Цвета для БЭНКов не меняются
-    const QVector<QColor> palette = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::cyan, Qt::magenta};
+        // Цвета для БЭНКов не меняются
+        const QVector<QColor> palette = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::cyan, Qt::magenta};
 
-    // TODO: напрашивается RoutesWidget
-    Object parameters;             // Возможно построение routes делать из ViWidget
-    ShipParameters shipParameters; // Возможно построение routes делать из ViWidget
+        // TODO: напрашивается RoutesWidget
+        Object parameters; // Возможно построение routes делать из ViWidget
 
-    QVector<RouteObject*> routes{};
-    size_t numberRoutes; // количество не законченных плавание
+        QVector<RouteObject *> routes{};
 
-signals:
-    //void sendCurrentPoint(const std::pair<size_t, QPointF>&);
-    void sendCurrentInformation(QVector<std::pair<QPointF, double>>&);
-    void sendCurrentTime(const double&);
-    void stop(void);
+        size_t numberRoutes; // количество не законченных
 
-public:
-    explicit Routes(QWidget* parent = nullptr)
-        : QWidget(parent)
-    {
-        routes = QVector<RouteObject*>();
-        numberRoutes = 0;
-    }
+    signals:
+        void sendIndexCurrentPositionSpeed(size_t, const QPointF &, double);
 
-    void draw(QPainter& painter)
-    {
-        for (const auto& route : routes)
-        {
-            route->draw(painter);
+        void complete(void);
 
-            //    /*    sendIntersectionResult(QString("Target Position: [" + QString("%1, %2").arg(target->getCurrentPosition().x()).arg(target->getCurrentPosition().y()) + ", Ship[" +
-            //                                       QString("] position:") + QString("%1, %2").arg(route->getCurrentPosition().x()).arg(route->getCurrentPosition().y()) +
-            //                                      QString(", Radius: ") + QString("%1").arg(route->getRadius())));*/
+    public:
+        Routes(QWidget *parent = nullptr)
+            : QWidget(parent) {
+            parameters = Object{};
+            routes = QVector<RouteObject *>();
+            numberRoutes = 0;
         }
-    }
 
-    // Сброс текущих значений до начальных current->start
-    // clear
-    void clear()
-    {
-        for (auto& route : routes)
-        {
-            if (!route->getSegments().isEmpty())
-            {
-                route->clear();
+        double getRadius() const {
+            return parameters.detection_range;
+        }
+
+        void reset() {
+            routes.clear();
+
+            numberRoutes = 0;
+            parameters.reset();
+        }
+
+        void changeShowPoints() {
+            for (const auto &route: routes)
+                route->changeShowPoints();
+        }
+
+        void draw(QPainter &painter) {
+            for (const auto &route: routes) {
+                route->draw(painter);
+
+                // sendIntersectionResult(QString("Target Position: [" + QString("%1, %2").arg(target->getCurrentPosition().x()).arg(target->getCurrentPosition().y()) + ", Ship[" +
+                //                                       QString("] position:") + QString("%1, %2").arg(route->getCurrentPosition().x()).arg(route->getCurrentPosition().y()) +
+                //                                      QString(", Radius: ") + QString("%1").arg(route->getRadius())));
             }
         }
-    }
 
-    void setParameters(const Object& params)
-    {
-        parameters = params;
-    }
+        double getMaximumTime() const {
+            double maximum{0};
+            for (const auto &route: routes)
+                if (maximum < route->getFullTime())
+                    maximum = route->getFullTime();
 
-    void swapCoordinates()
-    {
-        for (auto& route : routes)
-        {
-            route->swapCoordinates();
-        }
-    }
-
-    void setRoutes(const QVector<Route>& routes_)
-    {
-        // Очищаем старые значения
-        routes.clear();
-
-        // Устанавливаем новые
-        for (const auto& route_ : routes_)
-        {
-            auto route = new RouteObject(this);
-
-            route->initialize(route_.getSegments(), palette[routes.size() % palette.size()], parameters);
-
-            this->routes.append(route);
+            return maximum;
         }
 
-        numberRoutes = routes.size();
-
-        this->clear(); // После загрузки обновляем
-    }
-
-    void setModel(const Objects model, const double size)
-    {
-        for (size_t i = 0; i != routes.size(); ++i)
-        {
-            routes[i]->setModel(model, parameters.detectionRange, size);
-        }
-    }
-
-    void move(const double& speedMultiplier)
-    {
-        QVector<std::pair<QPointF, double>> positions(routes.size());
-
-        for (size_t i = 0; i != routes.size(); ++i)
-        {
-            // Когда путь заканчивается таймер останавливается
-            if (!routes[i]->update(speedMultiplier))
-            {
-                positions[i] = std::make_pair(routes[i]->getCurrentPosition(), routes[i]->getSpeed());
-                --numberRoutes;
-
-                if (numberRoutes == 0)
-                {
-                    qDebug() << "Общая длина пути: " << routes[i]->getCurrentLength() << " метров.";
-                    qDebug() << "Время в пути: " << routes[i]->getCurrentTime() << " секунд.";
-
-                    emit stop();
+        /*!
+         * Метод сброса текущей точки к стартовой для всех маршрутов.
+         */
+        void clear() {
+            for (auto &route: routes) {
+                if (!route->getSegments().isEmpty()) {
+                    route->clear();
                 }
             }
-            // TODO: {номер маршрута, координаты}
-            emit sendCurrentInformation(positions);
         }
 
-        emit sendCurrentTime(routes.first()->getCurrentTime());
-    }
-
-    bool isEmpty() const
-    {
-        return routes.isEmpty();
-    }
-
-    void setStateType(RouteState* state)
-    {
-        for (const auto route : routes)
-        {
-            route->setState(state);
-        }
-    }
-
-    // У всех состояние отрисовки одинаковое сейчас
-    StateType getStateType() const
-    {
-        if (routes.isEmpty())
-        {
-            return StateType::Clean;
+        void setParameters(const Object &params) {
+            parameters = params;
         }
 
-        return routes.first()->getStateType();
-    }
-
-    void setLimits(Limits& limits) const
-    {
-        for (const auto& route : routes)
-        {
-            for (const auto& segment : route->getSegments())
-                limits.initFromSegment(segment->getSegment());
+        /*!
+         * Метод смены координат  X<->Y
+         */
+        void swapCoordinates() {
+            //! Пути
+            for (auto &route: routes) {
+                route->swapCoordinates();
+            }
         }
-    }
-};
-} // namespace Entities
-} // namespace Scene
+
+        // TODO:
+        void setRoutes(const QVector<Route> &routes_, double pointSize) {
+            // Очищаем старые значения
+            routes.clear();
+
+            // this->clear();
+            // Устанавливаем новые
+            for (const auto &route_: routes_) {
+                auto route = new RouteObject(this);
+
+                route->initialize(route_.getSegments(), palette[routes.size() % palette.size()], parameters, pointSize);
+
+                this->routes.append(route);
+            }
+
+            numberRoutes = routes.size();
+
+            this->clear(); // После загрузки обновляем
+        }
+
+        size_t size() const {
+            return routes.size();
+        }
+
+        const QVector<RouteObject *> &getRoutes() const {
+            return routes;
+        }
+
+        void setModel(const Objects model, const double size) {
+            for (const auto &route: routes) {
+                route->setModel(model, parameters.detection_range, size);
+            }
+        }
+
+        void mousePressEvent(QMouseEvent *event, const QPointF &point) {
+            for (const auto &route: routes) {
+                route->mousePressEvent(event, point);
+            }
+        }
+
+        void move(double time) {
+            for (size_t i = 0; i != routes.size(); ++i) {
+                if (!routes[i]->move(time)) {
+                    --numberRoutes;
+                    // TODO: Сюда не попадает!
+                    if (numberRoutes == 0) {
+                        qDebug() << "Общая длина пути: " << routes[i]->getLength() << " метров.";
+                        emit complete();
+                    }
+                }
+
+                emit sendIndexCurrentPositionSpeed(i + 1, routes.at(i)->getCurrentPosition(), routes.at(i)->getSpeed());
+                // TODO: {номер маршрута, координаты}
+                //emit sendCurrentInformation(positions);
+            }
+        }
+
+        bool isEmpty() const {
+            return routes.isEmpty();
+        }
+
+        void setStateType(RouteState *state) {
+            for (const auto route: routes) {
+                route->setState(state);
+            }
+        }
+
+        // У всех состояние отрисовки одинаковое сейчас
+        StateType getStateType() const {
+            if (routes.isEmpty()) {
+                return StateType::Clean;
+            }
+
+            return routes.first()->getStateType();
+        }
+
+        void setLimits(Limits &limits) const {
+            for (const auto &route: routes) {
+                for (const auto &segment: route->getSegments())
+                    limits.initFromSegment(segment->getSegment());
+            }
+        }
+    };
+} // namespace Scene::Entities

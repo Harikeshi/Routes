@@ -2,10 +2,8 @@
 
 #include "../Actor.hpp"
 
-namespace Scene {
-namespace Actors {
+namespace Scene::Actors {
 class Border : public Actor
 {
 };
-} // namespace Actors
-} // namespace Scene
+} // namespace Scene::Actors

@@ -1,112 +1,97 @@
 #pragma once
 
-#include "./SegmentObject.hpp"
+#include "PointWidget.hpp"
+#include "SegmentObject.hpp"
 
-namespace Scene {
-namespace Objects {
-enum StateType
-{
-    Clean,
-    Current,
-    Full
-};
+namespace Scene::Objects {
+    enum StateType {
+        Clean,
+        Current,
+        Full
+    };
 
-class RouteState
-{
-    StateType state;
+    class State {
+        StateType state;
 
-public:
-    RouteState(const StateType& state)
-        : state{state}
-    {
-    }
-
-    StateType type() const
-    {
-        return state;
-    }
-
-    virtual void draw(QPainter& painter, const QVector<SegmentObject*>& segments, const QColor& color) = 0;
-    virtual ~RouteState() = default;
-};
-
-// Без отрисовки nullptr
-class WithOutDrawState : public RouteState
-{
-public:
-    WithOutDrawState()
-        : RouteState(StateType::Clean)
-    {
-    }
-
-    void draw(QPainter& painter, const QVector<SegmentObject*>& segments, const QColor& color) override
-    {
-        QPen pen = QPen(color, 2);
-        pen.setCosmetic(true);
-
-        painter.setPen(pen);
-    }
-};
-
-class CurrentDrawState : public RouteState
-{
-public:
-    CurrentDrawState()
-        : RouteState(StateType::Current)
-    {
-    }
-
-    void draw(QPainter& painter, const QVector<SegmentObject*>& segments, const QColor& color) override
-    {
-        for (size_t i = 0; i < segments.size(); ++i)
-        {
-            auto segment = segments.at(i);
-            segment->drawCurrent(painter, color);
+    public:
+        State(const StateType &state)
+            : state{state} {
         }
-    }
-};
 
-class FullDrawState : public RouteState
-{
-public:
-    FullDrawState()
-        : RouteState(StateType::Full)
-    {
-    }
-    void draw(QPainter& painter, const QVector<SegmentObject*>& segments, const QColor& color) override
-    {
-        for (size_t i = 0; i < segments.size(); ++i)
-        {
-            auto segment = segments.at(i);
-            segment->drawFull(painter, color);
+        StateType type() const {
+            return state;
         }
-    }
-};
+
+        // TODO: Добавить индекс текущего сегмента чтобы не считались все
+        virtual void draw(QPainter &painter, const QVector<SegmentObject *> &segments,
+                          const QColor &color) = 0;
+
+        virtual ~State() = default;
+    };
+
+    // Без отрисовки nullptr
+    class WithOutDrawState : public State {
+    public:
+        WithOutDrawState()
+            : State(StateType::Clean) {
+        }
+
+        void draw(QPainter &painter, const QVector<SegmentObject *> &segments,
+                  const QColor &color) override {
+            QPen pen = QPen(color, 2);
+            pen.setCosmetic(true);
+
+            painter.setPen(pen);
+        }
+    };
+
+    class CurrentDrawState : public State {
+    public:
+        CurrentDrawState()
+            : State(StateType::Current) {
+        }
+
+        // todo: общая функция draw и drawPoints drawSegments
+        void draw(QPainter &painter, const QVector<SegmentObject *> &segments,
+                  const QColor &color) override {
+            for (const auto &segment: segments) {
+                segment->drawCurrent(painter, color);
+            }
+        }
+    };
+
+    class FullDrawState : public State {
+    public:
+        FullDrawState()
+            : State(StateType::Full) {
+        }
+
+        void draw(QPainter &painter, const QVector<SegmentObject *> &segments,
+                  const QColor &color) override {
+            for (const auto &segment: segments) {
+                segment->drawFull(painter, color);
+            }
+        }
+    };
 
 #include <QWidget>
 
-// Memento
-class Memento
-{
-private:
-    RouteState* state;
-    Qt::Key key;
+    // Memento
+    class Memento {
+        State *state;
+        Qt::Key key;
 
-public:
-    Memento(RouteState* state_, Qt::Key key)
-        : state(state_), key(key)
-    {
-    }
+    public:
+        Memento(State *state_, Qt::Key key)
+            : state(state_), key(key) {
+        }
 
-    Qt::Key getKey() const
-    {
-        return key;
-    }
+        Qt::Key getKey() const {
+            return key;
+        }
 
-    RouteState* getState() const
-    {
-        return state;
-    }
-};
-} // namespace Objects
-} // namespace Scene
+        State *getState() const {
+            return state;
+        }
+    };
+} // namespace Scene::Objects

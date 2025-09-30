@@ -1,436 +1,555 @@
 #pragma once
 
+#ifdef _WIN32
+#define MYLIB_API __declspec(dllimport)
+#endif
+
 #include <QAction>
-#include <QApplication>
-#include <QFile>
-#include <QFileDialog>
-#include <QHBoxLayout>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QMainWindow>
-#include <QMenu>
 #include <QMenuBar>
-#include <QMessageBox>
-#include <QPainter>
 #include <QSplitter>
 #include <QStackedLayout>
 #include <QWidget>
 
-#include "./Scene/Actors/InRegion.hpp"
 #include "./Widgets/SceneWidget.hpp"
 
 #include "MessageType.hpp"
 
+#include "./Widgets/CustomTable.hpp"
 #include "./Widgets/DataWidget.hpp"
 #include "./Widgets/InformationWidget.hpp"
-#include "./Widgets/SpeedWidget.hpp"
-#include "./Widgets/SubmarineWidget.hpp"
-#include "./Widgets/TimeWidget.hpp"
+#include "./Widgets/ManageWidget.hpp"
+#include "./Widgets/SubWidget.hpp"
+#include "./Widgets/MatrixViewWidget.hpp"
 
-#include "./Data/Initializer.hpp"
+#include "Project/Widgets/UpdateProgress.hpp"
 
-class MainWindow : public QMainWindow
-{
-    using Route = Scene::Objects::Models::Route;
-    using Perimeter = Scene::Objects::Models::Perimeter;
-    using TimeWidget = Widgets::TimeWidget;
-    using CoordinateSystem = Scene::Entities::CoordinateSystem;
+#include "Project/Database/DatabaseManager.hpp"
 
+#include "Initializer.hpp"
+#include "search_task.hpp"
+
+class MainWindow : public QMainWindow {
     using SceneWidget = Widgets::SceneWidget;
-    using SpeedWidget = Widgets::SpeedWidget;
-
     using DataWidget = Widgets::DataWidget;
-    using SubmarineWidget = Widgets::SubmarineWidget;
+    using CustomTable = Widgets::CustomTable;
+    using MatrixViewWidget = Widgets::MatrixViewWidget;
+    using ManageWidget = Widgets::ManageWidget;
+    using SubWidget = Widgets::SubWidget;
     using InformationWidget = Widgets::InformationWidget;
+    using UpdateProgressBar = Widgets::UpdateProgressBar;
 
-    using Initializer = Data::Initializer;
-    using Request = Data::Request;
-    using Report = Data::Report;
+    using Request = Models::Request;
+    using Report = Models::Report;
 
     Q_OBJECT
 
+    SearchTask task;
+
 public:
-    MainWindow(QWidget* parent = nullptr)
-        : QMainWindow(parent)
-    {
-        // Меню
-        QMenu* fileMenu = menuBar()->addMenu("Файл");
-        QAction* openRequest = new QAction("Загрузить Request.json", this);
-        QAction* openResult = new QAction("Загрузить Result.json", this);
-        fileMenu->addAction(openRequest);
-        fileMenu->addAction(openResult);
+    MainWindow(QWidget *parent = nullptr)
+        : QMainWindow(parent) {
+        //! MainLayout - Основная компоновка
+        auto *centralWidget = new QWidget(this);
 
-        // Главный splitter (горизонтальный)
-        QSplitter* mainSplitter = new QSplitter(Qt::Horizontal, this);
+        auto *mainLayout = new QVBoxLayout(centralWidget);
+        mainLayout->setContentsMargins(0, 0, 0, 0);
+        mainLayout->setSpacing(0);
 
+        //! Главный горизонтальный splitter (разделитель между Scene и правой панелью)
+        auto *mainHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
+
+        //! SceneWidget
         scene = new SceneWidget(this);
         scene->setFocusPolicy(Qt::StrongFocus);
-
         scene->resize(800, 800);
         scene->setMouseTracking(false); // Отключить трекинг мыши
-        QVBoxLayout* leftLayout = new QVBoxLayout(scene);
-        scene->setLayout(leftLayout);
+        mainHorizontalSplitter->addWidget(scene);
 
-        /// start
-        timeWidget = new TimeWidget(this);
-        speedWidget = new SpeedWidget(this);
+        //! Вертикальная компоновка справа
+        auto *rightVerticalSplitter = new QSplitter(Qt::Vertical, centralWidget);
 
-        QWidget* upperWidget = new QWidget(this);
-        upperWidget->setGeometry(0, 0, 200, 56);                     // Такие же размеры, как у фона
-        upperWidget->setAttribute(Qt::WA_TransparentForMouseEvents); // Игнорировать события мыши
-        upperWidget->move(50, 0);
-        upperWidget->show();
-        upperWidget->setStyleSheet("background: transparent;"); // Прозрачный фон
+        //! Виджеты для правой вертикальной панели
+        dataWidget = new DataWidget(this); // TODO: this
 
-        QVBoxLayout* sceneLayout = new QVBoxLayout(upperWidget);
+        //! Вкладки под первым справа
+        QTabWidget *tabs = new QTabWidget(this);
 
-        sceneLayout->addWidget(timeWidget);
-        sceneLayout->addWidget(speedWidget);
+        // Первый виджет
+        table = new CustomTable(this);
+        QVBoxLayout *layout1 = new QVBoxLayout(table);
 
-        QStackedLayout* stackedLayout = new QStackedLayout(scene);
+        // Второй виджет
+        matrix = new Widgets::MatrixViewWidget(this);
+        QVBoxLayout *layout2 = new QVBoxLayout(matrix);
 
-        stackedLayout->addWidget(upperWidget);
-        stackedLayout->setCurrentIndex(1); // Показываем overlayWidget поверх
+        // Добавляем вкладки
+        tabs->addTab(table, "Таблица БЭНК");
+        tabs->addTab(matrix, "Гистограмма");
 
-        // end
+        rightVerticalSplitter->addWidget(dataWidget);
+        rightVerticalSplitter->addWidget(tabs);
+        // rightVerticalSplitter->addWidget(table);
 
-        // Правый splitter
-        QSplitter* rightSplitter = new QSplitter(Qt::Vertical, this);
+        //! Горизонтальный splitter нижний
+        auto *innerHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
+        manage = new ManageWidget(this);
 
-        // Верхний правый виджет
-        dataWidget = new DataWidget(this);
-        QVBoxLayout* rightTopLayout = new QVBoxLayout(dataWidget);
-        dataWidget->setLayout(rightTopLayout);
+        sub = new SubWidget(this);
 
-        // Средний правый виджет
-        subWidget = new SubmarineWidget(this);
-        QVBoxLayout* rightMiddleLayout = new QVBoxLayout(subWidget);
-        subWidget->setLayout(rightMiddleLayout);
+        innerHorizontalSplitter->addWidget(manage);
+        innerHorizontalSplitter->addWidget(sub);
+        rightVerticalSplitter->addWidget(innerHorizontalSplitter);
 
-        // Нижний правый виджет
         infoWidget = new InformationWidget(this);
-        QVBoxLayout* rightBottomLayout = new QVBoxLayout(infoWidget);
-        infoWidget->setLayout(rightBottomLayout);
+        rightVerticalSplitter->addWidget(infoWidget);
 
-        // Добавляем правые виджеты в правый splitter
-        rightSplitter->addWidget(dataWidget);
-        rightSplitter->addWidget(subWidget);
-        rightSplitter->addWidget(infoWidget);
+        //! Стиль для разделителей
+        QString splitterStyle =
+                "QSplitter::handle {"
+                "   background: #555555;"
+                "   width: 2px;"
+                "   height: 2px;"
+                ""
+                "}";
+        mainHorizontalSplitter->setStyleSheet(splitterStyle);
+        rightVerticalSplitter->setStyleSheet(splitterStyle);
+        innerHorizontalSplitter->setStyleSheet(splitterStyle);
 
-        // Добавляем левый visWidget и правый splitter в главный splitter
-        mainSplitter->addWidget(scene);
+        //! Главный горизонтальный splitter
+        mainHorizontalSplitter->addWidget(rightVerticalSplitter);
 
-        mainSplitter->addWidget(rightSplitter);
+        //! Добавляем главный splitter в layout
+        mainLayout->addWidget(mainHorizontalSplitter, 1);
+        progress = new UpdateProgressBar(this);
 
-        // Устанавливаем главный splitter как центральный виджет
-        setCentralWidget(mainSplitter);
+        mainLayout->addWidget(progress);
+        this->setCentralWidget(centralWidget);
 
-        // Настройка размеров splitter
-        mainSplitter->setHandleWidth(15);
-        rightSplitter->setHandleWidth(10);
-        mainSplitter->setStretchFactor(2, 3);  // Левый виджет занимает 2/3 пространства
-        rightSplitter->setStretchFactor(1, 1); // Правый splitter занимает 1/3 пространства
+        //! Signals-Slots
+        this->initConnections();
 
-        connect(openRequest, &QAction::triggered, this, &MainWindow::initRequestFromMenu);
-        connect(openResult, &QAction::triggered, this, &MainWindow::initReportFromMenu);
+        //! Установка дефолтный схемы схема(0)
+        this->datamanager->setScheme(Scene::ActorTypeName.find(static_cast<Scene::ActorType>(0))->second);
 
-        // SubWidget
-        /* 
-        connect(subWidget, &SubmarineWidget::sendReset, visWidget, &VisWidget::targetClear);
-        connect(subWidget, &SubmarineWidget::sendSpeed, visWidget, &VisWidget::setTargetSpeed);
-        */
+        //! Инициализация ReportsView
+        this->initReportsListView();
 
-        // connect(visWidget, &VisWidget::sendIntersectionResult, this, &MainWindow::setIntersectionInfo);*/
+        //! Отключить виджеты
+        this->setEnabled(false);
 
-        // DataWidget
-        //connect(dataWidget, &DataWidget::sendPath, this, &MainWindow::initJson);
-        //connect(initializer, &Initializer::sendRequestJson, dataWidget, &DataWidget::initializeRequest);
-        connect(dataWidget, &DataWidget::sendPath, this, &MainWindow::loadJson); // Получаем путь из списка
-
-        //
-        initializer = new Initializer();
-
-        // Initializer <-> Main
-        connect(initializer, &Initializer::sendMessage, this, &MainWindow::getInitializerMessage);
-        connect(initializer, &Initializer::sendRequest, this, &MainWindow::receiveRequest);
-        connect(initializer, &Initializer::sendReport, this, &MainWindow::receiveReport);
-
-        // Scene
-        connect(initializer, &Initializer::sendLimits, scene, &SceneWidget::setLimits);
-
-        // Main <-> Scene
-        connect(this, &MainWindow::sendValidateRequest, scene, &SceneWidget::reloadRequest);
-        connect(this, &MainWindow::sendValidateReport, scene, &SceneWidget::reloadReport);
-        connect(scene, &SceneWidget::sendDuringTime, this, &MainWindow::setCurrentTime);
-
-        // Scene <-> Speed
-        connect(this, &MainWindow::speedUp, speedWidget, &SpeedWidget::speedUp);
-        connect(this, &MainWindow::speedDown, speedWidget, &SpeedWidget::speedDown);
-        connect(speedWidget, &SpeedWidget::multiplierChanged, scene, &SceneWidget::setMultiplier);
-
-        // Submarine <-> Scene
-        connect(scene, &SceneWidget::sendDrawing, subWidget, &SubmarineWidget::changeButtonColor);
-        connect(scene, &SceneWidget::sendTargetPosition, subWidget, &SubmarineWidget::setCurrentPosition);
-        connect(scene, &SceneWidget::sendTargetSpeed, subWidget, &SubmarineWidget::setCurrentSpeed);
-        connect(scene, &SceneWidget::sendTargetSpeed, subWidget, &SubmarineWidget::setSpeedInput);
-
-        connect(subWidget, &SubmarineWidget::checkBottomChanged, scene, &SceneWidget::changeDrawing);
-        connect(subWidget, &SubmarineWidget::sendReset, scene, &SceneWidget::resetTarget);
-        //connect(subWidget, &SubmarineWidget::sendSpeed, scene, &SceneWidget::setTargetSpeed);
+        this->setWindowTitle("Visualization");
     }
 
-signals:
-    // Отсылаем значения для инициализации в определенной последовательности
-    void sendValidateRequest(Request);
-    void sendValidateReport(Report);
+    ~MainWindow() = default;
 
-public slots:
-    void setCurrentTime(const double& time)
-    {
-        timeWidget->updateTime(time);
+    void initConnections() {
+        //! Logics
+
+        //! DataWidget
+        connect(dataWidget, &DataWidget::sendPath, this, &MainWindow::loadJson); // Получаем путь из списка
+        connect(dataWidget, &DataWidget::sendReportRequestIds, this, &MainWindow::setRequestReportFromIds);
+
+        connect(datamanager, &Database::DatabaseManager::sendReportsModel, dataWidget, &DataWidget::updateReports);
+        connect(&Initializer::instance(), &Initializer::sendMessage, this, &MainWindow::processMessage);
+        connect(&Initializer::instance(), &Initializer::sendError, this, &MainWindow::processError);
+
+        connect(&Initializer::instance(), &Initializer::changedRequest, this, &MainWindow::receiveRequest);
+        connect(&Initializer::instance(), &Initializer::changedReport, this, &MainWindow::receiveReport);
+
+        connect(&Initializer::instance(), &Initializer::changedRequest, datamanager,
+                &Database::DatabaseManager::saveRequest);
+        connect(&Initializer::instance(), &Initializer::changedReport, datamanager,
+                &Database::DatabaseManager::saveReport);
+
+        //! ProgressBar <-> Scene
+        connect(scene, &SceneWidget::sendFullTime, progress, &UpdateProgressBar::setTotalTime);
+        connect(scene, &SceneWidget::sendCurrentTime, progress, &UpdateProgressBar::setCurrentTime);
+        connect(progress, &UpdateProgressBar::timeChanged, scene, &SceneWidget::moveFromProgress);
+
+        //! SubWidget
+        //! Submarine <-> Scene
+        connect(sub, &SubWidget::resetButtomPushed, scene, &SceneWidget::resetTarget);
+        connect(sub, &SubWidget::sendSpeedChanged, scene, &SceneWidget::setTargetSpeed);
+
+        connect(scene, &SceneWidget::sendTargetSpeed, sub, &SubWidget::setSpeedInput);
+
+        //! [ Set ]
+        connect(scene, &SceneWidget::sendDrawing, sub, &SubWidget::changeButtonColor);
+        connect(sub, &SubWidget::checkBottomChanged, scene, &SceneWidget::changeDrawing);
+
+        //! [ Reset ]
+        connect(sub, &SubWidget::sendReset, scene, &SceneWidget::resetTarget);
+
+        //! Manage
+        connect(manage, &ManageWidget::sendPlayButtonClicked, this, &MainWindow::start);
+        connect(manage, &ManageWidget::sendPauseButtonClicked, this, &MainWindow::pause);
+        connect(manage, &ManageWidget::sendMinusButtonClicked, this, &MainWindow::downSpeed);
+        connect(manage, &ManageWidget::sendPlusButtonClicked, this, &MainWindow::upSpeed);
+        connect(manage, &ManageWidget::clickVisionButton, scene, &SceneWidget::changeShowWidthPath);
+        //        connect(manage, &ManageWidget::clickVisionButton, scene, &SceneWidget::changeShowRoutesPoints);
+        connect(manage, &ManageWidget::clickedCalculate, this, &MainWindow::clickedCalc);
+        connect(manage, &ManageWidget::pushReset, scene, &SceneWidget::reset);
+
+        connect(scene, &SceneWidget::sceneReseted, this, &MainWindow::sceneReset);
+
+        //! Table
+        connect(scene, &SceneWidget::sendIndexCurrentPositionSpeed, table, &CustomTable::updateOrAddRow);
+        connect(scene, &SceneWidget::schemeChanged, datamanager, &Database::DatabaseManager::setScheme);
+
+        //! DataWidget
+        connect(dataWidget, &DataWidget::sendRequestFromWidget, this, &MainWindow::setRequestFromDataWidget);
     }
 
 private slots:
-    void getInitializerMessage(const QString& message, const MessageType type) const
-    {
-        infoWidget->addMessage(message, type);
-
-        qDebug() << message;
-    }
-
-    // Отправка данных request в Scene
-    void receiveRequest(const Request& request)
-    {
-        if (request.isLoaded())
-        {
-            requestLoaded = true;
-            emit sendValidateRequest(request);
-
-            infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
-        }
-        else
-        {
-            infoWidget->addMessage("Request был загружен не полностью.", MessageType::Warning);
+    /*!
+     * Инициализация Reports при загрузке MainWindow.
+     */
+    void initReportsListView() {
+        try {
+            dataWidget->updateReports(datamanager->allReportRowsModel());
+        } catch (std::exception &ex) {
+            qDebug() << ex.what();
         }
     }
 
-    // Отправка данных report в Scene
-    void receiveReport(const Report& report)
-    {
-        if (!requestLoaded)
-        {
+    /*!
+     * Обработка сообщения.
+     * @param message
+     */
+    void processMessage(const QString &message) {
+        infoWidget->addMessage(message, MessageType::Info);
+    }
+
+    /*!
+     * Обработка Ошибки.
+     * @param error
+     */
+    void processError(const QString &error) {
+        infoWidget->addMessage(error, MessageType::Error);
+    }
+
+    /*!
+    * Действия при сбросе сцены.
+    */
+    void sceneReset() {
+        // scene->reset();
+
+        // initializer->reset();
+
+        reportLoaded = false;
+        requestLoaded = false;
+
+        setEnabled(false);
+
+        progress->reset();
+        table->reset();
+
+        infoWidget->addMessage("Был Произведен сброс.", MessageType::Warning);
+
+        infoWidget->addMessage("Требуется загрузка данных(json).", MessageType::Info);
+    }
+
+    void clickedCalc() {
+        auto type = scene->getActorName();
+
+        datamanager->setScheme(type);
+
+        scene->setActor(type, Initializer::instance().getRequest());
+
+        if (requestLoaded) {
+            reportLoaded = false;
+            try {
+                // TODO: Можно сделать чтобы был перевод в nlohmann toNJson()
+                task.setTask(Initializer::instance().getRequest().toNJson());
+
+                auto report = task.computeRoute(static_cast<SearchScheme>(scene->getActorType()));
+
+                Initializer::instance().loadFromJson(Operations::convertToQJsonObject(report));
+
+                //TODO: message Произведен расчет
+                infoWidget->addMessage(QString("Расчет %1 произведен успешно!").arg(scene->getActorName()),
+                                       MessageType::Success);
+            } catch (...) {
+                infoWidget->addMessage("Неизвестная ошибка.", MessageType::Error);
+            }
+        } else {
             infoWidget->addMessage("Загрузите Request. Нельзя построить маршруты.", MessageType::Error);
+        }
+    }
+
+    //    void addInformation(int speed)
+    //    {
+    //        infoWidget->addMessage(QString::number(speed) + " м/c новая скорость ПЛ.", MessageType::Info);
+    //    }
+
+    /*!
+     * Действия после инициализации request.
+     */
+    void receiveRequest(const Request &request) {
+        requestLoaded = true;
+        reportLoaded = false;
+        checkLoad(); // TODO: В новых реалиях(сброс при загрузке request) под вопросом
+
+        //! Загрузка request, сброс загрузки report.
+        scene->reloadRequest(request);
+
+        //! Инициализация дерева request.json
+        // TODO: Переделать дерево.
+        dataWidget->clear();
+        dataWidget->setRequest(request);
+
+        infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
+    }
+
+    /*!
+     * Для загрузки из строки из базы Данных.
+     * @param request_id
+     * @param report_id
+     */
+    void setRequestReportFromIds(size_t report_id, size_t request_id) {
+        auto request = datamanager->getRequest(request_id);
+        auto report = datamanager->getReport(report_id);
+
+        if (!report.scheme.isEmpty())
+            scene->setActor(report.scheme, request);
+
+        try {
+            scene->reset();
+
+            Initializer::instance().setRequest(request);
+
+            receiveRequest(request);
+        } catch (std::exception &ex) {
+            infoWidget->addMessage(ex.what(), MessageType::Error);
+        }
+
+        if (report._routes.isEmpty()) {
+            infoWidget->addMessage("Report не содержит пути.", MessageType::Error);
             return;
         }
 
-        if (report.isLoaded())
-        {
-            reportLoaded = true;
-            emit sendValidateReport(report);
+        try {
+            Initializer::instance().setReport(report);
 
-            infoWidget->addMessage("Report был загружен полностью.", MessageType::Success);
+            receiveReport(report);
+        } catch (std::exception &ex) {
+            infoWidget->addMessage(ex.what(), MessageType::Error);
         }
-        else
-        {
-            infoWidget->addMessage("Report был загружен не полностью.", MessageType::Warning);
+    }
+
+    void setRequestFromDataWidget(const Models::Request &request) {
+        requestLoaded = true;
+
+        QString message;
+        MessageType type = MessageType::Success;
+
+        scene->reloadRequest(request);
+        Initializer::instance().saveRequest(request);
+
+        infoWidget->addMessage(message, type);
+    }
+
+    /*!
+     * Действия при изменении Report.
+     */
+    void receiveReport(const Report &report) {
+        if (!requestLoaded) {
+            infoWidget->addMessage("Загрузите Входные данные. Нельзя построить маршруты.", MessageType::Error);
+            return;
         }
+
+        reportLoaded = true;
+
+        checkLoad();
+
+        scene->reloadReport(report);
+
+        // Вывод сообщений
+        for (const auto &message: report._messages) {
+            infoWidget->addMessage(QString("%1").arg(message.code) + ":" + message.type + ": " + message.text);
+        }
+
+        infoWidget->addMessage("Report был загружен полностью.", MessageType::Success);
+
+        //! Загрузка в Гистограмму
+        matrix->loadReport(report);
     }
 
 public:
-    // Получаем строку к файлу json из меню
-    QString getPathFromMenu(const QString& title)
-    {
-        auto fileName = QFileDialog::getOpenFileName(this, title, "", "JSON Files (*.json)");
+    void setEnabled(bool value) {
+        // manage->setEnabled(value);
 
-        if (fileName.isEmpty())
-        {
-            throw std::runtime_error("Не удалось открыть файл. Операция отменена пользователем.");
-        }
+        sub->setEnabled(value);
 
-        return fileName;
+        table->setEnabled(value);
+
+        // scene->setEnabled(value);
+
+        progress->setEnabled(value);
     }
+
     // TODO:: соединить  DatabaseInitializer reloadRequest(request) и virtual bool reloadRequest(const Request& , const bool&)
 
 private slots:
     // Слот для загрузки из пути в базу данных
-    void loadJson(const QString& path)
-    {
+    void loadJson(const QString &path) {
         // Получить по пути Json
         QJsonObject obj = Operations::jsonFromFile(path);
 
         // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
-        initializer->loadFromJson(obj);
-
-        //// Инициализация дерева request.json
-        //dataWidget->clear();
-
-        //dataWidget->initialize(obj);
+        Initializer::instance().loadFromJson(obj);
     }
 
-    //void setIntersectionInfo(const QString& str)
-    //{
-    //    infoWidget->addMessage(str, InformationWidget::MessageType::Success);
-    //}
+public:
+    void calculate() {
+        // Нажатие Calc:
+        // вызов ActorType getSchemeType() из scene
+        // SearchTask(request);
+        // Вызов SearchTask.calculate(ActorType);
+        // Обработать полученный json.
+        // Выгрузить в scene.
+        // Получить из сцены название
+    }
 
 protected:
-    void keyPressEvent(QKeyEvent* event) override
-    {
-        switch (event->key())
-        {
-        case Qt::Key_Q:
-            scene->change();
-            break;
-        case Qt::Key_Equal:
-            this->upSpeed(1);
-            break;
-        case Qt::Key_Plus:
-            this->speedReset();
-            break;
-        case Qt::Key_Minus:
-            this->downSpeed(2);
-            break;
-        case Qt::Key_S:
-            this->start();
-            break;
-        case Qt::Key_L:
-            scene->lines();
-            break;
-        case Qt::Key_B:
-            scene->full();
-            break;
-        case Qt::Key_P:
-            this->pause();
-            break;
-        case Qt::Key_F: // TODO: Для тестов
-            this->setup();
-            break;
-        case Qt::Key_X:
-            this->drawing();
-            break;
-        // Очистка путей и точки цели
-        case Qt::Key_C:
-            //scene->targetClear(); // Tagret clear()
-            break;
+    void keyPressEvent(QKeyEvent *event) override {
+        switch (event->key()) {
+            case Qt::Key_U:
+                break;
+            case Qt::Key_Q:
+                scene->change();
+                break;
+            case Qt::Key_Equal:
+                this->speedReset();
+                break;
+            case Qt::Key_Plus:
+                this->upSpeed();
+                break;
+            case Qt::Key_Minus:
+                this->downSpeed();
+                break;
+            case Qt::Key_S:
+                this->start(true);
+                break;
+            case Qt::Key_L:
+                dataWidget->updateReports(datamanager->allReportRowsModel());
+                scene->lines();
+                break;
+            case Qt::Key_B:
+                scene->full();
+                break;
+            case Qt::Key_P:
+                this->pause();
+                break;
+            case Qt::Key_F: // TODO: Для тестов
+                this->setup();
+                break;
+            case Qt::Key_X:
+                this->drawing();
+                break;
+            // Очистка путей и точки цели
+            case Qt::Key_C:
+                //scene->targetClear(); // Tagret clear()
+                break;
         }
-    }
-
-private slots:
-    void initReportFromMenu()
-    {
-        QString path;
-
-        try
-        {
-            path = getPathFromMenu("Открыть report.json файл(Входные данные).");
-        }
-        catch (std::runtime_error& ex)
-        {
-            infoWidget->addMessage(ex.what(), MessageType::Error);
-
-            return;
-        }
-
-        this->loadJson(path);
-    }
-
-    void initRequestFromMenu() // TODO:
-    {
-        QString path;
-
-        try
-        {
-            path = getPathFromMenu("Открыть request.json файл(Входные данные).");
-        }
-        catch (std::runtime_error& ex)
-        {
-            infoWidget->addMessage(ex.what(), MessageType::Error);
-
-            return;
-        }
-
-        this->loadJson(path);
     }
 
 private:
-    void setup()
-    {
-        QJsonObject obj = Operations::jsonFromFile("d:\\test\\request.json");
-        // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
-        initializer->loadFromJson(obj);
+    void setup() {
+        try {
+            //        QJsonObject obj = Operations::jsonFromFile("d:\\test\\request.json");
+            //            QJsonObject obj = Operations::jsonFromFile("/home/harikeshi/ajson/request.json");
+            //            QJsonObject obj = Operations::jsonFromFile("e:\\visualization\\jsons\\request.json");
+            QJsonObject obj = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\request.json");
+            // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
+            Initializer::instance().loadFromJson(obj);
 
-        obj = Operations::jsonFromFile("d:\\test\\result.json");
-        // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
-        initializer->loadFromJson(obj);
+            requestLoaded = true;
+
+            //        obj = Operations::jsonFromFile("d:\\test\\result.json");
+            //             obj = Operations::jsonFromFile("/home/harikeshi/ajson/result.json");
+            //            obj = Operations::jsonFromFile("e:\\visualization\\jsons\\result.json");
+            obj = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\result.json");
+            // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
+            Initializer::instance().loadFromJson(obj);
+
+            reportLoaded = true;
+        } catch (...) {
+        }
+
+        checkLoad();
     }
 
-    void drawing()
-    {
+    void checkLoad() {
+        if (reportLoaded & reportLoaded)
+            setEnabled(true);
+    }
+
+    void drawing() {
         scene->setDrawing(true);
     }
 
     // Команды
-    void start()
-    {
-        if (!requestLoaded || !reportLoaded)
-        {
+    void start(bool checked) {
+        if (!requestLoaded || !reportLoaded) {
             if (!requestLoaded)
                 infoWidget->addMessage("Request не загружен.", MessageType::Error);
 
-            if (!reportLoaded)
-            {
+            if (!reportLoaded) {
                 infoWidget->addMessage("Report не загружен.", MessageType::Error);
             }
-        }
-        else
-        {
-            scene->start();
+        } else {
+            if (checked)
+                scene->start();
+            else {
+                scene->stop();
+                progress->clear();
+            }
         }
     }
 
-    void pause()
-    {
-        if (!requestLoaded && !reportLoaded)
-        {
+    void pause() {
+        if (!requestLoaded && !reportLoaded) {
             infoWidget->addMessage("Не все Данные загружены.", MessageType::Error);
-        }
-        else
-        {
+        } else {
             scene->pause();
+            // manage->setPauseButtomImage(scene->pause());
         }
     }
 
-    void upSpeed(const double& up)
-    {
-        emit speedUp(up);
+    void upSpeed() {
+        // Вызываем на сцене
+        scene->upSpeed(1);
     }
 
-    void downSpeed(const int& down)
-    {
-        emit speedDown(down);
+    void downSpeed() {
+        scene->downSpeed(2);
     }
 
-    void speedReset()
-    {
-        speedWidget->setSpeed(1);
+    void speedReset() {
+        scene->resetSpeed();
     }
 
-signals:
-    void speedUp(const double&);
-    void speedDown(const int&);
+    void mouseMoveEvent(QMouseEvent *event) override {
+    }
 
 private:
     // TODO: Указатель на абстрактную сцену
-    SceneWidget* scene;
+    SceneWidget *scene;
 
-    TimeWidget* timeWidget;
-    SpeedWidget* speedWidget;
+    // Правая панель
+    UpdateProgressBar *progress;
+    DataWidget *dataWidget;
+    CustomTable *table;
+    MatrixViewWidget *matrix;
+    ManageWidget *manage;
+    SubWidget *sub;
 
-    DataWidget* dataWidget;
-    InformationWidget* infoWidget;
-    SubmarineWidget* subWidget;
+    InformationWidget *infoWidget;
 
-    Initializer* initializer;
+    //!
+    Database::DatabaseManager *datamanager = new Database::DatabaseManager(this);
 
     bool requestLoaded = false;
     bool reportLoaded = false;

@@ -1,17 +1,18 @@
 #pragma once
 
-#include <QDebug>
 #include <QPainter>
-#include <QVector2D>
 #include <QWidget>
 
 #include "../Entities/Limits.hpp"
 #include "./SegmentObject.hpp"
-#include "./Models/Perimeter.hpp"
+#include "Project/Models/Perimeter.hpp"
 
-namespace Scene {
-namespace Objects {
-class PerimeterObject : public QObject
+namespace Scene::Objects {
+
+/*!
+ * Класс отображения Региона.
+ */
+class PerimeterObject final : public QObject
 {
     using Perimeter = Models::Perimeter;
 
@@ -46,7 +47,7 @@ public:
 
     void setPerimeter(const Perimeter& perimeter)
     {
-        this->perimeter = perimeter;
+        this->perimeter.setFrom(perimeter);
     }
 
     Perimeter getPerimeter() const
@@ -77,5 +78,4 @@ private:
 
     Perimeter perimeter;
 };
-} // namespace Objects
-} // namespace Scene
+} // namespace Scene::Objects

@@ -1,0 +1,161 @@
+#pragma once
+
+#include "Input.hpp"
+#include "Project/Operations/JsonOperations.hpp"
+#include "ValidateOperations.hpp"
+
+namespace Models {
+struct Target : public Input
+{
+    size_t id{0};
+    QPointF detectionPoint{0, 0};
+    std::pair<double, double> courses{360, 360};
+
+    double rootMeanSquareError = 99999;
+    // Velocities
+    double currentVelocity = 99.99;
+    double maxVelocity = 99.99;
+    double minNoiseReduced = 99.99;
+    double maxNoiseReduced = 99.99;
+
+    double obsolescenceTime = 999999;
+    double avoidanceDistance = 999999;
+
+public:
+    Target(
+        size_t _id,
+        QPointF _detectionPoint,
+        std::pair<double, double> _courses,
+        double _rootMeanSquareError,
+        double _currentVelocity,
+        double _maxVelocity,
+        double _minNoiseReduced,
+        double _maxNoiseReduced,
+        double _obsolescenceTime,
+        double _avoidanceDistance) : id(_id), detectionPoint(_detectionPoint), courses(_courses), rootMeanSquareError(_rootMeanSquareError), currentVelocity(_currentVelocity),
+                                     maxVelocity(_maxVelocity), minNoiseReduced(_minNoiseReduced), maxNoiseReduced(_maxNoiseReduced), obsolescenceTime(_obsolescenceTime),
+                                     avoidanceDistance(_avoidanceDistance)
+    {
+    }
+    Target()
+    {
+        addValidator("detection_point", [](const QJsonObject& json) { validatePointOrPair(json, "detection_point"); });
+
+        addValidator("courses", [](const QJsonObject& json) { validatePointOrPair(json, "courses"); });
+
+        addValidator("root-mean-square_error", [](const QJsonObject& j) {
+            validateDigit(j["root-mean-square_error"], "root-mean-square_error", 0., 99999);
+        });
+
+        // velocities
+        addValidator("current", [](const QJsonObject& j) {
+            validateDigit(j["velocities"]["current"], "current", 0, 99.99);
+        });
+        addValidator("max", [](const QJsonObject& j) {
+            validateDigit(j["velocities"]["max"], "max", 0, 99.99);
+        });
+        addValidator("min_noise-reduced", [](const QJsonObject& j) {
+            validateDigit(j["velocities"]["min_noise-reduced"], "min_noise-reduced", 0, 99.99);
+        });
+        addValidator("max_noise-reduced", [](const QJsonObject& j) {
+            validateDigit(j["velocities"]["max_noise-reduced"], "max_noise-reduced", 0, 99.99);
+        });
+
+        // other
+        addValidator("obsolescence_time", [](const QJsonObject& j) {
+            validateDigit(j["obsolescence_time"], "obsolescence_time", 0, 999999);
+        });
+        addValidator("avoidance_distance", [](const QJsonObject& j) {
+            validateDigit(j["avoidance_distance"], "avoidance_distance", 0, 999999);
+        });
+    }
+
+    size_t getId() const override
+    {
+        return id;
+    }
+
+    void initializeProperties(const QJsonObject& json) override
+    {
+        if (json.contains("id"))
+            id = json["id"].toInt();
+
+        Operations::setQPointF(detectionPoint, json["detection_point"]);
+
+        Operations::setDoublePair(courses, json["courses"]);
+
+        rootMeanSquareError = json["root-mean-square_error"].toDouble();
+        currentVelocity = json["velocities"]["current"].toDouble();
+        maxVelocity = json["velocities"]["max"].toDouble();
+        minNoiseReduced = json["velocities"]["min_noise-reduced"].toDouble();
+        maxNoiseReduced = json["velocities"]["max_noise-reduced"].toDouble();
+
+        obsolescenceTime = json["obsolescence_time"].toDouble();
+        avoidanceDistance = json["avoidance_distance"].toDouble();
+    }
+
+    QJsonObject toJson() const override
+    {
+        QJsonObject obj;
+
+        // detection point
+        QJsonArray detectionPointArr{detectionPoint.x(), detectionPoint.y()};
+
+        obj["detection_point"] = detectionPointArr;
+
+        // courses
+        QJsonArray coursesArray;
+        coursesArray.append(courses.first);
+        coursesArray.append(courses.second);
+        obj["courses"] = coursesArray;
+
+        obj["root-mean-square_error"] = rootMeanSquareError;
+        obj["obsolescence_time"] = obsolescenceTime;
+        obj["avoidance_distance"] = avoidanceDistance;
+
+        QJsonObject velocitiesObj;
+
+        velocitiesObj["current"] = currentVelocity;
+        velocitiesObj["max"] = maxVelocity;
+        velocitiesObj["min_noise-reduced"] = minNoiseReduced;
+        velocitiesObj["max_noise_reduced"] = maxNoiseReduced;
+
+        obj["velocities"] = velocitiesObj;
+
+        return obj;
+    }
+
+    nlohmann::json toNJson() const override
+    {
+        nlohmann::json obj;
+
+        // detection point
+        auto detection_point = nlohmann::json::array();
+        detection_point.emplace_back(detectionPoint.x());
+        detection_point.emplace_back(detectionPoint.y());
+
+        obj["detection_point"] = std::move(detection_point);
+
+        // courses
+        auto _courses = nlohmann::json::array();
+        _courses.emplace_back(courses.first, courses.second);
+
+        obj["courses"] = std::move(_courses);
+
+        obj["root-mean-square_error"] = rootMeanSquareError;
+        obj["obsolescence_time"] = obsolescenceTime;
+        obj["avoidance_distance"] = avoidanceDistance;
+
+        nlohmann::json velocitiesObj;
+
+        velocitiesObj["current"] = currentVelocity;
+        velocitiesObj["max"] = maxVelocity;
+        velocitiesObj["min_noise-reduced"] = minNoiseReduced;
+        velocitiesObj["max_noise-reduced"] = maxNoiseReduced;
+
+        obj["velocities"] = velocitiesObj;
+
+        return obj;
+    }
+};
+} // namespace Models

@@ -1,0 +1,200 @@
+select current_database();
+
+CREATE DATABASE requests_reports
+    WITH
+    OWNER = viz_user
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'en_US.UTF-8'
+    LC_CTYPE = 'en_US.UTF-8'
+    CONNECTION LIMIT = 100;
+
+-- Таблица сообщений
+CREATE TABLE messages
+(
+    id         BIGSERIAL PRIMARY KEY,
+    code       DOUBLE PRECISION NOT NULL,
+    text       TEXT             NOT NULL,
+    type       TEXT             NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Таблица объектов
+CREATE TABLE objects
+(
+    id                 BIGSERIAL PRIMARY KEY,
+    detection_range    DOUBLE PRECISION NOT NULL,
+    max_velocity       DOUBLE PRECISION NOT NULL,
+    search_velocity    DOUBLE PRECISION NOT NULL,
+    turning_radius     DOUBLE PRECISION NOT NULL,
+    min_length_section DOUBLE PRECISION NOT NULL,
+    created_at         TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+-- Таблица периметров
+CREATE TABLE perimeters
+(
+    id         BIGSERIAL PRIMARY KEY,
+    entrance_x DOUBLE PRECISION NOT NULL,
+    entrance_y DOUBLE PRECISION NOT NULL,
+    exit_x     DOUBLE PRECISION NOT NULL,
+    exit_y     DOUBLE PRECISION NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+-- Кольца периметра (полигоны)
+CREATE TABLE perimeter_rings
+(
+    id           BIGSERIAL PRIMARY KEY,
+    perimeter_id BIGINT  NOT NULL REFERENCES perimeters (id) ON DELETE CASCADE,
+    ring_index   INTEGER NOT NULL,
+    created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (perimeter_id, ring_index)
+);
+-- Точки колец периметра
+CREATE TABLE perimeter_ring_points
+(
+    id          BIGSERIAL PRIMARY KEY,
+    ring_id     BIGINT           NOT NULL REFERENCES perimeter_rings (id) ON DELETE CASCADE,
+    point_index INTEGER          NOT NULL,
+    x           DOUBLE PRECISION NOT NULL,
+    y           DOUBLE PRECISION NOT NULL,
+    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (ring_id, point_index)
+);
+-- Таблица сегментов маршрутов
+CREATE TABLE route_segments
+(
+    id         BIGSERIAL PRIMARY KEY,
+    start_x    DOUBLE PRECISION NOT NULL,
+    start_y    DOUBLE PRECISION NOT NULL,
+    end_x      DOUBLE PRECISION NOT NULL,
+    end_y      DOUBLE PRECISION NOT NULL,
+    base_speed DOUBLE PRECISION NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+-- Таблица маршрутов
+CREATE TABLE routes
+(
+    id         BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Связь маршрутов с сегментами (many-to-many)
+CREATE TABLE route_segment_relations
+(
+    route_id      BIGINT  NOT NULL REFERENCES routes (id) ON DELETE CASCADE,
+    segment_id    BIGINT  NOT NULL REFERENCES route_segments (id) ON DELETE CASCADE,
+    segment_order INTEGER NOT NULL,
+    created_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (route_id, segment_id),
+    UNIQUE (route_id, segment_order)
+);
+
+-- Таблица целей
+CREATE TABLE targets
+(
+    id                     BIGSERIAL PRIMARY KEY,
+    detection_point_x      DOUBLE PRECISION NOT NULL,
+    detection_point_y      DOUBLE PRECISION NOT NULL,
+    course_min             DOUBLE PRECISION NOT NULL,
+    course_max             DOUBLE PRECISION NOT NULL,
+    root_mean_square_error DOUBLE PRECISION NOT NULL,
+    current_velocity       DOUBLE PRECISION NOT NULL,
+    max_velocity           DOUBLE PRECISION NOT NULL,
+    min_noise_reduced      DOUBLE PRECISION NOT NULL,
+    max_noise_reduced      DOUBLE PRECISION NOT NULL,
+    obsolescence_time      DOUBLE PRECISION NOT NULL,
+    avoidance_distance     DOUBLE PRECISION NOT NULL,
+    created_at             TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Таблица запросов
+CREATE TABLE requests
+(
+    id           BIGSERIAL PRIMARY KEY,
+    time         DOUBLE PRECISION NOT NULL,
+    owner        TEXT             NOT NULL,
+    perimeter_id BIGINT           NOT NULL REFERENCES perimeters (id) ON DELETE RESTRICT,
+    target_id    BIGINT           NOT NULL REFERENCES targets (id) ON DELETE RESTRICT,
+    ship_id      BIGINT           NOT NULL REFERENCES objects (id) ON DELETE RESTRICT,
+    created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Граничные точки запроса
+CREATE TABLE request_border_points
+(
+    id          BIGSERIAL PRIMARY KEY,
+    request_id  BIGINT           NOT NULL REFERENCES requests (id) ON DELETE CASCADE,
+    point_index INTEGER          NOT NULL,
+    x           DOUBLE PRECISION NOT NULL,
+    y           DOUBLE PRECISION NOT NULL,
+    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (request_id, point_index)
+);
+
+-- Таблица отчетов
+CREATE TABLE reports
+(
+    id         BIGSERIAL PRIMARY KEY,
+    request_id BIGINT NOT NULL REFERENCES requests (id) ON DELETE CASCADE,
+    owner      TEXT   NOT NULL,
+    scheme     TEXT   NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Связь отчетов с маршрутами (many-to-many)
+CREATE TABLE report_route_relations
+(
+    report_id  BIGINT NOT NULL REFERENCES reports (id) ON DELETE CASCADE,
+    route_id   BIGINT NOT NULL REFERENCES routes (id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (report_id, route_id)
+);
+
+-- Связь отчетов с сообщениями (many-to-many)
+CREATE TABLE report_message_relations
+(
+    report_id  BIGINT NOT NULL REFERENCES reports (id) ON DELETE CASCADE,
+    message_id BIGINT NOT NULL REFERENCES messages (id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (report_id, message_id)
+);
+
+-- Индексы для улучшения производительности
+CREATE INDEX idx_perimeter_rings_perimeter_id ON perimeter_rings (perimeter_id);
+CREATE INDEX idx_perimeter_ring_points_ring_id ON perimeter_ring_points (ring_id);
+CREATE INDEX idx_route_segment_relations_route_id ON route_segment_relations (route_id);
+CREATE INDEX idx_route_segment_relations_segment_id ON route_segment_relations (segment_id);
+CREATE INDEX idx_request_border_points_request_id ON request_border_points (request_id);
+CREATE INDEX idx_reports_request_id ON reports (request_id);
+CREATE INDEX idx_report_route_relations_report_id ON report_route_relations (report_id);
+CREATE INDEX idx_report_route_relations_route_id ON report_route_relations (route_id);
+CREATE INDEX idx_report_message_relations_report_id ON report_message_relations (report_id);
+CREATE INDEX idx_report_message_relations_message_id ON report_message_relations (message_id);
+
+select *
+from requests;
+select *
+from reports;
+
+select *
+from targets;
+
+
+select *
+from perimeters
+where id = 2;
+
+--truncate tables
+truncate table messages cascade;
+truncate table objects cascade;
+truncate table perimeter_ring_points cascade;
+truncate table perimeter_rings cascade;
+truncate table perimeters cascade;
+truncate table report_message_relations cascade;
+truncate table report_route_relations cascade;
+truncate table reports cascade;
+truncate table request_border_points cascade;
+truncate table requests cascade;
+truncate table route_segment_relations cascade;
+truncate table route_segments cascade;
+truncate table routes cascade;
+truncate table targets cascade;

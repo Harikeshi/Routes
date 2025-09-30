@@ -1,31 +1,40 @@
 #pragma once
 
 #include <QGraphicsPolygonItem>
-#include <QPen>
-#include <QPolygonF>
-
-#include <cmath>
 
 #include "../Objects/PerimeterObject.hpp"
 
 #include "../Actor.hpp"
 
-namespace Scene {
-namespace Actors {
-class InRegionScene : public Actor
+namespace Scene::Actors {
+class InRegionScene final : public Actor
 {
-    using Perimeter = Objects::Models::Perimeter;
+    using Perimeter = Models::Perimeter;
     using PerimeterObject = Objects::PerimeterObject;
-    using Request = Data::Request;
+    using Request = Models::Request;
 
 public:
-    InRegionScene(QObject* parent = nullptr)
+    explicit InRegionScene(QObject* parent = nullptr)
         : Actor(parent)
     {
         perimeter = new PerimeterObject(this);
     }
 
 public:
+    Entities::Limits getLimits() const override
+    {
+        Entities::Limits limits;
+
+        limits.initFromPerimeter(perimeter->getPerimeter());
+
+        return limits;
+    }
+
+    void show()
+    {
+        perimeter->show();
+    }
+
     virtual void draw(QPainter& painter) override
     {
         perimeter->draw(painter);
@@ -40,10 +49,23 @@ public:
     virtual void reload(const Request& request) override
     {
         perimeter->setPerimeter(request.getPerimeter());
+
+        //        Entities::Limits limits;
+        //        limits.initFromPerimeter(request.getPerimeter());
+        //
+        //        return limits;
+    }
+
+    void setCurrentTime(double time) override
+    {
+    }
+
+    virtual void reset() override
+    {
+        perimeter = new PerimeterObject(this);
     }
 
 private:
     PerimeterObject* perimeter;
 };
-} // namespace Actors
-} // namespace Scene
+} // namespace Scene::Actors
