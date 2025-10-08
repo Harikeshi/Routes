@@ -202,14 +202,19 @@ class Matrix3DView : public QWidget
     Q_OBJECT
 
 public:
-    //! Перезагружает отображение.
-    void setMatrix(const std::vector<std::vector<double>>& matrix)
+    void clear()
     {
         if (!surface_->seriesList().isEmpty())
             surface_->removeSeries(surface_->seriesList().first());
 
         if (!bars_->seriesList().isEmpty())
             bars_->removeSeries(bars_->seriesList().first());
+    }
+
+    //! Перезагружает отображение.
+    void setMatrix(const std::vector<std::vector<double>>& matrix)
+    {
+        clear();
 
         QSurfaceDataArray* dataArray = new QSurfaceDataArray;
         dataArray->reserve(matrix.size());
@@ -220,6 +225,7 @@ public:
                 (*row)[x].setPosition(QVector3D(x, matrix[y][x], y));
             *dataArray << row;
         }
+
         QSurfaceDataProxy* proxy = new QSurfaceDataProxy();
         proxy->resetArray(dataArray);
         QSurface3DSeries* series = new QSurface3DSeries(proxy);
@@ -330,6 +336,7 @@ public slots:
     {
         stacked_->setCurrentIndex(0);
     }
+
     void showBars()
     {
         stacked_->setCurrentIndex(1);
@@ -456,12 +463,15 @@ private slots:
             qDebug() << "polyline is empty";
             return;
         }
+
         int step = stepSpin_->value();
         double radius = radiusSpin_->value();
         double gridW = gridWSpin_->value();
         double gridH = gridHSpin_->value();
         int q = qSpin_->value();
+
         loadingLabel_->show();
+        view_->clear();
         // matrix_.clear();
         QFuture<std::vector<std::vector<double>>> future = QtConcurrent::run([=]() {
             return buildMatrix(polyline_, step, radius, gridW, gridH, q);
@@ -478,4 +488,4 @@ private:
     QVector<QPointF> polyline_;
     Matrix3DView* view_;
 };
-} // namespace MatrixWidget
+} // namespace Widgets

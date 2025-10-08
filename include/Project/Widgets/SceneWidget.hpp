@@ -700,13 +700,14 @@ namespace Widgets {
                 current_segments(painter);
             }
             painter.save();
-            routes_->draw(painter);
             painter.restore();
             actor->draw(painter);
+
             // draw_full_segments(painter);
             target->draw(painter);
-
             targetPath->draw(painter);
+
+            routes_->draw(painter);
         }
 
         /*!
