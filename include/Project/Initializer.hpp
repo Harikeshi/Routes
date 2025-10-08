@@ -72,8 +72,8 @@ private:
         // velocities
         {"form_target.velocities.current", QJsonValue::Double},
         {"form_target.velocities.max", QJsonValue::Double},
-        {"form_target.velocities.min_noise-reduced", QJsonValue::Double},
-        {"form_target.velocities.max_noise-reduced", QJsonValue::Double},
+        //{"form_target.velocities.min_noise-reduced", QJsonValue::Double},
+        //{"form_target.velocities.max_noise-reduced", QJsonValue::Double},
 
         // search_region
         {"search_region.borders", QJsonValue::Array},

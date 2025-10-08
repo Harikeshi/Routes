@@ -318,6 +318,8 @@ private slots:
         infoWidget->addMessage("Request был загружен полностью.", MessageType::Success);
 
         matrix->loadRequest(request);
+
+        Operations::jsonToFile(request.toJson(), "d:\\_request.json");
     }
 
     /*!
@@ -404,6 +406,9 @@ private slots:
 
         //! Загрузка в Гистограмму
         matrix->loadReport(report);
+
+        // Сохранить на диск
+        Operations::jsonToFile(report.toJson(), "d:\\_report.json");
     }
 
 public:

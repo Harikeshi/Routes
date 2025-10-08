@@ -315,7 +315,15 @@ public:
     Matrix3DView(QWidget* parent = nullptr)
         : QWidget(parent)
     {
-        stacked_ = new QStackedLayout(this);
+        QWidget* stackContainer = new QWidget(this);
+
+        stacked_ = new QStackedLayout(stackContainer);
+
+        //! Надписи
+        auto x = new QLabel("Matrix");
+        x->setStyleSheet("background-color: rgb(255, 255, 255, 180);");
+        x->setAlignment(Qt::AlignLeft);
+        x->setAttribute(Qt::WA_TransparentForMouseEvents);
 
         // --- Surface ---
         surface_ = new Q3DSurface();
@@ -329,6 +337,13 @@ public:
 
         bars_->activeTheme()->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
         bars_->activeTheme()->setBaseColors({Qt::blue, Qt::green, Qt::red});
+
+        QVBoxLayout* layout = new QVBoxLayout(this);
+
+        //layout->addWidget(x);
+        layout->addWidget(stackContainer);
+
+        //!
     }
 
 public slots:
