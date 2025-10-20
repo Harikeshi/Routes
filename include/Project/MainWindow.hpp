@@ -366,6 +366,16 @@ private slots:
         }
     }
 
+    void deleteRequestReportFromTable(size_t report_id, size_t request_id)
+    {
+        datamanager->deleteReport(report_id);
+        datamanager->deleteRequest(request_id);
+    }
+
+    void saveRequestReportToDisk()
+    {
+    }
+
     void setRequestFromDataWidget(const Models::Request& request)
     {
         requestLoaded = true;

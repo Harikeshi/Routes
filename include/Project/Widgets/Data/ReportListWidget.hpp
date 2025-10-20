@@ -30,6 +30,10 @@ public:
         setLayout(layout);
 
         connect(tableView_, &QTableView::doubleClicked, this, &ReportListWidget::onDoubleClicked);
+
+        // Контекстное меню
+        tableView_->setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(tableView_, &QTableView::customContextMenuRequested, this, &ReportListWidget::onContextMenuRequested);
     }
 
 public slots:
@@ -51,6 +55,8 @@ public slots:
 signals:
     void reportActivated(size_t report_id, size_t request_id);
     void sendError(const QString&);
+    void saveReportToFile(qint64 report_id, qint64 request_id);
+    void deleteReportFromDb(qint64 report_id, qint64 request_id);
 
 private slots:
     void onDoubleClicked(const QModelIndex& idx)
@@ -62,6 +68,31 @@ private slots:
         }
 
         emit reportActivated(row->report_id, row->request_id);
+    }
+
+    void onContextMenuRequested(const QPoint& pos)
+    {
+        QModelIndex idx = tableView_->indexAt(pos);
+        if (!idx.isValid())
+            return;
+
+        const auto* row = model_->rowAt(idx.row());
+        if (!row)
+            return;
+
+        QMenu menu(this);
+        QAction* saveAction = menu.addAction(tr("Сохранить"));
+        QAction* deleteAction = menu.addAction(tr("Удалить"));
+
+        QAction* chosen = menu.exec(tableView_->viewport()->mapToGlobal(pos));
+        if (chosen == saveAction)
+        {
+            emit saveReportToFile(row->report_id, row->request_id);
+        }
+        else if (chosen == deleteAction)
+        {
+            emit deleteReportFromDb(row->report_id, row->request_id);
+        }
     }
 
 private:

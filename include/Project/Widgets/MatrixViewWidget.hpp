@@ -419,7 +419,7 @@ public:
         topControls->addWidget(gridHSpin_);
 
         stepSpin_ = new QSpinBox;
-        stepSpin_->setRange(10, 1000);
+        stepSpin_->setRange(1, 1000);
         stepSpin_->setValue(100);
         topControls->addWidget(new QLabel("Step:"));
         topControls->addWidget(stepSpin_);

@@ -124,6 +124,14 @@ public:
         }
     }
 
+    void deleteRequest(size_t id)
+    {
+    }
+
+    void deleteReport(size_t id)
+    {
+    }
+
     void saveReport(Models::Report report)
     {
         try

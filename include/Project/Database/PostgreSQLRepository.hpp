@@ -53,6 +53,38 @@ public:
         }
     }
 
+    bool deleteReportById(size_t id)
+    {
+        try
+        {
+            pqxx::work txn(*m_connection);
+            txn.exec_params("DELETE FROM reports WHERE id = $1", id);
+            txn.commit();
+            return true;
+        }
+        catch (const std::exception& ex)
+        {
+            qWarning() << "Delete failed:" << ex.what();
+            return false;
+        }
+    }
+
+    bool deleteRequestById(size_t id)
+    {
+        try
+        {
+            pqxx::work txn(*m_connection);
+            txn.exec_params("DELETE FROM requests WHERE id = $1", id);
+            txn.commit();
+            return true;
+        }
+        catch (const std::exception& ex)
+        {
+            qWarning() << "Delete failed:" << ex.what();
+            return false;
+        }
+    }
+
     size_t getLastId(const std::string& table)
     {
         pqxx::work txn(*m_connection);
