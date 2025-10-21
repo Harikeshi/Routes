@@ -53,7 +53,7 @@ public:
         }
     }
 
-    bool deleteReportById(size_t id)
+    bool deleteReportById(size_t id) override
     {
         try
         {
@@ -69,7 +69,7 @@ public:
         }
     }
 
-    bool deleteRequestById(size_t id)
+    bool deleteRequestById(size_t id) override
     {
         try
         {

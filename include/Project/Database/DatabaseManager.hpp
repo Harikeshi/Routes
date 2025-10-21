@@ -126,10 +126,12 @@ public:
 
     void deleteRequest(size_t id)
     {
+        repository->deleteRequestById(id);
     }
 
     void deleteReport(size_t id)
     {
+        repository->deleteReportById(id);
     }
 
     void saveReport(Models::Report report)

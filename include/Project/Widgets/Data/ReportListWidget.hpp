@@ -37,6 +37,12 @@ public:
     }
 
 public slots:
+
+    void deleteReport(size_t id)
+    {
+        model_->removeReport(id);
+    }
+
     //! При загрузке и при обновлении по кнопке.
     void refresh(const QVector<Database::ReportRowModel>& rows)
     {
@@ -57,6 +63,7 @@ signals:
     void sendError(const QString&);
     void saveReportToFile(qint64 report_id, qint64 request_id);
     void deleteReportFromDb(qint64 report_id, qint64 request_id);
+    void addReportToDb();
 
 private slots:
     void onDoubleClicked(const QModelIndex& idx)
@@ -83,6 +90,7 @@ private slots:
         QMenu menu(this);
         QAction* saveAction = menu.addAction(tr("Сохранить"));
         QAction* deleteAction = menu.addAction(tr("Удалить"));
+        QAction* addAction = menu.addAction(tr("Добавить в базу"));
 
         QAction* chosen = menu.exec(tableView_->viewport()->mapToGlobal(pos));
         if (chosen == saveAction)
@@ -92,6 +100,10 @@ private slots:
         else if (chosen == deleteAction)
         {
             emit deleteReportFromDb(row->report_id, row->request_id);
+        }
+        else if (chosen == addAction)
+        {
+            emit addReportToDb();
         }
     }
 

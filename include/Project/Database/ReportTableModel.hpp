@@ -15,6 +15,13 @@ public:
     {
     }
 
+    void addRow(const ReportRowModel& row)
+    {
+        beginResetModel();
+        rows.push_back(row);
+        endResetModel();
+    }
+
     void setRows(const QVector<ReportRowModel>& _rows)
     {
         beginResetModel();
@@ -63,6 +70,17 @@ public:
             return row.owner;
         }
         return {};
+    }
+
+    void removeReport(size_t report_id)
+    {
+        beginResetModel();
+
+        rows.erase(std::remove_if(rows.begin(), rows.end(), [report_id](const ReportRowModel& model) {
+            return model.report_id == report_id;
+        }));
+
+        endResetModel();
     }
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override

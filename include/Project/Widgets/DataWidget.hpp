@@ -26,6 +26,8 @@ signals:
     void sendRequestToWidget(Models::Request);
 
     void sendReportRequestIds(size_t report_id, size_t request_id);
+    void sendDeleteReportRequestIds(size_t report_id, size_t request_id);
+    void sendSaveReportRequestIds(size_t report_id, size_t request_id);
 
     void sendReportId(size_t id);
     void sendRequestId(size_t id);
@@ -49,13 +51,6 @@ public slots:
     {
         emit sendPath(string);
     }
-
-    // void initializeRequest(const QJsonObject& jsonObject)
-    // {
-    //     requestWidget->setEnabled(true);
-    //     requestWidget->clear();
-    //     requestWidget->createTreeFromJson(jsonObject);
-    // }
 
     void initializeReport(const QJsonObject& jsonObject)
     {
@@ -82,11 +77,26 @@ public:
         // Проброс пути выше
         connect(jsonExplorer, &JsonFileExplorer::sendPath, this, &DataWidget::pathtoFile);
         connect(propertyWidget, &Data::PropertyEditor::propertyChanged, this, &DataWidget::getRequestFromWidget);
-        connect(reportList, &Data::ReportListWidget::reportActivated, this, &DataWidget::setIdsFromReportList);
         connect(this, &DataWidget::sendRequestToWidget, propertyWidget, &Data::PropertyEditor::updateFromRequest);
+
+        connect(reportList, &Data::ReportListWidget::reportActivated, this, &DataWidget::setIdsFromReportList);
+        connect(reportList, &Data::ReportListWidget::deleteReportFromDb, this, &DataWidget::sendDeleteReportRequestIds); // delete
+        //connect(reportList, &Data::ReportListWidget::addReportToDb, this, &DataWidget::sendDeleteReportRequestIds);      // add
+        connect(reportList, &Data::ReportListWidget::saveReportToFile, this, &DataWidget::sendSaveReportRequestIds); // save
     }
 
 public:
+    void deleteReport(size_t id)
+    {
+        reportList->deleteReport(id);
+
+        update();
+    }
+
+    void addReport(Models::Request request)
+    {
+    }
+
     void clear()
     {
         // requestWidget->clear();

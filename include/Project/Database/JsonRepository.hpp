@@ -55,6 +55,16 @@ public:
         // QFileInfo file{requestPath};
     }
 
+    bool deleteReportById(size_t id)
+    {
+        return true;
+    }
+
+    bool deleteRequestById(size_t id)
+    {
+        return true;
+    }
+
     size_t save(const Models::Request& request) override
     {
         appendRequestJsonObjectToArrayFile(request.toJson());

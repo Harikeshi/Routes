@@ -200,6 +200,8 @@ public:
 
         //! DataWidget
         connect(dataWidget, &DataWidget::sendRequestFromWidget, this, &MainWindow::setRequestFromDataWidget);
+        connect(dataWidget, &DataWidget::sendDeleteReportRequestIds, this, &MainWindow::deleteRequestReportFromTable); // delete
+        connect(dataWidget, &DataWidget::sendSaveReportRequestIds, this, &MainWindow::saveRequestReportToDisk);        // save
     }
 
 private slots:
@@ -368,15 +370,76 @@ private slots:
 
     void deleteRequestReportFromTable(size_t report_id, size_t request_id)
     {
-        datamanager->deleteReport(report_id);
-        datamanager->deleteRequest(request_id);
-    }
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(
+            this,
+            tr("Подтверждение"),
+            tr("Точно хотите удалить запись?"),
+            QMessageBox::Yes | QMessageBox::No);
 
-    void saveRequestReportToDisk()
+        if (reply == QMessageBox::Yes)
+        {
+            datamanager->deleteReport(report_id);
+
+            QMessageBox::information(this, tr("Готово"), tr("Запись удалена."));
+
+            // обновить таблицу
+            //dataWidget->updateReports(datamanager->allReportRowsModel());
+            dataWidget->deleteReport(report_id);
+        }
+        else
+        {
+            // отмена
+        }
+    }
+    void saveRequestReportToDisk(size_t report_id, size_t request_id)
     {
+        const QString dirPath = QFileDialog::getSaveFileName(
+            this, tr("Выберите папку для сохранения"), QDir::homePath());
+
+        if (dirPath.isEmpty())
+        {
+            return;
+        }
+
+        QFileInfo fi(dirPath);
+        QString filePath = fi.absoluteFilePath() + QDir::separator() + fi.fileName();
+
+        auto json_report = datamanager->getReport(report_id).toNJson().dump(4);
+        auto json_request = datamanager->getRequest(request_id).toNJson().dump(4);
+        saveFile(dirPath + "_report.json", json_report);
+        saveFile(dirPath + "_request.json", json_request);
     }
 
-    void setRequestFromDataWidget(const Models::Request& request)
+private:
+    void saveFile(QString filePath, const std::string& txt)
+    {
+        QFile file(filePath);
+
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            QMessageBox::critical(this, tr("Ошибка"), tr("Не удалось открыть файл для записи: \n%1").arg(file.errorString()));
+            return;
+        }
+        QTextStream out_report(&file);
+        out_report.setCodec("UTF-8");
+        out_report << QString::fromStdString(txt);
+        out_report.flush();
+
+        if (file.error() != QFile::NoError)
+        {
+            QMessageBox::critical(this, tr("Ошибка"), tr("Ошибка записи в файл: \n%1").arg(file.errorString()));
+            return;
+        }
+
+        QMessageBox::information(this, tr("Готово"), tr("Файл успешно сохранен: \n%1").arg(filePath));
+
+        file.close();
+    }
+
+public:
+    void
+    setRequestFromDataWidget(const Models::Request& request)
     {
         requestLoaded = true;
 

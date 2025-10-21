@@ -10,6 +10,9 @@ public:
     IRepository(const QString& path)
     {
     }
+    virtual bool deleteReportById(size_t id) = 0;
+    virtual bool deleteRequestById(size_t id) = 0;
+
     virtual size_t save(const Models::Request& request) = 0;
     virtual size_t save(const Models::Report& report) = 0;
 
