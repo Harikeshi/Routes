@@ -38,13 +38,6 @@ public:
             horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
         }
 
-        //setColumnWidth(1, 10);
-        //setColumnWidth(2, 80);
-        //horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-        //horizontalHeader()->setMinimumSectionSize(50);
-        //horizontalHeader()->setMaximumSectionSize(300);
-        //horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
-
         verticalHeader()->setVisible(false);
         setEditTriggers(QAbstractItemView::NoEditTriggers);
         setSelectionBehavior(QAbstractItemView::SelectRows);

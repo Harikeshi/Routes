@@ -48,20 +48,15 @@ public:
 
 public slots:
 
-    void
-    addMessage(const QString& message)
+    void addMessage(const QString& message)
     {
         if (!repository.isNull())
             repository.updateInfo(message.toStdString(), getTypeString(MessageType::Info).toStdString());
 
-        // QString timestamp = QDateTime::currentDateTime().toString("[hh:mm:ss]");
         QString typeStr = getTypeString(MessageType::Info);
         QColor color = getTypeColor(MessageType::Info);
-        // QString formatted = QString("<span style='color:%1;'>%2 %3: %4</span>")
         QString formatted = QString("<span style='color:%1;'> %2</span>")
                                 .arg(color.name())
-                                // .arg(timestamp)
-                                // .arg(typeStr)
                                 .arg(message.toHtmlEscaped());
 
         textEdit->appendHtml(formatted);
@@ -76,15 +71,10 @@ public slots:
         if (!repository.isNull())
             repository.updateInfo(message.toStdString(), getTypeString(type).toStdString());
 
-        // QString timestamp = QDateTime::currentDateTime().toString("[hh:mm:ss]");
-        // QString typeStr = getTypeString(type);
         QColor color = getTypeColor(type);
 
-        // QString formatted = QString("<span style='color:%1;'>%2 %3: %4</span>")
         QString formatted = QString("<span style='color:%1;'> %2</span>")
                                 .arg(color.name())
-                                // .arg(timestamp)
-                                // .arg(typeStr)
                                 .arg(message.toHtmlEscaped());
 
         // Добавление HTML-форматированного сообщения
@@ -133,8 +123,6 @@ private:
         }
     }
 
-private:
-    //    Database::DatabaseRepository repository; // {Database::DatabaseConnection::createConnection()};
-    Database::InformationRepository repository; //{Database::DatabaseConnection::createConnection("192.168.50.52")};
+    Database::InformationRepository repository;
 };
 } // namespace Widgets

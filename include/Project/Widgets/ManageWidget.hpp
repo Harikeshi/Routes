@@ -25,10 +25,6 @@ public:
         playStopButton->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
         playStopButton->setCheckable(true);
 
-        // connect(playStopButton, &QPushButton::toggled, this, [this](bool checked) {
-        //     playStopButton->setIcon(style()->standardIcon(
-        //         checked ? QStyle::SP_MediaStop : QStyle::SP_MediaPlay));
-        // });
         connect(playStopButton, &QPushButton::toggled, this, &ManageWidget::sendPlayButtonClicked);
 
         layout->addWidget(playStopButton);
@@ -43,7 +39,6 @@ public:
 
         // [ reset ]
         resetButton = new QPushButton("Reset", this);
-        //        resetButton->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
         connect(resetButton, &QPushButton::clicked, this, &ManageWidget::sendReset);
         layout->addWidget(resetButton);
 
@@ -66,23 +61,11 @@ public:
         visionButton->setText("*"); // Используем эмодзи как временное решение
         connect(visionButton, &QPushButton::clicked, this, &ManageWidget::visionButtonClicked);
 
-        // connect(visionButton, &QPushButton::toggled, this, [this](bool checked) {
-        //     visionButton->setText(checked ? "🚫" : "👁");
-        // });
         visHasLayout->addWidget(visionButton);
 
-        //        hasButton = new QPushButton("ГАС", this);
-        //        hasButton->setCheckable(true);
-        //        // connect(hasButton, &QPushButton::toggled, this, [this](bool checked) {
-        //        //     hasButton->setText(checked ? "Г̶А̶С̶" : "ГАС");
-        //        // });
-        //        hasButton->setEnabled(false);
-        //        visHasLayout->addWidget(hasButton);
         calcButton = new QPushButton("Calc", this);
         connect(calcButton, &QPushButton::clicked, this, &ManageWidget::calculateClicked);
-        //        calcButton->setCheckable(true);
 
-        //        calcButton->setEnabled(false);
         visHasLayout->addWidget(calcButton);
         layout->addLayout(visHasLayout);
 

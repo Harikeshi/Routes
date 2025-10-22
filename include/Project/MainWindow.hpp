@@ -11,22 +11,19 @@
 #include <QStackedLayout>
 #include <QWidget>
 
-#include "./Widgets/SceneWidget.hpp"
-
-#include "MessageType.hpp"
-
+#include "./Database/DatabaseManager.hpp"
 #include "./Widgets/CustomTable.hpp"
 #include "./Widgets/DataWidget.hpp"
 #include "./Widgets/InformationWidget.hpp"
 #include "./Widgets/ManageWidget.hpp"
 #include "./Widgets/MatrixViewWidget.hpp"
+#include "./Widgets/SceneWidget.hpp"
 #include "./Widgets/SubWidget.hpp"
+#include "./Widgets/UpdateProgress.hpp"
 
-#include "Project/Widgets/UpdateProgress.hpp"
+#include "./Initializer.hpp"
+#include "./MessageType.hpp"
 
-#include "Project/Database/DatabaseManager.hpp"
-
-#include "Initializer.hpp"
 #include "Task/SearchTask.hpp"
 
 class MainWindow : public QMainWindow

@@ -4,9 +4,9 @@
 #include <QWidget>
 
 #include "Data/JsonExplorerWidget.hpp"
-#include "Data/PropertyTable.hpp"
 #include "Data/ReportListWidget.hpp"
-#include "Data/RequestWidget.hpp"
+#include "Data/RequestPropertyTable.hpp"
+// #include "Data/RequestWidget.hpp"
 
 namespace Widgets {
 /*!
@@ -18,7 +18,7 @@ class DataWidget : public QTabWidget
 
     JsonFileExplorer* jsonExplorer;
     Data::ReportListWidget* reportList;
-    Data::PropertyEditor* propertyWidget;
+    Data::RequestPropertyEditor* propertyWidget;
 
 signals:
     void sendPath(QString);
@@ -67,7 +67,7 @@ public:
         : QTabWidget(parent)
     {
         jsonExplorer = new JsonFileExplorer(this);
-        propertyWidget = new Data::PropertyEditor(this);
+        propertyWidget = new Data::RequestPropertyEditor(this);
         reportList = new Data::ReportListWidget(this);
 
         addTab(jsonExplorer, "JsonExplorer");
@@ -76,8 +76,8 @@ public:
 
         // Проброс пути выше
         connect(jsonExplorer, &JsonFileExplorer::sendPath, this, &DataWidget::pathtoFile);
-        connect(propertyWidget, &Data::PropertyEditor::propertyChanged, this, &DataWidget::getRequestFromWidget);
-        connect(this, &DataWidget::sendRequestToWidget, propertyWidget, &Data::PropertyEditor::updateFromRequest);
+        connect(propertyWidget, &Data::RequestPropertyEditor::propertyChanged, this, &DataWidget::getRequestFromWidget);
+        connect(this, &DataWidget::sendRequestToWidget, propertyWidget, &Data::RequestPropertyEditor::updateFromRequest);
 
         connect(reportList, &Data::ReportListWidget::reportActivated, this, &DataWidget::setIdsFromReportList);
         connect(reportList, &Data::ReportListWidget::deleteReportFromDb, this, &DataWidget::sendDeleteReportRequestIds); // delete

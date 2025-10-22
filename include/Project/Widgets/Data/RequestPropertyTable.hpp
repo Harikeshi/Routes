@@ -7,11 +7,11 @@
 #include <QWidget>
 
 namespace Widgets::Data {
-class PropertyEditor : public QWidget
+class RequestPropertyEditor : public QWidget
 {
     Q_OBJECT
 public:
-    explicit PropertyEditor(QWidget* parent = nullptr)
+    explicit RequestPropertyEditor(QWidget* parent = nullptr)
         : QWidget(parent)
     {
         QVBoxLayout* layout = new QVBoxLayout(this);
@@ -25,8 +25,8 @@ public:
         layout->addWidget(treeView);
         setupModel();
 
-        connect(model, &QStandardItemModel::dataChanged, this, &PropertyEditor::updateRequestFromModel);
-        connect(treeView, &QTreeView::customContextMenuRequested, this, &PropertyEditor::showContextMenu);
+        connect(model, &QStandardItemModel::dataChanged, this, &RequestPropertyEditor::updateRequestFromModel);
+        connect(treeView, &QTreeView::customContextMenuRequested, this, &RequestPropertyEditor::showContextMenu);
     }
 
 public slots:

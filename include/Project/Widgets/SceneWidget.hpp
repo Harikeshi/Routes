@@ -1,12 +1,7 @@
 #pragma once
 
-#include <QComboBox>
-#include <QGraphicsScene>
-#include <QMouseEvent>
-#include <QPushButton>
 #include <QStackedLayout>
-#include <QToolTip>
-#include <QWidget>
+#include <QtWidgets>
 
 #include "Project/Models/Report.hpp"
 #include "Project/Models/Request.hpp"
@@ -25,8 +20,6 @@
 
 #include "../Scene/Actors/InRegion.hpp"
 #include "../Scene/Actors/Spiral.hpp"
-#include "../Scene/HeatmapWidget.hpp"
-#include "../Scene/SmoothHeatmapWidget.hpp"
 
 namespace Widgets {
 /*!
