@@ -24,28 +24,28 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
         Qt5::Widgets
         Qt5::DataVisualization
 )
-
-if (MSVC)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/libs/Task.dll"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    )
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/libs/Task.lib"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    )
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/libs/Task_d.dll"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    )
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/libs/Task_d.lib"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    )
-endif ()
+#
+#if (MSVC)
+#    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#            "${CMAKE_SOURCE_DIR}/libs/Task.dll"
+#            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+#    )
+#    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#            "${CMAKE_SOURCE_DIR}/libs/Task.lib"
+#            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+#    )
+#    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#            "${CMAKE_SOURCE_DIR}/libs/Task_d.dll"
+#            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+#    )
+#    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#            "${CMAKE_SOURCE_DIR}/libs/Task_d.lib"
+#            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+#    )
+#endif ()
 
 
