@@ -1,5 +1,9 @@
 #pragma once
 
+#include <QComboBox>
+#include <QGraphicsScene>
+#include <QMouseEvent>
+#include <QPushButton>
 #include <QStackedLayout>
 #include <QtWidgets>
 

@@ -10,6 +10,7 @@
 #include <QSplitter>
 #include <QStackedLayout>
 #include <QWidget>
+#include <QtWidgets>
 
 #include "./Database/DatabaseManager.hpp"
 #include "./Widgets/CustomTable.hpp"

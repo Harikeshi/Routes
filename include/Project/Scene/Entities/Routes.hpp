@@ -8,7 +8,7 @@
 
 #include "../Objects/RouteObject.hpp"
 #include "Project/Models/Object.hpp"
-#include "Project/Scene/Objects/PointWidget.hpp"
+// #include "Project/Scene/Objects/PointWidget.hpp"
 
 #include "./Limits.hpp"
 
@@ -24,7 +24,7 @@ class Routes final : public QWidget
     using Limits = Entities::Limits;
     using Route = Models::Route;
     using Objects = Objects::Objects;
-    using PointWidget = Scene::Objects::PointWidget;
+    // using PointWidget = Scene::Objects::PointWidget;
 
     Q_OBJECT
 

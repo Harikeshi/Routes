@@ -1,13 +1,8 @@
 #pragma once
 
-#include <Project/Scene/Entities/CoordinateSystem.hpp>
 #include <QApplication>
-#include <QFile>
-#include <QMessageBox>
 #include <QMouseEvent>
 #include <QPainter>
-#include <QRandomGenerator>
-#include <QTextStream>
 #include <QToolTip>
 #include <QWidget>
 
@@ -353,29 +348,6 @@ public:
             QToolTip::showText(event->globalPos(), tooltipText, this);
         }
     }
-
-public:
-    // void mouseMove(const QPointF& point)
-    // {
-    //     int oldHovered = hoveredPoint;
-    //     hoveredPoint = findPointAt(point);
-    //
-    //     if (hoveredPoint != oldHovered)
-    //     {
-    //         update();
-    //     }
-    // }
-
-    // void keyPressEvent(QKeyEvent* event) override
-    // {
-    //     if (event->key() == Qt::Key_S)
-    //     {
-    //         //
-    //         //setDrawing(!drawing);
-    //     }
-    //
-    //     update();
-    // }
 
 private:
     // TODO: Сделать как в RouteObject

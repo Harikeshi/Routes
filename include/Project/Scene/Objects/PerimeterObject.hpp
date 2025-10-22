@@ -3,8 +3,6 @@
 #include <QPainter>
 #include <QWidget>
 
-#include "../Entities/Limits.hpp"
-#include "./SegmentObject.hpp"
 #include "Project/Models/Perimeter.hpp"
 
 namespace Scene::Objects {
