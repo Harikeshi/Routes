@@ -11,7 +11,6 @@
 #include "Project/Models/Report.hpp"
 #include "Project/Models/Request.hpp"
 #include "Project/Scene/ActorTypeInfo.hpp"
-#include "Project/Scene/ActorTypeInfo.hpp"
 
 #include "TimeWidget.hpp"
 
@@ -26,810 +25,865 @@
 
 #include "../Scene/Actors/InRegion.hpp"
 #include "../Scene/Actors/Spiral.hpp"
-#include "../Scene/Capsules.hpp"
 #include "../Scene/HeatmapWidget.hpp"
 #include "../Scene/SmoothHeatmapWidget.hpp"
 
-#include "../Scene/Capsules.hpp"
-
 namespace Widgets {
-    /*!
+/*!
          * Класс отображения сцены.
          */
-    class SceneWidget final : public QWidget {
-        using CoordinateSystem = Scene::Entities::CoordinateSystem;
-        using Limits = Scene::Entities::Limits;
-        using Routes = Scene::Entities::Routes;
-        using Targets = Scene::Objects::TargetObject;
-        using PathWidget = Scene::Objects::PathWidget;
+class SceneWidget final : public QWidget
+{
+    using CoordinateSystem = Scene::Entities::CoordinateSystem;
+    using Limits = Scene::Entities::Limits;
+    using Routes = Scene::Entities::Routes;
+    using Targets = Scene::Objects::TargetObject;
+    using PathWidget = Scene::Objects::PathWidget;
 
-        using TimeWidget = Widgets::TimeWidget; // Перевести в QObject
+    using TimeWidget = Widgets::TimeWidget; // Перевести в QObject
 
-        using Grid = Scene::Objects::GridObject;
-        using Actor = Scene::Actor;
-        using Objects = Scene::Objects::Objects;
+    using Grid = Scene::Objects::GridObject;
+    using Actor = Scene::Actor;
+    using Objects = Scene::Objects::Objects;
 
-        using Request = Models::Request;
-        using Report = Models::Report;
+    using Request = Models::Request;
+    using Report = Models::Report;
 
-        using InRegionScene = Scene::Actors::InRegionScene;
+    using InRegionScene = Scene::Actors::InRegionScene;
 
-        Q_OBJECT
+    Q_OBJECT
 
-        std::map<Scene::ActorType, std::function<Scene::Actor*()> > actors{
-            {
-                Scene::ActorType::Zigzag, [this]() {
-                    target->setState(new Scene::Objects::WithOutDrawState());
-                    return new Scene::Actors::InRegionScene();
-                }
-            },
-            {
-                Scene::ActorType::Shift, [this]() {
-                    target->setState(new Scene::Objects::WithOutDrawState());
-                    return new Scene::Actors::InRegionScene();
-                }
-            },
-            {
-                Scene::ActorType::SectorSpiral, [this]() {
-                    target->setState(new Scene::Objects::CurrentDrawState());
-                    return new Scene::Actors::Spiral();
-                }
-            },
-            {
-                Scene::ActorType::StraightTack, [this]() {
-                    target->setState(new Scene::Objects::CurrentDrawState());
-                    return new Scene::Actors::InRegionScene();
-                }
-            },
-            {Scene::ActorType::LinearPatrolling, []() { return new Scene::Actors::InRegionScene(); }},
-            {Scene::ActorType::OnStop, []() { return new Scene::Actors::InRegionScene(); }}
-        };
+    std::map<Scene::ActorType, std::function<Scene::Actor*()>> actors{
+        {Scene::ActorType::Zigzag, [this]() {
+             target->setState(new Scene::Objects::WithOutDrawState());
+             return new Scene::Actors::InRegionScene();
+         }},
+        {Scene::ActorType::Shift, [this]() {
+             target->setState(new Scene::Objects::WithOutDrawState());
+             return new Scene::Actors::InRegionScene();
+         }},
+        {Scene::ActorType::SectorSpiral, [this]() {
+             target->setState(new Scene::Objects::CurrentDrawState());
+             return new Scene::Actors::Spiral();
+         }},
+        {Scene::ActorType::StraightTack, [this]() {
+             target->setState(new Scene::Objects::CurrentDrawState());
+             return new Scene::Actors::InRegionScene();
+         }},
+        {Scene::ActorType::LinearPatrolling, []() { return new Scene::Actors::InRegionScene(); }},
+        {Scene::ActorType::OnStop, []() { return new Scene::Actors::InRegionScene(); }}};
 
-    protected:
-        // TODO: Добавляем    comboBox = new QComboBox(this);
-        //        comboBox->addItem("Scheme 1");
-        //        comboBox->addItem("Scheme 2");
-        //        comboBox->setFixedWidth(200);
-        // Widgets
-        // TODO: Внизу справа
-        QPushButton *metricChoose;
-        TimeWidget *timeWidget;
-        // TODO: Вверху Справа
-        QComboBox *actorChoose;
+protected:
+    // TODO: Добавляем    comboBox = new QComboBox(this);
+    //        comboBox->addItem("Scheme 1");
+    //        comboBox->addItem("Scheme 2");
+    //        comboBox->setFixedWidth(200);
+    // Widgets
+    // TODO: Внизу справа
+    QPushButton* metricChoose;
+    TimeWidget* timeWidget;
+    // TODO: Вверху Справа
+    QComboBox* actorChoose;
 
-        CoordinateSystem cs; // Система координат
-        Limits limits; // Крайние значения по осям
+    CoordinateSystem cs; // Система координат
+    Limits limits;       // Крайние значения по осям
 
-        // Элементы отрисовки цели.
-        Routes *routes_;
+    // Элементы отрисовки цели.
+    Routes* routes_;
 
-        // TODO: Если вдруг задумаю продолжить делать
-        // HeatmapWidget* heatmap = new HeatmapWidget(this);
-        //SmoothHeatmapWidget* sHeatmap = new SmoothHeatmapWidget(this);
-        //Capsules* capsules = new Capsules(this);
+    // TODO: Если вдруг задумаю продолжить делать
+    // HeatmapWidget* heatmap = new HeatmapWidget(this);
+    //SmoothHeatmapWidget* sHeatmap = new SmoothHeatmapWidget(this);
+    //Capsules* capsules = new Capsules(this);
 
-        Targets *target;
-        PathWidget *targetPath;
-        bool drawing; // Разрешить отрисовку цели
+    Targets* target;
+    PathWidget* targetPath;
+    bool drawing; // Разрешить отрисовку цели
 
-        Actor *actor; //! Вспомогательные элементы цели. Всегда остается.
+    Actor* actor; //! Вспомогательные элементы цели. Всегда остается.
 
-        // time block
-        double fullTime{0}; //! Общее время схемы. Принимается максимальное время из маршрутов.
-        double currentTime{0};
-        double targetStartTime{0};
-        QTimer *timer;
+    // time block
+    double fullTime{0}; //! Общее время схемы. Принимается максимальное время из маршрутов.
+    double currentTime{0};
+    double targetStartTime{0};
+    QTimer* timer;
 
-        double speedMultiplier{1}; // Множитель скорости
+    double speedMultiplier{1}; // Множитель скорости
 
-        Grid *grid; //! Сетка
-        const double margin = 5.; // Отступы от каждой стороны в процентах
-        const double pointPercent = 0.005;
+    Grid* grid;               //! Сетка
+    const double margin = 5.; // Отступы от каждой стороны в процентах
+    const double pointPercent = 0.005;
 
-        bool showWidthPath = false;
+    bool showWidthPath = false;
 
-        // Расположение осей
-        // TODO: Оси будут меняться (X-Y), (Ш-Д)
-        QPair<QString, QString> axies{"X", "Y"};
+    // Расположение осей
+    // TODO: Оси будут меняться (X-Y), (Ш-Д)
+    QPair<QString, QString> axies{"X", "Y"};
 
-    public slots:
+public slots:
 
-    public:
-        explicit SceneWidget(QWidget *parent = nullptr)
-            : QWidget(parent) {
-            targetPath = new PathWidget(this);
+public:
+    explicit SceneWidget(QWidget* parent = nullptr)
+        : QWidget(parent)
+    {
+        targetPath = new PathWidget(this);
 
-            QVBoxLayout *mainLayout = new QVBoxLayout(this);
+        QVBoxLayout* mainLayout = new QVBoxLayout(this);
 
-            mainLayout->setContentsMargins(0, 0, 0, 0); // Убираем отступы по краям
-            mainLayout->setSpacing(0); // Убираем промежутки
+        mainLayout->setContentsMargins(0, 0, 0, 0); // Убираем отступы по краям
+        mainLayout->setSpacing(0);                  // Убираем промежутки
 
-            // Верхняя часть
-            QWidget *topWidget = new QWidget(this);
-            QHBoxLayout *topLayout = new QHBoxLayout(topWidget);
-            topLayout->setContentsMargins(0, 10, 10, 0); // Отступы: слева, сверху, справа, снизу
+        // Верхняя часть
+        QWidget* topWidget = new QWidget(this);
+        QHBoxLayout* topLayout = new QHBoxLayout(topWidget);
+        topLayout->setContentsMargins(0, 10, 10, 0); // Отступы: слева, сверху, справа, снизу
 
-            // Добавляем растягивающееся пространство слева
-            topLayout->addStretch();
+        // Добавляем растягивающееся пространство слева
+        topLayout->addStretch();
 
-            // TODO: Все же отдельный виджет
-            actorChoose = new QComboBox(topWidget);
+        // TODO: Все же отдельный виджет
+        actorChoose = new QComboBox(topWidget);
 
-            //! Инициализация Выбора Actor.
-            for (const auto &act: Scene::ActorTypeName)
-                actorChoose->addItem(act.second, static_cast<int>(act.first));
+        //! Инициализация Выбора Actor.
+        for (const auto& act : Scene::ActorTypeName)
+            actorChoose->addItem(act.second, static_cast<int>(act.first));
 
-            connect(actorChoose, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int number) {
-                qDebug() << "Выбран: " << number;
-                auto type = static_cast<Scene::ActorType>(number);
-                changeActor(type);
+        connect(actorChoose, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int number) {
+            qDebug() << "Выбран: " << number;
+            auto type = static_cast<Scene::ActorType>(number);
+            changeActor(type);
 
-                emit schemeChanged(Scene::ActorTypeName.find(type)->second);
-            });
+            emit schemeChanged(Scene::ActorTypeName.find(type)->second);
+        });
 
-            actorChoose->setFixedSize(80, 30);
+        actorChoose->setFixedSize(80, 30);
 
-            // actorChoose->setEnabled(false);
+        // actorChoose->setEnabled(false);
 
-            topLayout->addWidget(actorChoose);
+        topLayout->addWidget(actorChoose);
 
-            mainLayout->addWidget(topWidget);
+        mainLayout->addWidget(topWidget);
 
-            // Центральная часть
-            QWidget *centerWidget = new QWidget(this);
-            centerWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-            mainLayout->addWidget(centerWidget, 1);
+        // Центральная часть
+        QWidget* centerWidget = new QWidget(this);
+        centerWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        mainLayout->addWidget(centerWidget, 1);
 
-            // Нижняя часть
-            QWidget *bottomWidget = new QWidget(this);
-            QHBoxLayout *bottomLayout = new QHBoxLayout(bottomWidget);
-            bottomLayout->setContentsMargins(0, 0, 10, 10);
+        // Нижняя часть
+        QWidget* bottomWidget = new QWidget(this);
+        QHBoxLayout* bottomLayout = new QHBoxLayout(bottomWidget);
+        bottomLayout->setContentsMargins(0, 0, 10, 10);
 
-            // Добавляем растягивающееся пространство слева
-            bottomLayout->addStretch();
+        // Добавляем растягивающееся пространство слева
+        bottomLayout->addStretch();
 
-            metricChoose = new QPushButton("metric", bottomWidget);
-            metricChoose->setFixedSize(80, 30);
-            metricChoose->setFlat(true); // Убираем стандартное оформление
+        metricChoose = new QPushButton("metric", bottomWidget);
+        metricChoose->setFixedSize(80, 30);
+        metricChoose->setFlat(true); // Убираем стандартное оформление
 
-            // Виджет в правом нижнем углу
-            bottomLayout->addWidget(metricChoose);
-            mainLayout->addWidget(bottomWidget);
+        // Виджет в правом нижнем углу
+        bottomLayout->addWidget(metricChoose);
+        mainLayout->addWidget(bottomWidget);
 
-            routes_ = new Routes(this);
-            target = new Targets(this);
-            target->setState(new Scene::Objects::WithOutDrawState());
+        routes_ = new Routes(this);
+        target = new Targets(this);
+        target->setState(new Scene::Objects::WithOutDrawState());
 
-            grid = new Grid(this);
-            timer = new QTimer(this);
+        grid = new Grid(this);
+        timer = new QTimer(this);
 
-            // TODO: переименовать
-            actor = new InRegionScene(this);
+        // TODO: переименовать
+        actor = new InRegionScene(this);
 
-            cs = CoordinateSystem();
+        cs = CoordinateSystem();
 
-            drawing = false;
-            speedMultiplier = 1;
+        drawing = false;
+        speedMultiplier = 1;
 
-            this->resize(100, 100);
+        this->resize(100, 100);
 
-            // Чтобы не было диких цифр при загрузке
-            limitesToRect();
+        // Чтобы не было диких цифр при загрузке
+        limitesToRect();
 
-            // connect(timer, &QTimer::timeout, this, &SceneWidget::updateDrawing);
-            connect(timer, &QTimer::timeout, this, &SceneWidget::moveFromTimer);
+        // connect(timer, &QTimer::timeout, this, &SceneWidget::updateDrawing);
+        connect(timer, &QTimer::timeout, this, &SceneWidget::moveFromTimer);
 
-            connect(routes_, &Routes::complete, this, &SceneWidget::stop);
-            connect(routes_, &Routes::sendIndexCurrentPositionSpeed, this, &SceneWidget::sendObjectInformation);
+        connect(routes_, &Routes::complete, this, &SceneWidget::stop);
+        connect(routes_, &Routes::sendIndexCurrentPositionSpeed, this, &SceneWidget::sendObjectInformation);
 
-            // TimeWidget
-            timeWidget = new TimeWidget(this);
-            connect(this, &SceneWidget::sendCurrentTime, timeWidget, &TimeWidget::updateTime);
+        // TimeWidget
+        timeWidget = new TimeWidget(this);
+        connect(this, &SceneWidget::sendCurrentTime, timeWidget, &TimeWidget::updateTime);
 
-            // Размещение Времени и множителя на сцене.
+        // Размещение Времени и множителя на сцене.
 
-            QWidget *upperWidget = new QWidget(this);
-            upperWidget->setGeometry(10, 10, 200, 70); // Отступы, ширина и высота
-            upperWidget->setAttribute(Qt::WA_TransparentForMouseEvents); // Игнорировать события мыши
-            upperWidget->show();
-            upperWidget->setStyleSheet("background: transparent;"); // Прозрачный фон
+        QWidget* upperWidget = new QWidget(this);
+        upperWidget->setGeometry(10, 10, 200, 70);                   // Отступы, ширина и высота
+        upperWidget->setAttribute(Qt::WA_TransparentForMouseEvents); // Игнорировать события мыши
+        upperWidget->show();
+        upperWidget->setStyleSheet("background: transparent;"); // Прозрачный фон
 
-            QVBoxLayout *sceneLayout = new QVBoxLayout(upperWidget);
+        QVBoxLayout* sceneLayout = new QVBoxLayout(upperWidget);
 
-            sceneLayout->addWidget(timeWidget);
+        sceneLayout->addWidget(timeWidget);
 
-            QStackedLayout *stackedLayout = new QStackedLayout(this);
+        QStackedLayout* stackedLayout = new QStackedLayout(this);
 
-            stackedLayout->addWidget(upperWidget);
-            stackedLayout->setCurrentIndex(1); // overlayWidget поверх
+        stackedLayout->addWidget(upperWidget);
+        stackedLayout->setCurrentIndex(1); // overlayWidget поверх
+    }
+
+    ~SceneWidget() = default;
+
+signals:
+    void sendMessage(const QString&); // Оповещение о пересечении например
+    void sendError(const QString&);
+
+    void sendDrawing(const bool&);
+
+    void sendIndexCurrentPositionSpeed(size_t, const QPointF&, double);
+
+    void sendTargetSpeed(double);
+
+    void sendCurrentTime(double time);
+
+    void sendFullTime(double time);
+
+    void sceneStarted();
+
+    void sceneStopped();
+
+    void scenePaused();
+
+    void sceneReseted();
+
+    void schemeChanged(const QString&);
+
+public:
+    void changeShowWidthPath()
+    {
+        showWidthPath = !showWidthPath;
+
+        update();
+    }
+
+    int getActorType() const
+    {
+        return actorChoose->currentIndex();
+    }
+
+    QString getActorName() const
+    {
+        return Scene::ActorTypeName.find(static_cast<Scene::ActorType>(actorChoose->currentIndex()))->second;
+    }
+
+    void changeActor(Scene::ActorType type)
+    {
+        // 1. Сброс сцены.
+        // 2. Назначение актера.
+        this->reset();
+
+        actor = actors[type]();
+    }
+
+    void setActor(const QString& name, const Models::Request& request)
+    {
+        if (getActorName() == name)
+        {
+            return;
         }
 
-        ~SceneWidget() = default;
+        this->reset();
 
-    signals:
-        void sendMessage(const QString &); // Оповещение о пересечении например
-        void sendError(const QString &);
+        // Изменить comboBox
+        auto type = std::find_if(Scene::ActorTypeName.begin(), Scene::ActorTypeName.end(), [name](const std::pair<Scene::ActorType, QString>& pair) {
+            return pair.second == name;
+        });
 
-        void sendDrawing(const bool &);
+        actor = actors[type->first]();
 
-        void sendIndexCurrentPositionSpeed(size_t, const QPointF &, double);
+        // Перезагрузить Actor
+        actor->reload(request);
 
-        void sendTargetSpeed(double);
+        //        auto index = static_cast<int>(type->first);
 
-        void sendCurrentTime(double time);
+        actorChoose->setCurrentIndex(type->first);
 
-        void sendFullTime(double time);
+        update();
+    }
 
-        void sceneStarted();
-
-        void sceneStopped();
-
-        void scenePaused();
-
-        void sceneReseted();
-
-        void schemeChanged(const QString &);
-
-    public:
-        void changeShowWidthPath() {
-            showWidthPath = !showWidthPath;
-
-            update();
-        }
-
-        int getActorType() const {
-            return actorChoose->currentIndex();
-        }
-
-        QString getActorName() const {
-            return Scene::ActorTypeName.find(static_cast<Scene::ActorType>(actorChoose->currentIndex()))->second;
-        }
-
-        void changeActor(Scene::ActorType type) {
-            // 1. Сброс сцены.
-            // 2. Назначение актера.
-            this->reset();
-
-            actor = actors[type]();
-        }
-
-        void setActor(const QString &name, const Models::Request &request) {
-            if (getActorName() == name) {
-                return;
-            }
-
-            this->reset();
-
-            // Изменить comboBox
-            auto type = std::find_if(Scene::ActorTypeName.begin(), Scene::ActorTypeName.end(),
-                                     [name](const std::pair<Scene::ActorType, QString> &pair) {
-                                         return pair.second == name;
-                                     });
-
-            actor = actors[type->first]();
-
-            // Перезагрузить Actor
-            actor->reload(request);
-
-            //        auto index = static_cast<int>(type->first);
-
-            actorChoose->setCurrentIndex(type->first);
-
-            update();
-        }
-
-    public:
-        /*!
+public:
+    /*!
          * Метод сброса сцены к стартовому состоянию.
          */
-        void reset() {
-            //!
-            //! Обнулить все динамические объекты.
-            timeWidget->reset();
+    void reset()
+    {
+        //!
+        //! Обнулить все динамические объекты.
+        timeWidget->reset();
 
-            //! Прогрузятся после загрузки Report.
-            //! Сетка Остается.
-            //! Система координат Остается.
-            //! Крайние значения по осям Остается.
-            //! Расположение Осей Остается.
+        //! Прогрузятся после загрузки Report.
+        //! Сетка Остается.
+        //! Система координат Остается.
+        //! Крайние значения по осям Остается.
+        //! Расположение Осей Остается.
 
-            routes_->reset();
-            target->reset();
-            target->setState(new Scene::Objects::WithOutDrawState());
+        routes_->reset();
+        target->reset();
+        target->setState(new Scene::Objects::WithOutDrawState());
 
-            targetPath->reset();
-            actor->reset();
+        targetPath->reset();
+        actor->reset();
 
-            setDrawing(false); // Запретить
+        setDrawing(false); // Запретить
 
-            speedMultiplier = 1; // Множитель скорости
+        speedMultiplier = 1; // Множитель скорости
 
-            // time block
-            fullTime = 0; //! Общее время схемы. Принимается максимальное время из маршрутов.
-            currentTime = 0;
-            targetStartTime = 0;
+        // time block
+        fullTime = 0; //! Общее время схемы. Принимается максимальное время из маршрутов.
+        currentTime = 0;
+        targetStartTime = 0;
 
-            timer->stop();
+        timer->stop();
 
-            limitesToRect();
+        limitesToRect();
 
-            initCoordinateSystem();
+        initCoordinateSystem();
 
-            update();
+        update();
 
-            emit sceneReseted();
-        }
+        emit sceneReseted();
+    }
 
-        void limitesToRect() {
-            // Чтобы не было диких цифр при загрузке
-            limits.set(static_cast<double>(rect().x()),
-                       static_cast<double>(rect().y()),
-                       static_cast<double>(rect().width()),
-                       static_cast<double>(rect().height()));
-        }
+    void limitesToRect()
+    {
+        // Чтобы не было диких цифр при загрузке
+        limits.set(static_cast<double>(rect().x()),
+                   static_cast<double>(rect().y()),
+                   static_cast<double>(rect().width()),
+                   static_cast<double>(rect().height()));
+    }
 
-        void sendObjectInformation(size_t index, const QPointF &position, double speed) {
-            emit sendIndexCurrentPositionSpeed(index, position, speed);
-        }
+    void sendObjectInformation(size_t index, const QPointF& position, double speed)
+    {
+        emit sendIndexCurrentPositionSpeed(index, position, speed);
+    }
 
-        /*!
+    /*!
          * Метод перемещения из Таймера.
          */
-        void moveFromTimer() {
-            setCurrentTime(currentTime += speedMultiplier);
+    void moveFromTimer()
+    {
+        setCurrentTime(currentTime += speedMultiplier);
 
-            if (currentTime >= fullTime) {
-                timer->stop();
-                emit sceneStopped();
-            }
-
-            this->move(currentTime);
-        }
-
-        void moveFromProgress(double time) {
-            routes_->clear();
-
+        if (currentTime >= fullTime)
+        {
             timer->stop();
-
             emit sceneStopped();
-
-            setCurrentTime(time);
-
-            this->move(time);
         }
 
-        // Интерфейс Scene (API)
-    public:
-        void setCurrentTime(double time) {
-            currentTime = time;
+        this->move(currentTime);
+    }
 
-            actor->setCurrentTime(time);
+    void moveFromProgress(double time)
+    {
+        routes_->clear();
 
-            emit sendCurrentTime(time);
-        }
+        timer->stop();
 
-        void upSpeed(double up) {
-            this->speedMultiplier = timeWidget->speedUp(up);
-        }
+        emit sceneStopped();
 
-        void downSpeed(int down) {
-            this->speedMultiplier = timeWidget->speedDown(down);
-        }
+        setCurrentTime(time);
 
-        void resetSpeed() {
-            this->speedMultiplier = timeWidget->setSpeed(1);
-        }
+        this->move(time);
+    }
 
-        /*!
+    // Интерфейс Scene (API)
+public:
+    void setCurrentTime(double time)
+    {
+        currentTime = time;
+
+        actor->setCurrentTime(time);
+
+        emit sendCurrentTime(time);
+    }
+
+    void upSpeed(double up)
+    {
+        this->speedMultiplier = timeWidget->speedUp(up);
+    }
+
+    void downSpeed(int down)
+    {
+        this->speedMultiplier = timeWidget->speedDown(down);
+    }
+
+    void resetSpeed()
+    {
+        this->speedMultiplier = timeWidget->setSpeed(1);
+    }
+
+    /*!
          * Максимальное время БЭНК и ПЛ.
          */
-        void setFullTime() {
-            fullTime = std::max(routes_->getMaximumTime(), targetStartTime + target->getFullTime());
-            // TODO: Время цели можно не учитывать
+    void setFullTime()
+    {
+        fullTime = std::max(routes_->getMaximumTime(), targetStartTime + target->getFullTime());
+        // TODO: Время цели можно не учитывать
 
-            setCurrentTime(0);
+        setCurrentTime(0);
 
-            emit sendFullTime(fullTime);
+        emit sendFullTime(fullTime);
+    }
+
+    // Начало движения
+    void start()
+    {
+        setCurrentTime(0);
+
+        // Сброс буфера путей
+        routes_->clear();
+        target->clear();
+
+        // Установить состояние движения до Текущего
+        routes_->setStateType(new Scene::Objects::CurrentDrawState());
+
+        timer->start(16); // Обновление каждые 16 миллисекунд (60 кадров в секунду)
+        emit sceneStarted();
+    }
+
+    QVector<QImage> fonts = QVector<QImage>(2);
+
+    void draw_full_segments(QPainter& painter)
+    {
+        // При загрузке route
+        if (routes_->isEmpty())
+            return;
+
+        for (auto const& segment : routes_->getRoutes().first()->getSegments())
+        {
+            segment->cDrawFull(painter, routes_->getRadius());
         }
+    }
 
-        // Начало движения
-        void start() {
-            setCurrentTime(0);
+    void current_segments(QPainter& painter)
+    {
+        if (routes_->isEmpty())
+            return;
 
-            // Сброс буфера путей
-            routes_->clear();
-            target->clear();
+        auto index = routes_->getRoutes().first()->getCurrentIndex();
+        for (size_t i = 0; i < index; ++i)
+        {
+            routes_->getRoutes().first()->getSegments().at(i)->cDrawCurrent(painter, routes_->getRadius());
+        }
+        routes_->getRoutes().first()->getSegments().at(index)->cDrawCurrent(painter, routes_->getRadius());
+    }
 
-            // Установить состояние движения до Текущего
-            routes_->setStateType(new Scene::Objects::CurrentDrawState());
+    // Сброс к началу
+    void clear()
+    {
+    }
 
-            timer->start(16); // Обновление каждые 16 миллисекунд (60 кадров в секунду)
+    // Пауза
+    bool pause()
+    {
+        if (timer->isActive())
+        {
+            timer->stop();
+            emit scenePaused();
+
+            return true;
+        }
+        else
+        {
+            timer->start(16);
             emit sceneStarted();
         }
 
-        QVector<QImage> fonts = QVector<QImage>(2);
+        return false;
+    }
 
-        void draw_full_segments(QPainter &painter) {
-            // При загрузке route
-            if (routes_->isEmpty()) return;
-
-            for (auto const &segment: routes_->getRoutes().first()->getSegments()) {
-                segment->cDrawFull(painter, routes_->getRadius());
-            }
+    // Полный показ/Текущий показ
+    void full()
+    {
+        //if ()
+        if (routes_->getStateType() == Scene::Objects::StateType::Full)
+        {
+            routes_->setStateType(new Scene::Objects::CurrentDrawState());
+        }
+        else
+        {
+            routes_->setStateType(new Scene::Objects::FullDrawState());
         }
 
-        void current_segments(QPainter &painter) {
-            if (routes_->isEmpty()) return;
+        update();
+    }
 
-            auto index = routes_->getRoutes().first()->getCurrentIndex();
-            for (size_t i = 0; i < index; ++i) {
-                routes_->getRoutes().first()->getSegments().at(i)->cDrawCurrent(painter, routes_->getRadius());
-            }
-            routes_->getRoutes().first()->getSegments().at(index)->cDrawCurrent(painter, routes_->getRadius());
+    // Убрать/показать линии
+    void lines()
+    {
+        if (routes_->getStateType() == Scene::Objects::StateType::Clean)
+        {
+            routes_->setStateType(new Scene::Objects::CurrentDrawState());
+        }
+        else
+        {
+            routes_->setStateType(new Scene::Objects::WithOutDrawState());
         }
 
-        // Сброс к началу
-        void clear() {
-        }
+        update();
+    }
 
-        // Пауза
-        bool pause() {
-            if (timer->isActive()) {
-                timer->stop();
-                emit scenePaused();
+    // Изменить оси
+    void change()
+    {
+        std::swap(axies.first, axies.second); // swapAxies
 
-                return true;
-            } else {
-                timer->start(16);
-                emit sceneStarted();
-            }
+        limits.swap();
 
-            return false;
-        }
+        // TODO: Где-то уменьшается Или не меняется
+        actor->swapCoordinates();
+        routes_->swapCoordinates();
+        target->swapCoordinates();
+        targetPath->swapCoordinates();
 
-        // Полный показ/Текущий показ
-        void full() {
-            //if ()
-            if (routes_->getStateType() == Scene::Objects::StateType::Full) {
-                routes_->setStateType(new Scene::Objects::CurrentDrawState());
-            } else {
-                routes_->setStateType(new Scene::Objects::FullDrawState());
-            }
+        initCoordinateSystem(); // percent
 
-            update();
-        }
+        update();
+    }
 
-        // Убрать/показать линии
-        void lines() {
-            if (routes_->getStateType() == Scene::Objects::StateType::Clean) {
-                routes_->setStateType(new Scene::Objects::CurrentDrawState());
-            } else {
-                routes_->setStateType(new Scene::Objects::WithOutDrawState());
-            }
+public slots:
+    void changeShowRoutesPoints()
+    {
+        routes_->changeShowPoints();
 
-            update();
-        }
+        update();
+    }
 
-        // Изменить оси
-        void change() {
-            std::swap(axies.first, axies.second); // swapAxies
+    void changeDrawing()
+    {
+        setDrawing(!drawing);
+    }
 
-            limits.swap();
+    // TODO: Не похоже что используется.
+    void setDrawing(const bool check)
+    {
+        drawing = check;
 
-            // TODO: Где-то уменьшается Или не меняется
-            actor->swapCoordinates();
-            routes_->swapCoordinates();
-            target->swapCoordinates();
-            targetPath->swapCoordinates();
+        emit sendDrawing(drawing);
+    }
 
-            initCoordinateSystem(); // percent
-
-            update();
-        }
-
-    public
-    slots:
-        void changeShowRoutesPoints() {
-            routes_->changeShowPoints();
-
-            update();
-        }
-
-        void changeDrawing() {
-            setDrawing(!drawing);
-        }
-
-        // TODO: Не похоже что используется.
-        void setDrawing(const bool check) {
-            drawing = check;
-
-            emit sendDrawing(drawing);
-        }
-
-        /*!
+    /*!
          * Установка скорости цели.
          * @param speed
          */
-        void setTargetSpeed(double speed) {
-            target->setSpeed(speed);
-        }
+    void setTargetSpeed(double speed)
+    {
+        target->setSpeed(speed);
+    }
 
-        /*!
+    /*!
          * Действия при остановке.
          */
-        void stop() {
-            qDebug() << "*stop*";
-            timer->stop();
-            currentTime = 0;
-            emit sceneStopped();
+    void stop()
+    {
+        qDebug() << "*stop*";
+        timer->stop();
+        currentTime = 0;
+        emit sceneStopped();
 
-            routes_->clear();
-            target->clear();
+        routes_->clear();
+        target->clear();
 
-            update();
-        }
+        update();
+    }
 
-        /*!
+    /*!
          * Метод определяет какие настройки устанавливаются при изменении Limits.
          * Пересчет только делаем при перезагрузке request или report.
          * @param limits
          */
-        void setLimits(bool isReport) {
-            limits.reset();
+    void setLimits(bool isReport)
+    {
+        limits.reset();
 
-            //! Собрать из Путей
-            if (isReport)
-                limits.initFromRoutes(this->routes_->getRoutes());
+        //! Собрать из Путей
+        if (isReport)
+            limits.initFromRoutes(this->routes_->getRoutes());
 
-            //! Инициализация из Actor.
-            //! Данные Actor не забываем сбросить.
-            this->limits.compareLimits(actor->getLimits());
+        //! Инициализация из Actor.
+        //! Данные Actor не забываем сбросить.
+        this->limits.compareLimits(actor->getLimits());
 
-            //! ПЛ не учитываем, всегда сбрасываем путь лодки.
-            initTargetPath(limits.diagonal() * pointPercent);
+        //! ПЛ не учитываем, всегда сбрасываем путь лодки.
+        initTargetPath(limits.diagonal() * pointPercent);
 
-            //! Обновляем модели.
-            setModels(Objects::Arrow, 0.01 * limits.diagonal());
+        //! Обновляем модели.
+        setModels(Objects::Arrow, 0.01 * limits.diagonal());
 
-            if (axies.first > axies.second)
-                this->limits.swap();
+        if (axies.first > axies.second)
+            this->limits.swap();
 
-            //! Обновляем систему координат.
-            initCoordinateSystem();
+        //! Обновляем систему координат.
+        initCoordinateSystem();
 
-            update();
-        }
+        update();
+    }
 
-        /*!
+    /*!
          * Установка моделей для ПЛ и БЭНК.
          * @param type
          * @param size
          */
-        void setModels(Objects type, double size) {
-            routes_->setModel(type, size); //getMaxDifference()); // 1%
-            target->setModel(type, size); // getMaxDifference());
-        }
+    void setModels(Objects type, double size)
+    {
+        routes_->setModel(type, size); //getMaxDifference()); // 1%
+        target->setModel(type, size);  // getMaxDifference());
+    }
 
-        /*!
+    /*!
          * Действия при обновлении Request.
          * @param request
          */
-        void reloadRequest(const Request &request) {
-            //        this->reload();
+    void reloadRequest(const Request& request)
+    {
+        //        this->reload();
 
-            target->reset();
+        target->reset();
 
-            // Гарантированно получаем полностью инициализированный request. Проверяется в mainWindow
-            // targets->setParameters(request.getTarget()); // Инициализация данных цели
-            target->initialize(request.getTarget(), 10);
-            targetPath->clear();
+        // Гарантированно получаем полностью инициализированный request. Проверяется в mainWindow
+        // targets->setParameters(request.getTarget()); // Инициализация данных цели
+        target->initialize(request.getTarget(), 10);
+        targetPath->clear();
 
-            emit sendTargetSpeed(target->getSpeed());
+        emit sendTargetSpeed(target->getSpeed());
 
-            actor->reload(request);
+        actor->reload(request);
 
-            if (axies.first > axies.second) {
-                actor->swapCoordinates();
-            }
-
-            routes_->reset();
-            routes_->setParameters(request.getShip());
-
-            this->setLimits(false);
+        if (axies.first > axies.second)
+        {
+            actor->swapCoordinates();
         }
 
-        /*!
+        routes_->reset();
+        routes_->setParameters(request.getShip());
+
+        this->setLimits(false);
+    }
+
+    /*!
          * Действия при обновлении Report.
          * @param report
          */
-        void reloadReport(const Report &report) {
-            // В MainWindow гарантируем, что файл request уже был загружен
-            // targets->reset();
+    void reloadReport(const Report& report)
+    {
+        // В MainWindow гарантируем, что файл request уже был загружен
+        // targets->reset();
 
-            // Инициализация routes
-            routes_->setRoutes(report.routes(), pointPercent * limits.diagonal()); // Радиус точки 1% диагонали
+        // Инициализация routes
+        routes_->setRoutes(report.routes(), pointPercent * limits.diagonal()); // Радиус точки 1% диагонали
 
-            setFullTime();
+        setFullTime();
 
-            // TODO: Возможно требуется пересчет модели цели
-            if (axies.first > axies.second) {
-                routes_->swapCoordinates();
-            }
-
-            this->setLimits(true);
+        // TODO: Возможно требуется пересчет модели цели
+        if (axies.first > axies.second)
+        {
+            routes_->swapCoordinates();
         }
 
-        /*!
+        this->setLimits(true);
+    }
+
+    /*!
          * Инициализация пути цели.
          * @param radius
          */
-        void initTargetPath(double radius) {
-            targetPath->clear();
-            targetStartTime = 0;
+    void initTargetPath(double radius)
+    {
+        targetPath->clear();
+        targetStartTime = 0;
 
-            targetPath->setRadius(radius);
-        }
+        targetPath->setRadius(radius);
+    }
 
-        /*!
+    /*!
          * Полный сброс установок ПЛ.
          */
-        void resetTarget() {
-            target->reset();
-            targetPath->clear();
-            targetStartTime = 0;
+    void resetTarget()
+    {
+        target->reset();
+        targetPath->clear();
+        targetStartTime = 0;
 
-            update();
-        }
+        update();
+    }
 
-    protected
+protected
     :
-        /*!
+    /*!
          * Метод определяет, что надо отображать.
          * @param event
          */
-        void paintEvent(QPaintEvent *event) override {
-            //! Определение общего QPainter.
-            QPainter painter(this);
-            painter.setRenderHint(QPainter::Antialiasing); // Более плавная отрисовка, но наложение линий
-            painter.drawImage(rect(), grid->getImage());
+    void paintEvent(QPaintEvent* event) override
+    {
+        //! Определение общего QPainter.
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing); // Более плавная отрисовка, но наложение линий
+        painter.drawImage(rect(), grid->getImage());
 
-            painter.setTransform(cs.getTransform());
+        painter.setTransform(cs.getTransform());
 
-            //! Отрисовка Объектов
-            if (showWidthPath) {
-                current_segments(painter);
-            }
-            painter.save();
-            painter.restore();
-            actor->draw(painter);
-
-            // draw_full_segments(painter);
-            target->draw(painter);
-            targetPath->draw(painter);
-
-            routes_->draw(painter);
+        //! Отрисовка Объектов
+        if (showWidthPath)
+        {
+            current_segments(painter);
         }
+        painter.save();
+        painter.restore();
+        actor->draw(painter);
 
-        /*!
+        // draw_full_segments(painter);
+        target->draw(painter);
+        targetPath->draw(painter);
+
+        routes_->draw(painter);
+    }
+
+    /*!
          * Действия при изменении размера виджета.
          * @param event
          */
-        void resizeEvent(QResizeEvent *event) override {
-            initCoordinateSystem();
+    void resizeEvent(QResizeEvent* event) override
+    {
+        initCoordinateSystem();
 
-            update();
+        update();
 
-            QWidget::resizeEvent(event);
-        }
+        QWidget::resizeEvent(event);
+    }
 
-        void addPointToTargetPathInitTargets(const QPoint &screenPosition) {
+    void addPointToTargetPathInitTargets(const QPoint& screenPosition)
+    {
+        if (targetPath->isEmpty())
+            targetStartTime = currentTime;
+
+        targetPath->addPoint(cs.toLogical(screenPosition));
+
+        target->setRoute(targetPath->getPath());
+        target->setModel(Objects::Arrow, 0.01 * limits.diagonal());
+    }
+
+    /*!
+         *
+         * @param event
+         */
+    void mousePressEvent(QMouseEvent* event) override
+    {
+        if (drawing)
+        {
+            // TODO: Включение отображения ПЛ.
             if (targetPath->isEmpty())
-                targetStartTime = currentTime;
+                target->setState(new Scene::Objects::CurrentDrawState());
 
-            targetPath->addPoint(cs.toLogical(screenPosition));
-
-            target->setRoute(targetPath->getPath());
-            target->setModel(Objects::Arrow, 0.01 * limits.diagonal());
+            addPointToTargetPathInitTargets(event->pos());
+        }
+        else
+        {
+            this->showPosition(event);
         }
 
-        /*!
+        //! Обработка события pressMouse для targetPath.
+        if (targetPath->hasDrawingPoints())
+            targetPath->mousePress(event, cs.toLogical(event->pos()));
+
+        //! Обработка события pressMouse для Routes.
+        routes_->mousePressEvent(event, cs.toLogical(event->pos()));
+
+        update();
+    }
+
+public
+    :
+    /*!
          *
          * @param event
          */
-        void mousePressEvent(QMouseEvent *event) override {
-            if (drawing) {
-                // TODO: Включение отображения ПЛ.
-                if (targetPath->isEmpty())
-                    target->setState(new Scene::Objects::CurrentDrawState());
-
+    void mouseMoveEvent(QMouseEvent* event) override
+    {
+        if (drawing)
+        {
+            //! При рисовании добавляем точки движения.
+            if (rect().contains(event->pos()))
+            {
                 addPointToTargetPathInitTargets(event->pos());
-            } else {
-                this->showPosition(event);
             }
 
-            //! Обработка события pressMouse для targetPath.
-            if (targetPath->hasDrawingPoints())
-                targetPath->mousePress(event, cs.toLogical(event->pos()));
-
-            //! Обработка события pressMouse для Routes.
-            routes_->mousePressEvent(event, cs.toLogical(event->pos()));
-
-            update();
+            // Отрисовка
         }
+        //! Обработка событий для путей и точек соответственно.
+        // if (targetPath->hasDrawingPoints())
+        //     targetPath->mouseMove(cs.toLogical(event->pos()));
 
-    public
+        //! Routes
+        // routes_->mouseMoveEvent(event);
+
+        update();
+    }
+
+public
     :
-        /*!
-         *
-         * @param event
-         */
-        void mouseMoveEvent(QMouseEvent *event) override {
-            if (drawing) {
-                //! При рисовании добавляем точки движения.
-                if (rect().contains(event->pos())) {
-                    addPointToTargetPathInitTargets(event->pos());
-                }
-
-                // Отрисовка
-            }
-            //! Обработка событий для путей и точек соответственно.
-            // if (targetPath->hasDrawingPoints())
-            //     targetPath->mouseMove(cs.toLogical(event->pos()));
-
-            //! Routes
-            // routes_->mouseMoveEvent(event);
-
-            update();
-        }
-
-    public
-    :
-        /*!
+    /*!
          * Метод расчета новых позиций перемещения для всех объектов.
          * @param time Текущее время.
          */
-        void move(double time) {
-            routes_->move(time);
+    void move(double time)
+    {
+        routes_->move(time);
 
-            //! Расчет позиции ПЛ.
-            if (!target->isEmpty()) {
-                if (targetStartTime <= currentTime)
-                    target->move(time - targetStartTime);
+        //! Расчет позиции ПЛ.
+        if (!target->isEmpty())
+        {
+            if (targetStartTime <= currentTime)
+                target->move(time - targetStartTime);
 
-                //! Текущие данные о цели.
-                emit sendIndexCurrentPositionSpeed(0, target->getCurrentPosition(), target->getSpeed());
-            }
-
-            update();
+            //! Текущие данные о цели.
+            emit sendIndexCurrentPositionSpeed(0, target->getCurrentPosition(), target->getSpeed());
         }
 
-        /*!
+        update();
+    }
+
+    /*!
          * Метод пересчета системы координат.
          */
-        void initCoordinateSystem() {
-            //! Пределы с учетом отступов.
-            auto hightLimits = limits.limitsWithMargins(this->margin);
+    void initCoordinateSystem()
+    {
+        //! Пределы с учетом отступов.
+        auto hightLimits = limits.limitsWithMargins(this->margin);
 
-            cs.setTransform(rect(), hightLimits);
+        cs.setTransform(rect(), hightLimits);
 
-            //! Перерисовать изображение сетки Image.
-            grid->draw(this->limits, rect(), axies.first, axies.second);
-        }
+        //! Перерисовать изображение сетки Image.
+        grid->draw(this->limits, rect(), axies.first, axies.second);
+    }
 
-        /*!
+    /*!
          * Метод показывает координаты точки под курсором при нажатии.
          * @param event
          */
-        void showPosition(QMouseEvent *event) {
-            // Отрисовка таблички X, Y.
-            if (rect().contains(event->pos())) {
-                QPointF pos = cs.toLogical(event->pos());
+    void showPosition(QMouseEvent* event)
+    {
+        // Отрисовка таблички X, Y.
+        if (rect().contains(event->pos()))
+        {
+            QPointF pos = cs.toLogical(event->pos());
 
-                QString tooltipText = QString("X: %1, Y: %2").arg(pos.x()).arg(pos.y());
-                // : QString("X: %1, Y: %2").arg(pos.y()).arg(pos.x());
+            QString tooltipText = QString("X: %1, Y: %2").arg(pos.x()).arg(pos.y());
+            // : QString("X: %1, Y: %2").arg(pos.y()).arg(pos.x());
 
-                QToolTip::showText(event->globalPos(), tooltipText, this);
-            }
+            QToolTip::showText(event->globalPos(), tooltipText, this);
         }
-    };
+    }
+};
 } // namespace Widgets

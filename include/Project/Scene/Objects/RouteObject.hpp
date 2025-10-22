@@ -5,7 +5,6 @@
 #include <QToolTip>
 #include <QWidget>
 
-#include "../Capsules.hpp"
 #include "./ModelObject.hpp"
 #include "./SegmentObject.hpp"
 #include "Project/Models/Object.hpp"

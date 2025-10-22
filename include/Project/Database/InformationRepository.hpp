@@ -1,8 +1,6 @@
 #ifndef DATABASE_REPOSITORY_HPP
 #define DATABASE_REPOSITORY_HPP
 
-#include "DataAccessObjects/ErrorLogDAO.hpp"
-#include "DataAccessObjects/EventDAO.hpp"
 #include "DataAccessObjects/InfoDAO.hpp"
 
 #include <memory>
@@ -30,22 +28,18 @@ class InformationRepository
 
     std::shared_ptr<pqxx::connection> connection;
 
-    DataAccessObjects::EventDAO eventDao;
     DataAccessObjects::InfoDAO infoDao;
-    DataAccessObjects::ErrorLogDAO errorDao;
 
 public:
     InformationRepository()
         : connection(nullptr),
-          eventDao(nullptr), infoDao(nullptr), errorDao(nullptr)
+          infoDao(nullptr)
     {
     }
 
     explicit InformationRepository(const std::shared_ptr<pqxx::connection>& conn)
         : connection(conn),
-          eventDao(connection),
-          infoDao(connection),
-          errorDao(connection)
+          infoDao(connection)
     {
     }
 
@@ -55,21 +49,6 @@ public:
             return true;
 
         return false;
-    }
-
-    void updateErrorLog(const std::string_view& message,
-                        const std::string_view& stack_trace,
-                        const std::string_view& source,
-                        const std::string_view& severity = "ERROR") const
-    {
-        try
-        {
-            errorDao.update(message, stack_trace, source, severity);
-        }
-        catch (...)
-        {
-            throw;
-        }
     }
 
     void updateInfo(const std::string_view& message,
