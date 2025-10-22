@@ -10,15 +10,47 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 # Для Astra C++17
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 #set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES}
         include/Project/MainWindow.hpp)
 
-find_package(Git)
 
+find_package(Qt5 COMPONENTS Widgets
+            DataVisualization
+            REQUIRED)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC
+            Qt5::Widgets
+            Qt5::DataVisualization
+    )
+
+find_package(Git)
+#-------------------------------------------------------------------------------
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# GTest for LibTask
+find_package(GTest)
+if(NOT ${GTEST_FOUND})
+  mark_as_advanced(
+    gmock_build_tests
+    gtest_build_samples
+    gtest_build_tests
+    gtest_disable_pthreads
+    gtest_force_shared_crt
+  )
+endif()
+
+if(${PROJECT_BUILD_TESTS})
+  enable_testing()
+  message(STATUS "[${PROJECT_NAME}] Project build tests: ON")
+else()
+  message(STATUS "[${PROJECT_NAME}] Project build tests: OFF")
+endif()
+add_subdirectory(libTasks/)
+target_link_libraries(${PROJECT_NAME} PUBLIC Task)
+#-------------------------------------------------------------------------------
 if (MSVC)
    set(Qt5_DIR "C:/Qt/5.15.17-msvc2019_64/lib/cmake/Qt5")
 endif ()
@@ -67,20 +99,21 @@ endif ()
 find_package(PostgreSQL REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
 
-target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
+#target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
+#target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
 
-if (IS_ARCH_LINUX)
-    target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/arch)
-    target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/arch)
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/arch/libTask.so)
-elseif (UNIX)
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/libTask.so)
-else ()
-    #    target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/Task.dll)
-    if (DEBUG)
-        target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/Task_d.lib)
-    else ()
-        target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/Task.lib)
-    endif ()
-endif ()
+#! Подключение таск либ
+#if (IS_ARCH_LINUX)
+#    target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/arch)
+#    target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/arch)
+#    target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/arch/libTask.so)
+#elseif (UNIX)
+#    target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/libTask.so)
+#else ()
+#    #    target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/Task.dll)
+#    if (DEBUG)
+#        target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/Task_d.lib)
+#    else ()
+#        target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs/Task.lib)
+#    endif ()
+#endif ()

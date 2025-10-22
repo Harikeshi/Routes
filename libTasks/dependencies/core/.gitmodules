@@ -1,0 +1,18 @@
+[submodule "3rdparty/gtest"]
+	path = 3rdparty/gtest
+	url = ssh://git@bitbucket.01050-1.ru:7999/sec03/gtest.git
+[submodule "dependencies/Cartographic"]
+	path = dependencies/Cartographic
+	url = ssh://git@bitbucket.01050-1.ru:7999/sec03/cartographic.git
+[submodule "dependencies/GeographicLib"]
+	path = dependencies/GeographicLib
+	url = ssh://git@bitbucket.01050-1.ru:7999/sec03/geographiclib.git
+[submodule "3rdparty/GEOS"]
+	path = 3rdparty/GEOS
+	url = ssh://git@bitbucket.01050-1.ru:7999/sec03/geos-3.12.1.git
+[submodule "dependencies/ExceptionTools"]
+	path = dependencies/ExceptionTools
+	url = ssh://git@bitbucket.01050-1.ru:7999/sec03/exceptiontools.git
+[submodule "dependencies/OSTools"]
+	path = dependencies/OSTools
+	url = ssh://git@bitbucket.01050-1.ru:7999/sec03/ostools.git

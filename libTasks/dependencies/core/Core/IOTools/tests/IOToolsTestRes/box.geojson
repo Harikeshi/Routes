@@ -1,0 +1,2 @@
+{"type":"Feature","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:EPSG::4326"}},"geometry":{"type":"Polygon","coordinates":[[[30,40],[50,40],[50,45],[30,45],[30,40]]]}} 
+ 

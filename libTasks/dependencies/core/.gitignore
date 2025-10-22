@@ -1,0 +1,12 @@
+*.bak
+*.orig
+*.user
+*.autosave
+*~
+
+/build*/
+
+/.vscode/
+/.vs/
+
+.directory

@@ -1,0 +1,6 @@
+[submodule "3rdparty/gtest"]
+	path = 3rdparty/gtest
+	url = ssh://git@bitbucket.01050-1.ru:7999/sec03/gtest.git
+[submodule "dependencies/ExceptionTools"]
+	path = dependencies/ExceptionTools
+	url = ssh://git@bitbucket.01050-1.ru:7999/sec03/exceptiontools.git

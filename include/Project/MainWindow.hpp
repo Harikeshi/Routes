@@ -27,7 +27,7 @@
 #include "Project/Database/DatabaseManager.hpp"
 
 #include "Initializer.hpp"
-#include "search_task.hpp"
+#include "Task/SearchTask.hpp"
 
 class MainWindow : public QMainWindow
 {
@@ -202,6 +202,9 @@ public:
         connect(dataWidget, &DataWidget::sendRequestFromWidget, this, &MainWindow::setRequestFromDataWidget);
         connect(dataWidget, &DataWidget::sendDeleteReportRequestIds, this, &MainWindow::deleteRequestReportFromTable); // delete
         connect(dataWidget, &DataWidget::sendSaveReportRequestIds, this, &MainWindow::saveRequestReportToDisk);        // save
+
+        //! MatrixViewer
+        connect(matrix, &MatrixViewWidget::sendMessage, this, &MainWindow::getMessage);
     }
 
 private slots:
@@ -438,8 +441,7 @@ private:
     }
 
 public:
-    void
-    setRequestFromDataWidget(const Models::Request& request)
+    void setRequestFromDataWidget(const Models::Request& request)
     {
         requestLoaded = true;
 
@@ -450,6 +452,11 @@ public:
         Initializer::instance().saveRequest(request);
 
         infoWidget->addMessage(message, type);
+    }
+
+    void getMessage(const QString& message, size_t type)
+    {
+        infoWidget->addMessage(message, static_cast<MessageType>(type));
     }
 
     /*!
