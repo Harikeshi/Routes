@@ -103,8 +103,8 @@ else ()
     endif()
 endif ()
 
-find_package(PostgreSQL REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
+#find_package(PostgreSQL REQUIRED)
+#target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
 
 #target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
 #target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
