@@ -12,7 +12,8 @@ set(CMAKE_AUTORCC ON)
 # Для Astra C++17
 set(CMAKE_CXX_STANDARD 17)
 
-#set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(libs_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/libs")
 
 add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES}
         include/Project/MainWindow.hpp)
@@ -93,11 +94,17 @@ if (IS_ARCH_LINUX)
     endif ()
 else ()
     find_package(libpqxx REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx::pqxx)
+    if(MSVC)
+        target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx::pqxx)
+    else()
+    target_include_directories(${PROJECT_NAME} PUBLIC ${libpqxx_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${libpqxx_LIBRARIES})
+    #message(FATAL_ERROR "libpqxx not found!")
+    endif()
 endif ()
 
-find_package(PostgreSQL REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
+#find_package(PostgreSQL REQUIRED)
+#target_link_libraries(${PROJECT_NAME} PUBLIC PostgreSQL::PostgreSQL)
 
 #target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
 #target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/libs)
