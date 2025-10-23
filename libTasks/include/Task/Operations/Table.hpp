@@ -1,12 +1,19 @@
 #pragma once
 
 #include <Task/Entities/Efficiency.hpp>
+#include <Task/SearchScheme.hpp>
 #include <fstream>
 #include <iostream>
 
-namespace Data {
+namespace Operations {
 
-inline void initTable(const std::string& path)
+/*!
+ * \brief initTable
+ * \details Записывает резултат метрических вычислений в таблицу
+ * \param metric [in] метрики
+ * \param path [in] путь до файла
+ */
+inline void initTable(std::map<SearchScheme, std::vector<std::string>>& metric, const std::string& path)
 {
     std::ofstream file(path);
     if (!file.is_open())
@@ -14,24 +21,43 @@ inline void initTable(const std::string& path)
         throw std::runtime_error("Не удалось открыть файл!");
     }
 
+    const std::map<SearchScheme, std::string> scheme = {{SearchScheme::Zigzag, "Зигзаг"},
+                                                        {SearchScheme::Shift, "Шифт"},
+                                                        {SearchScheme::DeterminedShift, "Д. Шифт"}};
     file << "Схема;"
-         << "Размер;"
-         << "Время;"
-         << "Дальность;"
-         << "Средняя производительность;"
-         << "Среднее время" << std::endl;
-}
-
-inline void addTable(const std::string& path, const std::string& scheme, const std::string& size,
-                     const double& searchTime, const double& detRange, const double& prod, const double& time)
-{
-    std::ofstream file(path, std::ios::app);
-    if (!file.is_open())
+         << "Размер, м ∙ м;"
+         << "Время, с;"
+         << "Дальность, м;"
+         << "Среднее время, с;"
+         << "СКО, с"
+         << std::endl;
+    for (auto& [indexScheme, valueData] : metric)
     {
-        throw std::runtime_error("Не удалось открыть файл!");
+        file << scheme.at(indexScheme) << ";";
+        for (size_t i = 0; i < valueData.size(); ++i)
+        {
+            if (i == valueData.size() - 1)
+            {
+                for (size_t j = valueData[i].size() - 1; j >= 0; --j)
+                {
+                    if (valueData[i][j] == '0')
+                    {
+                        valueData[i].pop_back();
+                    }
+                    else
+                    {
+                        file << valueData[i] << ";";
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                file << valueData[i] << ";";
+            }
+        }
+        file << std::endl;
     }
-    file << scheme << ";" << size << ";" << searchTime << ";"
-         << detRange << ";" << prod << ";" << time << std::endl;
 }
 
-} // namespace Data
+} // namespace Operations

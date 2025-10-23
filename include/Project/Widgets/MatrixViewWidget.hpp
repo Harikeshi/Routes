@@ -109,13 +109,13 @@ inline double velocityFromRequest(const Models::Request& request)
  * \param detRange
  * \return
  */
-inline std::vector<std::vector<int>> buildMatrix(const PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
+inline std::vector<std::vector<double>> buildMatrix(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
 {
-    EfficiencyMeasure::EfficiencyIndicators indicators;
+    Entities::EfficiencyIndicators indicators(100);
     // bbox
-    std::vector<std::vector<int>> matrix_ = indicators.calculateObservationDensity(polygon, route, detRange);
+    indicators.calculateObservationDensity(polygon, route, detRange);
 
-    return matrix_;
+    return indicators.getObservationDensity();
 }
 
 /*!
@@ -126,13 +126,13 @@ inline std::vector<std::vector<int>> buildMatrix(const PrimaryEntities::Polygon<
  * \param searchVelocity
  * \return
  */
-inline double buildAverageTime(const PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange, const double& searchVelocity)
+inline double buildAverageTime(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange, const double& searchVelocity)
 {
     double result;
 
-    EfficiencyMeasure::EfficiencyIndicators indicators;
+    Entities::EfficiencyIndicators indicators(100);
 
-    return indicators.averageTime(polygon, route, detRange, searchVelocity);
+    return indicators.averageTime(polygon, route, detRange);
 }
 
 /*!
@@ -149,7 +149,7 @@ public:
             surface_->removeSeries(surface_->seriesList().first());
     }
     //! Перезагружает отображение.
-    void setMatrix(const std::vector<std::vector<int>>& matrix)
+    void setMatrix(const std::vector<std::vector<double>>& matrix)
     {
         if (matrix.empty())
         {
@@ -282,7 +282,7 @@ public:
         layout->addWidget(button);
 
         //TODO: future перевести на int
-        futureWatcher_ = new QFutureWatcher<std::vector<std::vector<int>>>(this);
+        futureWatcher_ = new QFutureWatcher<std::vector<std::vector<double>>>(this);
         connect(futureWatcher_, &QFutureWatcherBase::finished, this, &MatrixViewWidget::onMatrixReady);
         connect(button, &QPushButton::clicked, this, &MatrixViewWidget::startAsyncCalculationMatrix);
 
@@ -341,7 +341,8 @@ private slots:
         loadingLabel_->show();
 
         view_->clear();
-        QFuture<std::vector<std::vector<int>>> future = QtConcurrent::run([=]() {
+
+        QFuture<std::vector<std::vector<double>>> future = QtConcurrent::run([=]() {
             return buildMatrix(polygon, route, radius);
         });
         futureWatcher_->setFuture(future);
@@ -380,7 +381,7 @@ private:
     PrimaryEntities::Polygon<Point2D> polygon;
     Outputs::Route route; // -> polyline
 
-    QFutureWatcher<std::vector<std::vector<int>>>* futureWatcher_;
+    QFutureWatcher<std::vector<std::vector<double>>>* futureWatcher_;
     QFutureWatcher<double>* futureWatcherTime_;
     QLabel* loadingLabel_;
 

@@ -4,12 +4,12 @@
 - Запустить скрипт make-deb.sh
 
 -install
-- на целевой машине запускаем sudo -i visualization-1.0.0-AMD64.deb
+- на целевой машине запускаем sudo -i visualization-1.x.x-AMD64.deb
 
 Настройки для msvc для tasks
 -G Ninja -DCMAKE_CXX_FLAGS="/D_USE_MATH_DEFINES" -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_PREFIX_PATH=C:/Qt/5.15.17-msvc2019_64 -DQt5_DIR=C:/Qt/5.15.17-msvc2019_64/lib/cmake/Qt5 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON -DCMAKE_CXX_STANDARD:STRING=17
 
-
+//------------------------------------------------------------------
 Требуется фикс в tasks:
 inline void validateRegionJson(const nlohmann::json& json)
 {
@@ -37,3 +37,8 @@ inline void validateRegionJson(const nlohmann::json& json)
     if (json.find("exit_point") == json.end())
         throw std::runtime_error("Поле \"exit_point\" отсутствует.");
 }
+
+//-------------------------
+Для запуска библиотеки с исходниками
+- Заменить папки include и src в libTask, взять актуальные в проекте
+- Если менялась Core, заменить папку dependencies

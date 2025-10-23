@@ -251,16 +251,16 @@ inline Radian operator / (const Radian& radian, double value)
 //==============================================================================
 
   /*!
- * \brief bisector нахождение биссектрисы дирекционных углов
+ * \brief bisector нахождение биссектрисы дирекционных углов такой, что alpha, bisector, beta следуют в порядке против часовой стрелки
  * \note углы должны быть нормализованы.
- * В случае если beta > alpha получается биссектриса острого угла, иначе - выпуклого угла
  * \param alpha - первый угол
  * \param beta - второй угол
  * \return
  */
 inline Radian bisector(const Radian& alpha, const Radian& beta)
 {
-    return alpha + (beta - alpha) / 2;
+    Radian differenceCCW = (beta - alpha).normalizeWithShift();
+    return (alpha + differenceCCW / 2).normalize();
 }
 
 #endif //! MATH_TOOLS_ANGULAR_UNITS_RADIANS_OPERATIONS_HPP

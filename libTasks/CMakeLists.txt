@@ -9,8 +9,6 @@ file(GLOB_RECURSE SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
 #-------------------------------------------------------------------------------
 add_library(${PROJECT_NAME} STATIC ${HEADER} ${SOURCE})
 #-------------------------------------------------------------------------------
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-#-------------------------------------------------------------------------------
 if(MSVC)
     find_package(nlohmann_json REQUIRED)
     if(nlohmann_json_DIR)
@@ -40,5 +38,6 @@ PUBLIC
   target_include_directories(
     ${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
+  add_subdirectory(tests)
 #-------------------------------------------------------------------------------
 add_subdirectory(dependencies/)

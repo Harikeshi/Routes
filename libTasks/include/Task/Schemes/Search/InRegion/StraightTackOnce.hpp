@@ -2,7 +2,7 @@
 
 #include <Task/Abstractions/Scheme.hpp>
 #include <Task/Entities/SearchRegion.hpp>
-#include <Task/Operations/SegmentOperations.hpp>
+#include <Task/Operations/Geometry/SegmentOperations.hpp>
 #include <Task/Schemes/Search/InRegion/Input.hpp>
 #include <cmath>
 

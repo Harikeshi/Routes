@@ -14,9 +14,9 @@ PUBLIC
   "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
 #-------------------------------------------------------------------------------
-#if(${BUILD_TESTS})
-#  add_subdirectory(tests)
-#endif()
+if(${BUILD_TESTS})
+  add_subdirectory(tests)
+endif()
 #-------------------------------------------------------------------------------
 if(MSVC)
   group_files_by_path()

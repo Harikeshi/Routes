@@ -278,6 +278,16 @@ public:
     */
     std::vector<RingIntersection> intersectionsAllGEOS(const Point2D& p0, const Point2D& p1, const double eps = 1e-14) const;
     //==============================================================================
+    /*!
+     * \brief effectiveWidth
+     * \param point
+     * \param transversalDirection
+     * \param detectionRange
+     * \param im
+     * \return
+     */
+    double effectiveWidth(const Point2D& point, const Radian& transversalDirection, const double& detectionRange, const IntersectionMethod& im = Core) const;
+    //==============================================================================
     /**
      * @brief Метод возвращает кольцо региона по индексу.
      * 0-outer
@@ -394,6 +404,12 @@ public:
      * @return size_t
      */
     size_t size() const;
+    //==============================================================================
+    /*!
+     * \brief boxSizes
+     * \return
+     */
+    std::pair<Point2D, Point2D> boxSizes() const;
     //==============================================================================
     /*!
      * @brief Метод возвращает расстояние между наиболее удаленными точками внешнего кольца.

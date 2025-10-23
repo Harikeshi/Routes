@@ -1,23 +1,10 @@
 #pragma once
 
-// Core
-#include <AbstractOperations/Algorithms/Area.hpp>
-#include <AbstractOperations/Algorithms/Envelope.hpp>
-#include <AbstractOperations/Algorithms/Intersection.hpp>
-#include <AbstractOperations/Algorithms/Union.hpp>
-#include <Geometry/Operations/CheckPointsInPolygon.hpp>
-#include <PrimaryEntities/Entities/Box.hpp>
-
 // Task
-#include <Task/Entities/SearchRing.hpp>
-#include <Task/Operations/RouteOperations.hpp>
-#include <Task/Operations/SegmentOperations.hpp>
-#include <Task/Operations/Vector2D.hpp>
 #include <Task/Outputs/Route.hpp>
 #include <Task/Schemes/Search/InRegion/Input.hpp>
-#include <Task/SearchScheme.hpp>
 
-namespace EfficiencyMeasure {
+namespace Entities {
 using Input = Schemes::Search::InRegion::Input;
 using SearchRing = Entities::SearchRing;
 using Line = Entities::Line;
@@ -25,184 +12,148 @@ using Line = Entities::Line;
 class EfficiencyIndicators
 {
 protected:
-    double routeSquare;
-    std::vector<std::vector<int>> observationDensity;
+    std::vector<std::vector<double>> observationDensity;
     std::vector<std::vector<bool>> mask;
+    double routeSquare;
+    int cellLength;
 
-    std::pair<Point2D, Point2D> boxTack(const Geometry::BorderedLine& tack, const double& detRange)
-    {
-        double maxX = std::max(tack.getStart().getX(), tack.getFinish().getX());
-        double maxY = std::max(tack.getStart().getY(), tack.getFinish().getY());
-        double minX = std::min(tack.getStart().getX(), tack.getFinish().getX());
-        double minY = std::min(tack.getStart().getY(), tack.getFinish().getY());
-        return std::pair(Point2D{minX - detRange, minY - detRange}, Point2D{maxX + detRange, maxY + detRange});
-    }
+    /*!
+     * \brief boxTack
+     * \details Расчитывает бокс минимального размера, в котором лежит галс с учетом зоны обнаржения, представленный в виде двух точек
+     * \param tack [in] отрезок
+     * \param detRange [in] радиус обнаружения
+     * \return [out] две точки: нижняя левая вершина, верхняя правая вершина
+     */
+    std::pair<Point2D, Point2D> boxTack(const Geometry::BorderedLine& tack, const double& detRange);
 
-    void initializeMask(const PrimaryEntities::Polygon<Point2D>& polygon, const double& minX, const double& minY, const int& sizeX, const int& sizeY, const int& cellLength)
-    {
-        for (int i = 0; i < sizeY; ++i)
-        {
-            std::vector<bool> rowIsPolygon;
-            for (int j = 0; j < sizeX; ++j)
-            {
-                rowIsPolygon.push_back(AbstractOperations::coveredBy(Point2D{minX + j * cellLength, minY + i * cellLength}, polygon));
-            }
-            mask.push_back(rowIsPolygon);
-        }
-    }
+    /*!
+     * \brief initializeMask инициализация маски
+     * \param sizeX [in] количество ребер решетки по оси X внутри бокса полигона с учетом буфера ширины дальности обнаружения (внешний бокс)
+     * \param sizeY [in] количество ребер решетки по оси Y внутри внешнего бокса
+     */
+    void initializeMask(const size_t& sizeX, const size_t& sizeY);
 
-    void addObsercationTack(const Point2D& minCorner, const Point2D& firstPoint, const Point2D& secondPoint, const double& detRange, const int& cellLength, const int& stepLength)
-    {
-        int maxVal = std::floor(detRange / stepLength) + 1;
-        Geometry::BorderedLine tack(firstPoint, secondPoint);
-        if (tack.getLength() < detRange)
-        {
-            maxVal = std::floor(tack.getLength() / stepLength) + 1;
-        }
-        auto boxTack = this->boxTack(tack, detRange);
+    /*!
+     * \brief calculateMask расчет маски
+     * \details Решетка буллевых значений в зависимости от принадлежности точек решетки полигону.
+     * \param polygon [in] полигон
+     * \param minX [in] минимальная координата по оси X
+     * \param minY [in] минимальная координата по оси Y
+     * \param sizeX [in] количество ребер решетки по оси X внутри бокса полигона с учетом буфера ширины дальности обнаружения (внешний бокс)
+     * \param sizeY [in] количество ребер решетки по оси Y внутри внешнего бокса
+     */
+    void calculateMask(const PrimaryEntities::Polygon<Point2D>& polygon, const double& minX, const double& minY, const int& sizeX, const int& sizeY);
 
-        int sizeXTack = std::floor((boxTack.second.getX() - boxTack.first.getX()) / cellLength) + 1;
-        int sizeYTack = std::floor((boxTack.second.getY() - boxTack.first.getY()) / cellLength) + 1;
+    /*!
+     * \brief initializeObservationDensity инициализация матрицы плотности наблюдения
+     * \param sizeX [in]  число ребер решетки по оси х внутри бокса полигона с учетом буфера ширины дальности обнаружения (внешний бокс)
+     * \param sizeY [in] количество ребер решетки по оси Y внутри внешнего бокса
+     */
+    void initializeObservationDensity(const int& sizeX, const int& sizeY);
 
-        int initI = std::floor((boxTack.first.getY() - minCorner.getY()) / cellLength);
-        int initJ = std::floor((boxTack.first.getX() - minCorner.getX()) / cellLength);
+    /*!
+     * \brief addObservationTack
+     * \details Добавить время наблюдения каждой точки бокса, содержащего галс с учетом зоны обнаржения
+     * \param minCorner [in] нижняя левая вершина бокса
+     * \param firstPoint [in] начальная точка галса
+     * \param secondPoint [in] конечная точка галса
+     * \param detRange [in] радиус обнаружения
+     */
+    void addObservationTack(const Point2D& minCorner, const Point2D& firstPoint, const Point2D& secondPoint, const double& searchVelocity, const double& detRange);
 
-        for (int i = initI, stepTackY = 0; i < initI + sizeYTack; ++i, ++stepTackY)
-        {
-            for (int j = initJ, stepTackX = 0; j < initJ + sizeXTack; ++j, ++stepTackX)
-            {
-                double dist = Operations::pointToSegmentDistance(Point2D{boxTack.first.getX() + stepTackX * cellLength, boxTack.first.getY() + stepTackY * cellLength}, firstPoint, secondPoint);
-                if (dist > detRange)
-                {
-                    continue;
-                }
-                observationDensity[i][j] += maxVal - std::floor(dist / stepLength);
-            }
-        }
-    }
+    /*!
+     * \brief sumObservationTack
+     * \details Сложить вклады во время наблюдения от всех галсов
+     * \param box [in] бокс полигона с учетом буфера ширины дальности обнаружения
+     * \param route [in] маршрут
+     * \param detRange [in] дальность обнаружения
+     */
+    void sumObservationTack(const PrimaryEntities::Box<Point2D>& box, const Outputs::Route& route, const double& detRange);
 
-    void sumObservationTack(const PrimaryEntities::Box<Point2D>& box, const Outputs::Route& route, const double& detRange, const int& sizeX, const int& sizeY, const int& cellLength, const int& stepLength)
-    {
-        observationDensity.resize(sizeY);
-        for (int i = 0; i < sizeY; ++i)
-        {
-            observationDensity[i].resize(sizeX);
-        }
-
-        for (size_t i = 0; i < route.points.size() - 1; ++i)
-        {
-            addObsercationTack(box.min_corner(), route.points[i], route.points[i + 1], detRange, cellLength, stepLength);
-        }
-    }
-
-    double ObservationIntegral(const double& searchVelocity, const int& cellLength, const int& stepLength)
-    {
-        double integral = 0.0;
-        for (const auto& i : observationDensity)
-        {
-            for (const auto& j : i)
-            {
-                integral += j * std::pow(cellLength, 2) * stepLength / searchVelocity;
-            }
-        }
-        return integral;
-    }
+    /*!
+     * \brief observationIntegral Наработка наблюдения (площадь х время).
+     * \details Интеграл по матрице плотности наблюдения по всему боксу полигона с учетом буфера ширины дальности обнаружения (внешний бокс).
+     * \return [out]
+     */
+    double observationIntegral();
 
 public:
-    EfficiencyIndicators() = default;
+    /*!
+     * \brief EfficiencyIndicators
+     * \details Конструктор класса показателей эффективности схемы
+     * \param cl [in] размер клетки
+     */
+    EfficiencyIndicators(const int& cl)
+        : cellLength(cl){};
 
-    void calculateRouteSquare(const PrimaryEntities::Polygon<Point2D>& polygon, Outputs::Route& route, const double& detRange)
-    {
-        Polygon2D geometry;
-        auto detRing = Operations::detectionRing(route.points, detRange, 360);
-        if (detRing.empty())
-            routeSquare = 0.0;
-        for (size_t i = 0; i < detRing.size(); i++)
-        {
-            AbstractOperations::unionOf(detRing[i], geometry, geometry, true, true);
-        }
-        AbstractOperations::intersection(geometry, polygon, geometry);
-        routeSquare = AbstractOperations::area(geometry, true, true);
-    }
+    /*!
+     * \brief calculateRouteSquare
+     * \details Расчет площади области которая была покрыта поисковым маршрутом
+     * \param polygon [in] полигон
+     * \param route [in] маршрут
+     * \param detRange [in] дальность обнаружения
+     */
+    void calculateRouteSquare(const PrimaryEntities::Polygon<Point2D>& polygon, Outputs::Route& route, const double& detRange);
 
-    std::vector<std::vector<int>> calculateObservationDensity(const PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
-    {
-        const int cellLength = 200, stepLength = 200;
+    /*!
+     * \brief calculateObservationDensity
+     * \details Расчет матрицы плотности поиска
+     * \param polygon [in] полигон
+     * \param route [in] маршрут
+     * \param detRange [in] дальность обнаружения
+     */
+    void calculateObservationDensity(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange);
 
-        PrimaryEntities::Box<Point2D> box;
-        AbstractOperations::envelope(polygon.outer(), box);
+    /*!
+     * @note пока что некорректная интерпретация метрики
+     *
+     * \brief averageProductivity
+     * \details Расчёт средней производительности поиска
+     * \param polygon [in] полигон
+     * \param route [in] маршрут
+     * \param detRange [in] дальность обнаружения
+     * \param searchTime [in] поисковое время
+     * \return [out]
+     */
+    double averageProductivity(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange, const double& searchTime);
 
-        box = PrimaryEntities::Box<Point2D>(Point2D(box.min_corner().getX() - detRange, box.min_corner().getY() - detRange), Point2D(box.max_corner().getX() + detRange, box.max_corner().getY() + detRange));
+    /*!
+     * \brief averageTime
+     * \details Расчёт среднего времени наблюдения каждой точки в боксе
+     * \param polygon [in] полигон
+     * \param route [in] маршрут
+     * \param detRange [in] дальность обнаружения
+     * \return [out] среднее время
+     */
+    double averageTime(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange);
 
-        int sizeX = std::floor((box.max_corner().getX() - box.min_corner().getX()) / cellLength) + 1;
-        int sizeY = std::floor((box.max_corner().getY() - box.min_corner().getY()) / cellLength) + 1;
+    /*!
+     * \brief timeStatistics
+     * \details Расчет среднего времени наблюдения и СКО (среднеквадратичное отклонение) времени наблюдения
+     * \param polygon [in] полигон
+     * \param route [in] маршрут
+     * \param detRange [in] дальность обнаружения
+     * \return [out] среднее время и СКО
+     */
+    std::pair<double, double> timeStatistics(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange);
 
-        initializeMask(polygon, box.min_corner().getX(), box.min_corner().getY(), sizeX, sizeY, cellLength);
+    /*!
+     * \brief getObservationDensity
+     * \return [out] плотность
+     */
+    std::vector<std::vector<double>> getObservationDensity() const;
 
-        sumObservationTack(box, route, detRange, sizeX, sizeY, cellLength, stepLength);
+    /*!
+     * \brief getMask
+     * \return [out] маска
+     */
+    std::vector<std::vector<bool>> getMask() const;
 
-        for (size_t i = 0; i < mask.size(); ++i)
-        {
-            for (size_t j = 0; j < mask[i].size(); ++j)
-            {
-                observationDensity[i][j] *= mask[i][j];
-            }
-        }
-
-        return observationDensity;
-    }
-
-    std::string size(const PrimaryEntities::Polygon<Point2D>& polygon) const
-    {
-        auto [minX, maxX] = std::minmax_element(polygon.outer().begin(), polygon.outer().end(), [](const Point2D& first, const Point2D& second) {
-            return first.getX() < second.getX();
-        });
-        auto [minY, maxY] = std::minmax_element(polygon.outer().begin(), polygon.outer().end(), [](const Point2D& first, const Point2D& second) {
-            return first.getY() < second.getY();
-        });
-        int a = maxX->getX() - minX->getX();
-        int b = maxY->getY() - minY->getY();
-        return std::to_string(a) + "x" + std::to_string(b);
-    }
-
-    double averageProductivity(const PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange, const double& searchVelocity, const double& searchTime)
-    {
-        const int cellLength = 200, stepLength = 200;
-
-        if (observationDensity.empty())
-        {
-            calculateObservationDensity(polygon, route, detRange);
-        }
-
-        return ObservationIntegral(searchVelocity, cellLength, stepLength) / searchTime;
-    }
-
-    double averageTime(const PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange, const double& searchVelocity)
-    {
-        const int cellLength = 200, stepLength = 200;
-
-        if (observationDensity.empty())
-        {
-            calculateObservationDensity(polygon, route, detRange);
-        }
-
-        return ObservationIntegral(searchVelocity, cellLength, stepLength) / AbstractOperations::area(polygon, true, true);
-    }
-
-    std::vector<std::vector<int>> getObservationDensity() const
-    {
-        return observationDensity;
-    }
-
-    std::vector<std::vector<bool>> getMask() const
-    {
-        return mask;
-    }
-
-    double getRouteSquare()
-    {
-        return routeSquare;
-    }
+    /*!
+     * \brief getRouteSquare
+     * \return [out] площадь маршрута
+     */
+    double getRouteSquare() const;
 };
 
-} // namespace EfficiencyMeasure
+} // namespace Entities

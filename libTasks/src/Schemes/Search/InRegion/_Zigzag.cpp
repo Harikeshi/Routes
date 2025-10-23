@@ -1,8 +1,8 @@
 #include <Task/Schemes/Search/InRegion/_Zigzag.hpp>
 
 #include <Task/Exceptions/AlgorithmException.hpp>
+#include <Task/Operations/Geometry/Vector2D.hpp>
 #include <Task/Operations/RouteOperations.hpp>
-#include <Task/Operations/Vector2D.hpp>
 #include <Task/Schemes/Search/Config.hpp>
 #include <Task/Schemes/Search/InRegion/RouteType.hpp>
 #include <Task/Schemes/Search/InRegion/Utilities.hpp>

@@ -6,7 +6,13 @@
 
 namespace Operations {
 
-inline std::vector<int> split(const std::string& line)
+/*!
+ * \brief split
+ * \details
+ * \param line
+ * \return
+ */
+inline std::vector<int> splitLine(const std::string& line)
 {
     std::vector<int> result;
     std::string number;
@@ -16,7 +22,7 @@ inline std::vector<int> split(const std::string& line)
         {
             number.push_back(line[i]);
         }
-            else
+        else
         {
             result.push_back(std::stoi(number));
             number.clear();
@@ -25,7 +31,14 @@ inline std::vector<int> split(const std::string& line)
     return result;
 }
 
-inline void save(const std::vector<std::vector<int>>& m, const std::string& path)
+/*!
+ * \brief save
+ * \details Запись результата плотности в файл
+ * \param m [in] плотность
+ * \param path [in] путь до файла
+ */
+template<typename T>
+inline void saveMatrix(const std::vector<std::vector<T>>& m, const std::string& path)
 {
     std::ofstream file(path);
     if (!file.is_open())
@@ -43,7 +56,13 @@ inline void save(const std::vector<std::vector<int>>& m, const std::string& path
     file.close();
 }
 
-inline std::vector<std::vector<int>> load(const std::string& path)
+/*!
+ * \brief load
+ * \details Выгрузка плотности из файла
+ * \param path [in] путь до файла
+ * \return [out] плотность
+ */
+inline std::vector<std::vector<int>> loadMatrix(const std::string& path)
 {
     std::ifstream file(path);
     if (!file.is_open())
@@ -55,7 +74,7 @@ inline std::vector<std::vector<int>> load(const std::string& path)
 
     while (std::getline(file, line))
     {
-        std::vector<int> row = split(line);
+        std::vector<int> row = splitLine(line);
         result.push_back(row);
     }
     file.close();

@@ -1,7 +1,7 @@
 #include <Task/Schemes/Restore/ProryvK.hpp>
 
-#include <Task/Operations/AngularOperations.hpp>
-#include <Task/Operations/Vector2D.hpp>
+#include <Task/Operations/Geometry/AngularOperations.hpp>
+#include <Task/Operations/Geometry/Vector2D.hpp>
 
 using namespace Operations;
 

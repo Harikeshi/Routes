@@ -122,8 +122,12 @@ namespace GeographicLib {
     void filepos(int ix, int iy) const {
       _file.seekg(
 #if !(defined(__GNUC__) && __GNUC__ < 4)
+#if (__cplusplus < 201703)
                   // g++ 3.x doesn't know about the cast to streamoff.
+                  std::ios::streamoff
+#else
                   std::streamoff
+#endif
 #endif
                   (_datastart +
                    pixel_size_ * (unsigned(iy)*_swidth + unsigned(ix))));

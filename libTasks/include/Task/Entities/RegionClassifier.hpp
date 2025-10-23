@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Task/Entities/SearchRegion.hpp>
-#include <Task/Operations/SegmentOperations.hpp>
+#include <Task/Operations/Geometry/SegmentOperations.hpp>
 
 namespace Entities {
 

@@ -2,8 +2,8 @@
 #include <Task/Entities/SearchRegion.hpp>
 
 #include <Task/Exceptions/AlgorithmException.hpp>
+#include <Task/Operations/Geometry/SegmentOperations.hpp>
 #include <Task/Operations/RouteOperations.hpp>
-#include <Task/Operations/SegmentOperations.hpp>
 #include <Task/Schemes/Search/Config.hpp>
 
 /*! Core */
@@ -281,6 +281,32 @@ std::vector<RingIntersection> SearchRegion::intersectionsAllGEOS(const Point2D& 
     return result;
 }
 
+double SearchRegion::effectiveWidth(const Point2D& point, const Radian& transversalDirection, const double& detectionRange, const IntersectionMethod& im) const
+{
+    Line transversalLine{point, transversalDirection};
+    std::vector<RingIntersection> intersections = intersectionsAll(point, transversalDirection, im);
+    double minLength1 = detectionRange;
+    double minLength2 = detectionRange;
+    for (size_t i = 0; i < intersections.size(); ++i)
+    {
+        for (const auto& intersection : intersections[i]._intersections)
+        {
+            const Point2D& intersectionPoint = intersection.getPoint();
+            BorderedLine tack{point, intersectionPoint};
+            double length = tack.getLength();
+            if (tack.isForward() == transversalLine.isForward() && length < minLength1)
+            {
+                minLength1 = length;
+            }
+            else if (tack.isForward() != transversalLine.isForward() && length < minLength2)
+            {
+                minLength2 = length;
+            }
+        }
+    }
+    return minLength1 + minLength2;
+}
+
 SearchRing SearchRegion::getRing(size_t index) const
 {
     if (mOuterRing.size() == 0)
@@ -457,33 +483,21 @@ size_t SearchRegion::size() const
     return mInnerRings.size() + 1;
 }
 
+std::pair<Point2D, Point2D> SearchRegion::boxSizes() const
+{
+    auto [minX, maxX] = std::minmax_element(mOuterRing.begin(), mOuterRing.end(), [](const Point2D& first, const Point2D& second) {
+        return first.getX() < second.getX();
+    });
+    auto [minY, maxY] = std::minmax_element(mOuterRing.begin(), mOuterRing.end(), [](const Point2D& first, const Point2D& second) {
+        return first.getY() < second.getY();
+    });
+    return std::make_pair(Point2D{minX->getX(), minY->getY()}, Point2D{maxX->getX(), maxY->getY()});
+}
+
 double SearchRegion::halfPerimeter() const
 {
-    double minX = Schemes::Search::MAX_SIZE, minY = Schemes::Search::MAX_SIZE;
-    double maxX = -Schemes::Search::MAX_SIZE, maxY = -Schemes::Search::MAX_SIZE;
-    for (unsigned int i = 0; i < this->mOuterRing.size(); i++)
-    {
-        double x = this->mOuterRing[i].getX();
-        double y = this->mOuterRing[i].getY();
-        if (x < minX)
-        {
-            minX = x;
-        }
-        else if (x > maxX)
-        {
-            maxX = x;
-        }
-        if (y < minY)
-        {
-            minY = y;
-        }
-        else if (y > maxY)
-        {
-            maxY = y;
-        }
-    }
-
-    return maxX - minX + maxY - minY;
+    auto hp = boxSizes();
+    return hp.second.getX() - hp.first.getX() + hp.second.getY() - hp.first.getY();
 }
 
 double SearchRegion::maxTackLength(const Point2D& start, const RingIntersection& intersection) const

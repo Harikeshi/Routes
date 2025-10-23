@@ -3,8 +3,8 @@
 
 #include <AbstractOperations/Algorithms/Helper/BufferHelper.hpp>
 #include <Task/Exceptions/AlgorithmException.hpp>
+#include <Task/Operations/Geometry/Vector2D.hpp>
 #include <Task/Operations/RouteOperations.hpp>
-#include <Task/Operations/Vector2D.hpp>
 #include <Task/Schemes/Search/Config.hpp>
 #include <Task/Schemes/Search/InRegion/RouteType.hpp>
 #include <Task/Schemes/Search/InRegion/Utilities.hpp>
@@ -64,7 +64,7 @@ Outputs::Route Zigzag::calculate()
     ///
     std::vector<Point2D> pathToExit;
     auto infPolygon = region.crop(TRAVERSA_MIN);
-    const Entities::SearchRegion regionInf(infPolygon[0], infPolygon[0].outer()[entranceIdx], infPolygon[0].outer()[exitIdx]) ;
+    const Entities::SearchRegion regionInf(infPolygon[0], infPolygon[0].outer()[entranceIdx], infPolygon[0].outer()[exitIdx]);
 
     if (!AbstractOperations::correct(infPolygon[0]))
     {

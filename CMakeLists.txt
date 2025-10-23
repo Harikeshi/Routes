@@ -12,7 +12,10 @@ set(CMAKE_AUTORCC ON)
 # Для Astra C++17
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+if (NOT MSVC)
+    set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+endif ()
+
 set(libs_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/libs")
 
 add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES}
@@ -20,40 +23,40 @@ add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES}
 
 
 find_package(Qt5 COMPONENTS Widgets
-            DataVisualization
-            REQUIRED)
+        DataVisualization
+        REQUIRED)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
-            Qt5::Widgets
-            Qt5::DataVisualization
-    )
+        Qt5::Widgets
+        Qt5::DataVisualization
+)
 
 find_package(Git)
 #-------------------------------------------------------------------------------
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # GTest for LibTask
 find_package(GTest)
-if(NOT ${GTEST_FOUND})
-  mark_as_advanced(
-    gmock_build_tests
-    gtest_build_samples
-    gtest_build_tests
-    gtest_disable_pthreads
-    gtest_force_shared_crt
-  )
-endif()
+if (NOT ${GTEST_FOUND})
+    mark_as_advanced(
+            gmock_build_tests
+            gtest_build_samples
+            gtest_build_tests
+            gtest_disable_pthreads
+            gtest_force_shared_crt
+    )
+endif ()
 
-if(${PROJECT_BUILD_TESTS})
-  enable_testing()
-  message(STATUS "[${PROJECT_NAME}] Project build tests: ON")
-else()
-  message(STATUS "[${PROJECT_NAME}] Project build tests: OFF")
-endif()
+if (${PROJECT_BUILD_TESTS})
+    enable_testing()
+    message(STATUS "[${PROJECT_NAME}] Project build tests: ON")
+else ()
+    message(STATUS "[${PROJECT_NAME}] Project build tests: OFF")
+endif ()
 add_subdirectory(libTasks/)
 target_link_libraries(${PROJECT_NAME} PUBLIC Task)
 #-------------------------------------------------------------------------------
 if (MSVC)
-   set(Qt5_DIR "C:/Qt/5.15.17-msvc2019_64/lib/cmake/Qt5")
+    set(Qt5_DIR "C:/Qt/5.15.17-msvc2019_64/lib/cmake/Qt5")
 endif ()
 
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
@@ -94,13 +97,13 @@ if (IS_ARCH_LINUX)
     endif ()
 else ()
     find_package(libpqxx REQUIRED)
-    if(MSVC)
+    if (MSVC)
         target_link_libraries(${PROJECT_NAME} PUBLIC libpqxx::pqxx)
-    else()
-    target_include_directories(${PROJECT_NAME} PUBLIC ${libpqxx_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${libpqxx_LIBRARIES})
-    #message(FATAL_ERROR "libpqxx not found!")
-    endif()
+    else ()
+        target_include_directories(${PROJECT_NAME} PUBLIC ${libpqxx_INCLUDE_DIRS})
+        target_link_libraries(${PROJECT_NAME} PUBLIC ${libpqxx_LIBRARIES})
+        #message(FATAL_ERROR "libpqxx not found!")
+    endif ()
 endif ()
 
 #find_package(PostgreSQL REQUIRED)

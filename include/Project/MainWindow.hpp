@@ -25,6 +25,7 @@
 #include "./Initializer.hpp"
 #include "./MessageType.hpp"
 
+#include "Task/Exceptions/AlgorithmException.hpp"
 #include "Task/SearchTask.hpp"
 
 class MainWindow : public QMainWindow
@@ -284,6 +285,10 @@ private slots:
                 //TODO: message Произведен расчет
                 infoWidget->addMessage(QString("Расчет %1 произведен успешно!").arg(scene->getActorName()),
                                        MessageType::Success);
+            }
+            catch (const std::exception& ex)
+            {
+                infoWidget->addMessage(ex.what(), MessageType::Error);
             }
             catch (...)
             {

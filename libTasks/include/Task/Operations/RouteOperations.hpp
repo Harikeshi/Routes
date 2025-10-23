@@ -151,7 +151,7 @@ inline Ring2D tackDetectionRing(const Point2D& position, const Point2D& nextPosi
  * \param detectionRange [in] дальность действия ГАС, [0-999999, м]
  * \return
  */
-inline std::vector<Ring2D> detectionRing(std::vector<Point2D>& route, const double& detectionRange, const unsigned int countOfVertices = 360)
+inline std::vector<Ring2D> detectionRing(const std::vector<Point2D>& route, const double& detectionRange, const unsigned int countOfVertices = 360)
 {
     std::vector<Ring2D> result;
     Ring2D tack;
@@ -172,7 +172,7 @@ inline std::vector<Ring2D> detectionRing(std::vector<Point2D>& route, const doub
  * \param detectionRange [in] дальность действия ГАС, [0-999999, м]
  * \return [out] площадь фигуры
  */
-inline double routeSquare(const Polygon2D& polygon, std::vector<Point2D>& route, const double& detectionRange, const unsigned int countOfVertices = 360)
+inline double routeSquare(const Polygon2D& polygon, const std::vector<Point2D>& route, const double& detectionRange, const unsigned int countOfVertices = 360)
 {
     Polygon2D geometry;
     auto detRing = detectionRing(route, detectionRange, countOfVertices);
@@ -193,7 +193,7 @@ inline double routeSquare(const Polygon2D& polygon, std::vector<Point2D>& route,
  * \param route [in] маршрут
  * \return [out] количество точек
  */
-inline int countPoints(const Polygon2D& polygon, std::vector<Point2D>& route)
+inline int countPoints(const Polygon2D& polygon, const std::vector<Point2D>& route)
 {
     std::vector<std::pair<Point2D, double>> pointsWithRange;
     for (const auto& point : route)
@@ -219,7 +219,7 @@ inline Line centerLine(const Ring2D& ring, const Point2D& centerPoint)
     Point2D pointLine;
     double dist = 0;
 
-    for (int i = 0; i < box.size() - 3; i++)
+    for (size_t i = 0; i < box.size() - 3; i++)
     {
         BorderedLine borderLine(box[i], box[i + 1]);
         pointLine = borderLine.findNearestLinePoint(centerPoint);
@@ -232,6 +232,22 @@ inline Line centerLine(const Ring2D& ring, const Point2D& centerPoint)
     });
 
     return maxSegment->second.parallelLine(centerPoint);
+}
+
+inline Radian angleSum(const std::vector<Point2D>& points)
+{
+    if (points.size() < 3)
+    {
+        throw std::runtime_error("Слишком мало маршрутных точек!");
+    }
+    Radian angleSum{0};
+    for (size_t i = 0; i < points.size() - 2; ++i)
+    {
+        BorderedLine currSegment(points[i], points[i + 1]);
+        BorderedLine nextSegment(points[i + 1], points[i + 2]);
+        angleSum += fabs(nextSegment.getAngleTo(currSegment));
+    }
+    return angleSum;
 }
 
 } // namespace Operations

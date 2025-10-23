@@ -1,6 +1,6 @@
 #include "Task/Entities/RegionClassifier.hpp"
 #include <Task/Entities/SearchRing.hpp>
-#include <Task/Operations/SegmentOperations.hpp>
+#include <Task/Operations/Geometry/SegmentOperations.hpp>
 #include <Task/Schemes/Search/Config.hpp>
 
 /*! Core */
@@ -523,6 +523,5 @@ SearchRing SearchRing::deepenConcavities(const size_t& entrance, const size_t& e
 
     return *this;
 }
-
 
 } // namespace Entities

@@ -1,9 +1,9 @@
 #pragma once
 
 #include <AbstractOperations/Algorithms/Correct.hpp>
+#include <Task/Outputs/Route.hpp>
 #include <Task/Entities/SearchRegion.hpp>
 #include <Task/Entities/SearchRing.hpp>
-#include <Task/Outputs/Route.hpp>
 
 /*! Core */
 #include <Point/Point2D.hpp>
@@ -226,28 +226,19 @@ inline void validateRegionJson(const nlohmann::json& json)
 {
     // TODO: Добавить проверки validate Point2D
     if (json.find("borders") == json.end())
-        throw std::runtime_error("Поле \"borders\" отсутствует.");
+        return throw std::runtime_error("Поле \"borders\" отсутствует.");
 
     if (!json.at("borders").is_array())
-        throw std::runtime_error("Поле \"borders\" не является массивом.");
+        return throw std::runtime_error("Поле \"borders\" не является массивом.");
 
     if (json.at("borders").size() == 0)
-        throw std::runtime_error("Пустое поле \"borders\".");
-
-    //! TODO: Проверка на пустые кольца
-    for (const auto& border : json.at("borders"))
-    {
-        if (border.empty())
-        {
-            throw std::runtime_error("Одно из колец пустое.");
-        }
-    }
+        return throw std::runtime_error("Пустое поле \"borders\".");
 
     if (json.find("entry_point") == json.end())
-        throw std::runtime_error("Поле \"entry_point\" отсутствует.");
+        return throw std::runtime_error("Поле \"entry_point\" отсутствует.");
 
     if (json.find("exit_point") == json.end())
-        throw std::runtime_error("Поле \"exit_point\" отсутствует.");
+        return throw std::runtime_error("Поле \"exit_point\" отсутствует.");
 }
 
 // Outer
@@ -448,7 +439,7 @@ inline void setRouteFromJson(Outputs::Route& route, const nlohmann::json& json)
     for (size_t i = 0; i < sizePoints; ++i)
     {
         route.points.push_back(Point2D{json["routes"][0]["points"][i][0].get<double>(),
-                                       json["routes"][0]["points"][i][1].get<double>()});
+                                json["routes"][0]["points"][i][1].get<double>()});
     }
 
     for (size_t i = 0; i < sizeVelocities; ++i)
@@ -457,4 +448,4 @@ inline void setRouteFromJson(Outputs::Route& route, const nlohmann::json& json)
     }
 }
 
-} // namespace Operations
+}

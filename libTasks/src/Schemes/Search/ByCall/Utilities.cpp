@@ -1,6 +1,6 @@
 #include <Task/Schemes/Search/ByCall/Utilities.hpp>
 
-#include <Task/Operations/Vector2D.hpp>
+#include <Task/Operations/Geometry/Vector2D.hpp>
 
 namespace Schemes {
 namespace Search {
