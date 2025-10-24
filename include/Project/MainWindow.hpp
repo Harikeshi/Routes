@@ -90,7 +90,6 @@ public:
 
         rightVerticalSplitter->addWidget(dataWidget);
         rightVerticalSplitter->addWidget(tabs);
-        // rightVerticalSplitter->addWidget(table);
 
         //! Горизонтальный splitter нижний
         auto* innerHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
@@ -146,6 +145,7 @@ public:
 
     void initConnections()
     {
+        connect(manage, &ManageWidget::btSignal, this, &MainWindow::getMessage);
         //! Logics
 
         //! DataWidget
@@ -153,14 +153,19 @@ public:
         connect(dataWidget, &DataWidget::sendReportRequestIds, this, &MainWindow::setRequestReportFromIds);
 
         connect(datamanager, &Database::DatabaseManager::sendReportsModel, dataWidget, &DataWidget::updateReports);
+        connect(datamanager, &Database::DatabaseManager::sendReportRow, dataWidget, &DataWidget::updateReports_);
+
         connect(&Initializer::instance(), &Initializer::sendMessage, this, &MainWindow::processMessage);
         connect(&Initializer::instance(), &Initializer::sendError, this, &MainWindow::processError);
 
         connect(&Initializer::instance(), &Initializer::changedRequest, this, &MainWindow::receiveRequest);
         connect(&Initializer::instance(), &Initializer::changedReport, this, &MainWindow::receiveReport);
 
-        connect(&Initializer::instance(), &Initializer::changedRequest, datamanager, &Database::DatabaseManager::saveRequest);
-        connect(&Initializer::instance(), &Initializer::changedReport, datamanager, &Database::DatabaseManager::saveReport);
+        // connect(&Initializer::instance(), &Initializer::changedRequest, this, &MainWindow::requestChange);
+        // connect(&Initializer::instance(), &Initializer::changedReport, this, &MainWindow::reportChange);
+
+        //connect(&Initializer::instance(), &Initializer::changedRequest, datamanager, &Database::DatabaseManager::saveRequest);
+        //connect(&Initializer::instance(), &Initializer::changedReport, datamanager, &Database::DatabaseManager::saveReport);
 
         //! ProgressBar <-> Scene
         connect(scene, &SceneWidget::sendFullTime, progress, &UpdateProgressBar::setTotalTime);
@@ -187,7 +192,6 @@ public:
         connect(manage, &ManageWidget::sendMinusButtonClicked, this, &MainWindow::downSpeed);
         connect(manage, &ManageWidget::sendPlusButtonClicked, this, &MainWindow::upSpeed);
         connect(manage, &ManageWidget::clickVisionButton, scene, &SceneWidget::changeShowWidthPath);
-        //        connect(manage, &ManageWidget::clickVisionButton, scene, &SceneWidget::changeShowRoutesPoints);
         connect(manage, &ManageWidget::clickedCalculate, this, &MainWindow::clickedCalc);
         connect(manage, &ManageWidget::pushReset, scene, &SceneWidget::reset);
 
@@ -201,12 +205,14 @@ public:
         connect(dataWidget, &DataWidget::sendRequestFromWidget, this, &MainWindow::setRequestFromDataWidget);
         connect(dataWidget, &DataWidget::sendDeleteReportRequestIds, this, &MainWindow::deleteRequestReportFromTable); // delete
         connect(dataWidget, &DataWidget::sendSaveReportRequestIds, this, &MainWindow::saveRequestReportToDisk);        // save
+        connect(dataWidget, &DataWidget::sendAddReportToDbSignal, this, &MainWindow::addRequestReportToDb);            // add
 
         //! MatrixViewer
         connect(matrix, &MatrixViewWidget::sendMessage, this, &MainWindow::getMessage);
     }
 
 private slots:
+
     /*!
      * Инициализация Reports при загрузке MainWindow.
      */
@@ -301,11 +307,6 @@ private slots:
         }
     }
 
-    //    void addInformation(int speed)
-    //    {
-    //        infoWidget->addMessage(QString::number(speed) + " м/c новая скорость ПЛ.", MessageType::Info);
-    //    }
-
     /*!
      * Действия после инициализации request.
      */
@@ -331,6 +332,7 @@ private slots:
     }
 
     /*!
+     * Методы работы с базой данных
      * Для загрузки из строки из базы Данных.
      * @param request_id
      * @param report_id
@@ -387,17 +389,15 @@ private slots:
         {
             datamanager->deleteReport(report_id);
 
-            QMessageBox::information(this, tr("Готово"), tr("Запись удалена."));
-
-            // обновить таблицу
-            //dataWidget->updateReports(datamanager->allReportRowsModel());
             dataWidget->deleteReport(report_id);
+            // обновить таблицу
         }
         else
         {
             // отмена
         }
     }
+
     void saveRequestReportToDisk(size_t report_id, size_t request_id)
     {
         const QString dirPath = QFileDialog::getSaveFileName(
@@ -408,17 +408,33 @@ private slots:
             return;
         }
 
-        QFileInfo fi(dirPath);
-        QString filePath = fi.absoluteFilePath() + QDir::separator() + fi.fileName();
-
         auto json_report = datamanager->getReport(report_id).toNJson().dump(4);
         auto json_request = datamanager->getRequest(request_id).toNJson().dump(4);
         saveFile(dirPath + "_report.json", json_report);
         saveFile(dirPath + "_request.json", json_request);
     }
 
+    void addRequestReportToDb()
+    {
+        // TODO: Проверить id в базе, Чтобы не сохранять одинаковые или оставить на усмотрение пользователя;
+        if (reportLoaded == true)
+        {
+            auto request_id = datamanager->saveRequest(Initializer::instance().getRequest());
+
+            auto report_id = datamanager->saveReport(Initializer::instance().getReport());
+
+            infoWidget->addMessage(QString("Report #%1 сохранен в базу данных.").arg(report_id), MessageType::Success);
+        }
+        else
+        {
+            infoWidget->addMessage("Report не загружен.", MessageType::Warning);
+        }
+
+        table->update();
+    }
+
 private:
-    void saveFile(QString filePath, const std::string& txt)
+    void saveFile(const QString& filePath, const std::string& txt)
     {
         QFile file(filePath);
 
@@ -457,6 +473,7 @@ public:
         infoWidget->addMessage(message, type);
     }
 
+    // Отправка сообщения в InformationWidget
     void getMessage(const QString& message, size_t type)
     {
         infoWidget->addMessage(message, static_cast<MessageType>(type));
@@ -495,6 +512,10 @@ public:
     }
 
 public:
+    /*!
+     * Активируем виджеты после загрузки report.
+     * @param value
+     */
     void setEnabled(bool value)
     {
         // manage->setEnabled(value);
@@ -521,23 +542,17 @@ private slots:
         Initializer::instance().loadFromJson(obj);
     }
 
-public:
-    void calculate()
-    {
-        // Нажатие Calc:
-        // вызов ActorType getSchemeType() из scene
-        // SearchTask(request);
-        // Вызов SearchTask.calculate(ActorType);
-        // Обработать полученный json.
-        // Выгрузить в scene.
-        // Получить из сцены название
-    }
-
 protected:
     void keyPressEvent(QKeyEvent* event) override
     {
         switch (event->key())
         {
+        case Qt::Key_0:
+        {
+            auto x = datamanager->getRequest(179).toNJson();
+            std::cout << x.dump(4) << std::endl;
+            break;
+        }
         case Qt::Key_U:
             break;
         case Qt::Key_Q:
@@ -565,9 +580,6 @@ protected:
         case Qt::Key_P:
             this->pause();
             break;
-        case Qt::Key_F: // TODO: Для тестов
-            this->setup();
-            break;
         case Qt::Key_X:
             this->drawing();
             break;
@@ -579,35 +591,6 @@ protected:
     }
 
 private:
-    void setup()
-    {
-        try
-        {
-            //        QJsonObject obj = Operations::jsonFromFile("d:\\test\\request.json");
-            //            QJsonObject obj = Operations::jsonFromFile("/home/harikeshi/ajson/request.json");
-            //            QJsonObject obj = Operations::jsonFromFile("e:\\visualization\\jsons\\request.json");
-            QJsonObject obj = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\request.json");
-            // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
-            Initializer::instance().loadFromJson(obj);
-
-            requestLoaded = true;
-
-            //        obj = Operations::jsonFromFile("d:\\test\\result.json");
-            //             obj = Operations::jsonFromFile("/home/harikeshi/ajson/result.json");
-            //            obj = Operations::jsonFromFile("e:\\visualization\\jsons\\result.json");
-            obj = Operations::jsonFromFile("d:\\dev\\visualization\\jsons\\result.json");
-            // TODO: может просто из инициализатора приходить request или report и используется там, где подписано?
-            Initializer::instance().loadFromJson(obj);
-
-            reportLoaded = true;
-        }
-        catch (...)
-        {
-        }
-
-        checkLoad();
-    }
-
     void checkLoad()
     {
         if (reportLoaded & reportLoaded)
@@ -653,7 +636,6 @@ private:
         else
         {
             scene->pause();
-            // manage->setPauseButtomImage(scene->pause());
         }
     }
 
@@ -671,10 +653,6 @@ private:
     void speedReset()
     {
         scene->resetSpeed();
-    }
-
-    void mouseMoveEvent(QMouseEvent* event) override
-    {
     }
 
 private:
@@ -696,4 +674,7 @@ private:
 
     bool requestLoaded = false;
     bool reportLoaded = false;
+
+    // bool reportChanged = false;
+    // bool requestChanged = false;
 };

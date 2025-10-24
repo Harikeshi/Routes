@@ -24,34 +24,25 @@ public:
         playStopButton = new QPushButton(this);
         playStopButton->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
         playStopButton->setCheckable(true);
-
-        connect(playStopButton, &QPushButton::toggled, this, &ManageWidget::sendPlayButtonClicked);
-
         layout->addWidget(playStopButton);
 
         // [ pause ]
         pauseButton = new QPushButton(this);
         pauseButton->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
-
-        connect(pauseButton, &QPushButton::clicked, this, &ManageWidget::sendPauseButtonClicked);
-
         layout->addWidget(pauseButton);
 
         // [ reset ]
         resetButton = new QPushButton("Reset", this);
-        connect(resetButton, &QPushButton::clicked, this, &ManageWidget::sendReset);
         layout->addWidget(resetButton);
 
         // speed up / speed down
         QHBoxLayout* speedLayout = new QHBoxLayout();
         minusButton = new QPushButton(this);
         minusButton->setIcon(style()->standardIcon(QStyle::SP_MediaSeekBackward));
-        connect(minusButton, &QPushButton::clicked, this, &ManageWidget::sendMinusButtonClicked);
         speedLayout->addWidget(minusButton);
 
         plusButton = new QPushButton(this);
         plusButton->setIcon(style()->standardIcon(QStyle::SP_MediaSeekForward));
-        connect(plusButton, &QPushButton::clicked, this, &ManageWidget::sendPlusButtonClicked);
         speedLayout->addWidget(plusButton);
 
         layout->addLayout(speedLayout);
@@ -59,17 +50,22 @@ public:
         QHBoxLayout* visHasLayout = new QHBoxLayout();
         visionButton = new QPushButton(this);
         visionButton->setText("*"); // Используем эмодзи как временное решение
-        connect(visionButton, &QPushButton::clicked, this, &ManageWidget::visionButtonClicked);
-
         visHasLayout->addWidget(visionButton);
 
+        auto* bt = new QPushButton(this);
+        bt->setText("$");
+
+        connect(bt, &QPushButton::clicked, this, &ManageWidget::print);
+
+        visHasLayout->addWidget(bt);
         calcButton = new QPushButton("Calc", this);
-        connect(calcButton, &QPushButton::clicked, this, &ManageWidget::calculateClicked);
-
         visHasLayout->addWidget(calcButton);
-        layout->addLayout(visHasLayout);
 
+        layout->addLayout(visHasLayout);
         setLayout(layout);
+
+        this->initConnections();
+
     }
 
 signals:
@@ -83,7 +79,25 @@ signals:
     void pushReset();
     void clickedCalculate();
 
+    void btSignal(QString, size_t);
+private:
+    void print()
+    {
+        emit btSignal("Hello World!", 1);
+    }
+
 protected:
+    void initConnections()
+    {
+        connect(playStopButton, &QPushButton::toggled, this, &ManageWidget::sendPlayButtonClicked);
+        connect(pauseButton, &QPushButton::clicked, this, &ManageWidget::sendPauseButtonClicked);
+        connect(resetButton, &QPushButton::clicked, this, &ManageWidget::sendReset);
+        connect(minusButton, &QPushButton::clicked, this, &ManageWidget::sendMinusButtonClicked);
+        connect(plusButton, &QPushButton::clicked, this, &ManageWidget::sendPlusButtonClicked);
+        connect(visionButton, &QPushButton::clicked, this, &ManageWidget::visionButtonClicked);
+        connect(calcButton, &QPushButton::clicked, this, &ManageWidget::calculateClicked);
+    }
+
     void calculateClicked()
     {
         emit clickedCalculate();

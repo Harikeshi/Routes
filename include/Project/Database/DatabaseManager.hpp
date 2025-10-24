@@ -27,10 +27,7 @@ public:
     explicit DatabaseManager(QObject* parent = nullptr)
         : QObject(parent)
     {
-        //!
-        //    QString connectionString = "host=127.0.0.1 dbname=requests_reports user=viz_user password=1 connect_timeout=3";
         QString connectionString = "host=192.168.50.52 dbname=requests_reports user=viz_user password=1 connect_timeout=1";
-        //        QString connectionString = "host=192.168.205.130 dbname=requests_reports user=viz_user password=1 connect_timeout=3";
         try
         {
             // TODO: need Create Factory
@@ -134,33 +131,52 @@ public:
         repository->deleteReportById(id);
     }
 
-    void saveReport(Models::Report report)
+    size_t saveReport(Models::Report report)
     {
+        size_t id{0};
+
         try
         {
             report.request_id = repository->getLastRequestId();
             report.scheme = scheme;
 
-            emit reportSaved(repository->save(report));
-
-            emit sendReportsModel(allReportRowsModel());
+            id = repository->save(report);
+            //
+            // emit reportSaved(id);
+            // size_t report_id;
+            // size_t request_id;
+            // QString scheme;
+            // QString message;
+            // QString date;
+            // QString owner;
+            //
+            //repository->findReportById(id);
+            emit sendReportRow(ReportRowModel{id, report.request_id, report.scheme, QString{}, report.created_at.toString(), report.owner});
+            //emit sendReportsModel(allReportRowsModel());
         }
         catch (const std::exception& e)
         {
             emit sendError(QString("Failed to save report: %1").arg(e.what()));
         }
+
+        return id;
     }
 
-    void saveRequest(const Models::Request& request)
+    size_t saveRequest(const Models::Request& request)
     {
+        size_t id{0};
+
         try
         {
-            emit requestSaved(repository->save(request));
+            auto id = repository->save(request);
+            emit requestSaved(id);
         }
         catch (const std::exception& e)
         {
             emit sendError(QString("Failed to save request: %1").arg(e.what()));
         }
+
+        return id;
     }
 public slots:
     void setScheme(const QString& name)
@@ -173,6 +189,7 @@ signals:
     void requestSaved(size_t id);
 
     void sendReportsModel(const QVector<ReportRowModel>&) const;
+    void sendReportRow(const ReportRowModel&);
     void sendError(const QString& message) const;
     void sendMessage(const QString& message) const;
 

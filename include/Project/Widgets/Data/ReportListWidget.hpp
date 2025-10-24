@@ -58,6 +58,20 @@ public slots:
         }
     }
 
+    void refresh(const Database::ReportRowModel& row)
+    {
+        try
+        {
+            model_->addRow(std::move(row));
+
+            update(); // TODO: ?
+        }
+        catch (const std::exception& ex)
+        {
+            emit sendError(QString("Failed to load reports: %1").arg(ex.what()));
+        }
+    }
+
 signals:
     void reportActivated(size_t report_id, size_t request_id);
     void sendError(const QString&);

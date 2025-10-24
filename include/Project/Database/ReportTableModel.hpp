@@ -19,6 +19,10 @@ public:
     {
         beginResetModel();
         rows.push_back(row);
+
+        //! Сортировка
+        std::sort(rows.begin(), rows.end(), [](const ReportRowModel& a, const ReportRowModel& b) { return a.report_id < b.report_id; });
+
         endResetModel();
     }
 
@@ -26,6 +30,7 @@ public:
     {
         beginResetModel();
         rows = std::move(_rows);
+        std::sort(rows.begin(), rows.end(), [](const ReportRowModel& a, const ReportRowModel& b) { return a.report_id < b.report_id; });
         endResetModel();
     }
 
