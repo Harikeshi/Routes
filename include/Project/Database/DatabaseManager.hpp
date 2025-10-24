@@ -141,17 +141,7 @@ public:
             report.scheme = scheme;
 
             id = repository->save(report);
-            //
-            // emit reportSaved(id);
-            // size_t report_id;
-            // size_t request_id;
-            // QString scheme;
-            // QString message;
-            // QString date;
-            // QString owner;
-            //
-            //repository->findReportById(id);
-            emit sendReportRow(ReportRowModel{id, report.request_id, report.scheme, QString{}, report.created_at.toString(), report.owner});
+            emit sendReportRow(ReportRowModel{id, report.request_id, report.scheme, report.messages()[0].text, report.created_at.toString(), report.owner});
             //emit sendReportsModel(allReportRowsModel());
         }
         catch (const std::exception& e)

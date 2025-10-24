@@ -125,5 +125,10 @@ public:
     {
         return _routes;
     }
+
+    QVector<Message> messages() const
+    {
+        return _messages;
+    }
 };
 } // namespace Models
