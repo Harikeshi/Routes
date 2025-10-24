@@ -224,21 +224,29 @@ inline void saveJsonToHome(const nlohmann::json& json, const std::string& fileNa
 // Region -> json["search_region"]
 inline void validateRegionJson(const nlohmann::json& json)
 {
-    // TODO: Добавить проверки validate Point2D
     if (json.find("borders") == json.end())
-        return throw std::runtime_error("Поле \"borders\" отсутствует.");
+        throw std::runtime_error("Поле \"borders\" отсутствует.");
 
     if (!json.at("borders").is_array())
-        return throw std::runtime_error("Поле \"borders\" не является массивом.");
+        throw std::runtime_error("Поле \"borders\" не является массивом.");
 
     if (json.at("borders").size() == 0)
-        return throw std::runtime_error("Пустое поле \"borders\".");
+        throw std::runtime_error("Пустое поле \"borders\".");
+
+    //! TODO: Проверка на пустые кольца
+    for (const auto& border : json.at("borders"))
+    {
+        if (border.empty())
+        {
+            throw std::runtime_error("Одно из колец пустое.");
+        }
+    }
 
     if (json.find("entry_point") == json.end())
-        return throw std::runtime_error("Поле \"entry_point\" отсутствует.");
+        throw std::runtime_error("Поле \"entry_point\" отсутствует.");
 
     if (json.find("exit_point") == json.end())
-        return throw std::runtime_error("Поле \"exit_point\" отсутствует.");
+        throw std::runtime_error("Поле \"exit_point\" отсутствует.");
 }
 
 // Outer
