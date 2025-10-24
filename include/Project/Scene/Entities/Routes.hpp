@@ -24,24 +24,22 @@ class Routes final : public QWidget
     using Limits = Entities::Limits;
     using Route = Models::Route;
     using Objects = Objects::Objects;
-    // using PointWidget = Scene::Objects::PointWidget;
 
     Q_OBJECT
 
-    // Цвета для БЭНКов не меняются
+    // Цвета для БЭНКов не меняются, можно добавить еще.
     const QVector<QColor> palette = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::cyan, Qt::magenta};
 
-    // TODO: напрашивается RoutesWidget
-    Object parameters; // Возможно построение routes делать из ViWidget
+    Object parameters; //!
 
     QVector<RouteObject*> routes{};
 
     size_t numberRoutes; // количество не законченных
 
 signals:
-    void sendIndexCurrentPositionSpeed(size_t, const QPointF&, double);
+    void sendIndexCurrentPositionSpeed(size_t, const QPointF&, double); //! Возвращает текущую точку и скорость.
 
-    void complete(void);
+    void complete(void); //! Сообщает о завершении путей.
 
 public:
     Routes(QWidget* parent = nullptr)
@@ -65,21 +63,11 @@ public:
         parameters.reset();
     }
 
-    void changeShowPoints()
-    {
-        for (const auto& route : routes)
-            route->changeShowPoints();
-    }
-
     void draw(QPainter& painter)
     {
         for (const auto& route : routes)
         {
             route->draw(painter);
-
-            // sendIntersectionResult(QString("Target Position: [" + QString("%1, %2").arg(target->getCurrentPosition().x()).arg(target->getCurrentPosition().y()) + ", Ship[" +
-            //                                       QString("] position:") + QString("%1, %2").arg(route->getCurrentPosition().x()).arg(route->getCurrentPosition().y()) +
-            //                                      QString(", Radius: ") + QString("%1").arg(route->getRadius())));
         }
     }
 
@@ -164,14 +152,6 @@ public:
         }
     }
 
-    void mousePressEvent(QMouseEvent* event, const QPointF& point)
-    {
-        for (const auto& route : routes)
-        {
-            route->mousePressEvent(event, point);
-        }
-    }
-
     void move(double time)
     {
         for (size_t i = 0; i != routes.size(); ++i)
@@ -206,7 +186,6 @@ public:
         }
     }
 
-    // У всех состояние отрисовки одинаковое сейчас
     StateType getStateType() const
     {
         if (routes.isEmpty())
@@ -214,9 +193,14 @@ public:
             return StateType::Clean;
         }
 
+        // У всех состояние отрисовки одинаковое сейчас
         return routes.first()->getStateType();
     }
 
+    /*!
+     * Получить предельные значения из параметров сегментов.
+     * @param limits
+     */
     void setLimits(Limits& limits) const
     {
         for (const auto& route : routes)

@@ -84,29 +84,4 @@ public:
         }
     }
 };
-
-#include <QWidget>
-
-// Memento
-class Memento
-{
-    State* state;
-    Qt::Key key;
-
-public:
-    Memento(State* state_, Qt::Key key)
-        : state(state_), key(key)
-    {
-    }
-
-    Qt::Key getKey() const
-    {
-        return key;
-    }
-
-    State* getState() const
-    {
-        return state;
-    }
-};
 } // namespace Scene::Objects

@@ -44,17 +44,6 @@ public:
         checkButton->setStyleSheet("QPushButton { }");
         mainLayout->addWidget(checkButton);
 
-        // [ Straight | Twisting ]
-        paintButton = new QPushButton("Straight");
-        paintButton->setChecked(false);
-        paintButton->setCheckable(true); // Включаем функцию фиксации
-        connect(paintButton, &QPushButton::toggled, this, [this](bool checked) {
-            paintButton->isChecked() ? paintButton->setText("Straight") : paintButton->setText("Winding");
-        });
-
-        paintButton->setEnabled(false);
-        mainLayout->addWidget(paintButton);
-
         // [ Reset ]
         resetButton = new QPushButton("Reset", this);
         mainLayout->addWidget(resetButton);
@@ -145,7 +134,6 @@ private:
     QLineEdit* speedInput;
 
     QPushButton* checkButton;
-    QPushButton* paintButton;
     QPushButton* resetButton;
 };
 } // namespace Widgets

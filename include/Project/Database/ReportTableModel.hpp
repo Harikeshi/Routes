@@ -29,7 +29,7 @@ public:
     void setRows(const QVector<ReportRowModel>& _rows)
     {
         beginResetModel();
-        rows = std::move(_rows);
+        rows = _rows;
         std::sort(rows.begin(), rows.end(), [](const ReportRowModel& a, const ReportRowModel& b) { return a.report_id < b.report_id; });
         endResetModel();
     }
@@ -106,7 +106,11 @@ public:
             return "Date";
         case 5:
             return "Owner";
+        default:
+            break;
         }
+
+
         return {};
     }
 

@@ -40,60 +40,6 @@ public:
         current = segment.getStart();
     }
 
-    QPainterPath create(const QPointF& a, const QPointF& b, qreal R)
-    {
-        QPainterPath path;
-        if (a == b)
-        {
-            path.addEllipse(a, R, R);
-            return path;
-        }
-        QPointF v = b - a;
-        qreal L = std::hypot(v.x(), v.y());
-        QPointF dir(v.x() / L, v.y() / L);
-        QPointF n(-dir.y(), dir.x());
-
-        QPointF aL = a + n * R;
-        QPointF aR = a - n * R;
-        QPointF bL = b + n * R;
-        QPointF bR = b - n * R;
-
-        path.moveTo(aL);
-        path.lineTo(bL);
-        path.lineTo(bR);
-        path.lineTo(aR);
-        path.closeSubpath();
-
-        QRectF arcRectA(a.x() - R, a.y() - R, 2 * R, 2 * R);
-        QRectF arcRectB(b.x() - R, b.y() - R, 2 * R, 2 * R);
-
-        QPainterPath capA;
-        capA.moveTo(aR);
-        capA.arcTo(arcRectA, std::atan2(-(aR.y() - a.y()), aR.x() - a.x()) * 180 / M_PI, 180);
-        QPainterPath capB;
-        capB.moveTo(bL);
-        capB.arcTo(arcRectB, std::atan2(-(bL.y() - b.y()), bL.x() - b.x()) * 180 / M_PI, 180);
-
-        path = path.united(capA);
-        path = path.united(capB);
-
-        return path;
-    }
-
-    void cDrawFull(QPainter& painter, double radius, const QColor& color = QColor(100, 150, 255, 180))
-    {
-        auto capsule = create(segment.start, segment.end, radius);
-
-        painter.fillPath(capsule, color);
-    }
-
-    void cDrawCurrent(QPainter& painter, double radius, const QColor& color = QColor(100, 150, 255, 180))
-    {
-        auto capsule = create(segment.start, current, radius);
-
-        painter.fillPath(capsule, color);
-    }
-
     void drawCurrent(QPainter& painter, const QColor& color) const
     {
         setPen(painter, color);
@@ -103,7 +49,6 @@ public:
     void drawFull(QPainter& painter, const QColor& color) const
     {
         setPen(painter, color);
-
         painter.drawLine(segment.start, segment.end);
     }
 

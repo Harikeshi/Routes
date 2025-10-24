@@ -23,6 +23,7 @@ public:
         // [ start | stop ]
         playStopButton = new QPushButton(this);
         playStopButton->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
+
         playStopButton->setCheckable(true);
         layout->addWidget(playStopButton);
 
@@ -52,12 +53,6 @@ public:
         visionButton->setText("*"); // Используем эмодзи как временное решение
         visHasLayout->addWidget(visionButton);
 
-        auto* bt = new QPushButton(this);
-        bt->setText("$");
-
-        connect(bt, &QPushButton::clicked, this, &ManageWidget::print);
-
-        visHasLayout->addWidget(bt);
         calcButton = new QPushButton("Calc", this);
         visHasLayout->addWidget(calcButton);
 
@@ -65,7 +60,6 @@ public:
         setLayout(layout);
 
         this->initConnections();
-
     }
 
 signals:
@@ -78,13 +72,6 @@ signals:
 
     void pushReset();
     void clickedCalculate();
-
-    void btSignal(QString, size_t);
-private:
-    void print()
-    {
-        emit btSignal("Hello World!", 1);
-    }
 
 protected:
     void initConnections()

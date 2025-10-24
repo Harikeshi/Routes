@@ -145,7 +145,6 @@ public:
 
     void initConnections()
     {
-        connect(manage, &ManageWidget::btSignal, this, &MainWindow::getMessage);
         //! Logics
 
         //! DataWidget
@@ -309,6 +308,7 @@ private slots:
 
     /*!
      * Действия после инициализации request.
+     * Действия при изменении request
      */
     void receiveRequest(const Request& request)
     {
@@ -388,7 +388,6 @@ private slots:
         if (reply == QMessageBox::Yes)
         {
             datamanager->deleteReport(report_id);
-
             dataWidget->deleteReport(report_id);
             // обновить таблицу
         }
@@ -409,8 +408,9 @@ private slots:
         }
 
         auto json_report = datamanager->getReport(report_id).toNJson().dump(4);
-        auto json_request = datamanager->getRequest(request_id).toNJson().dump(4);
         saveFile(dirPath + "_report.json", json_report);
+
+        auto json_request = datamanager->getRequest(request_id).toNJson().dump(4);
         saveFile(dirPath + "_request.json", json_request);
     }
 
@@ -468,6 +468,7 @@ public:
         MessageType type = MessageType::Success;
 
         scene->reloadRequest(request);
+
         Initializer::instance().saveRequest(request);
 
         infoWidget->addMessage(message, type);
@@ -547,12 +548,6 @@ protected:
     {
         switch (event->key())
         {
-        case Qt::Key_0:
-        {
-            auto x = datamanager->getRequest(179).toNJson();
-            std::cout << x.dump(4) << std::endl;
-            break;
-        }
         case Qt::Key_U:
             break;
         case Qt::Key_Q:
@@ -608,8 +603,9 @@ private:
         if (!requestLoaded || !reportLoaded)
         {
             if (!requestLoaded)
+            {
                 infoWidget->addMessage("Request не загружен.", MessageType::Error);
-
+            }
             if (!reportLoaded)
             {
                 infoWidget->addMessage("Report не загружен.", MessageType::Error);

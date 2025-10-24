@@ -48,7 +48,7 @@ public slots:
     {
         try
         {
-            model_->setRows(std::move(rows));
+            model_->setRows(rows);
 
             update(); // TODO: ?
         }
@@ -62,7 +62,7 @@ public slots:
     {
         try
         {
-            model_->addRow(std::move(row));
+            model_->addRow(row);
 
             update(); // TODO: ?
         }
