@@ -81,6 +81,8 @@ inline Outputs::Route routeFromReport(const Models::Report& report)
  */
 inline std::vector<std::vector<double>> buildMatrix(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
 {
+    //return {{1, 1, 1}, {2, 2, 2}, {1, 1, 1}};
+
     Entities::EfficiencyIndicators indicators(100);
     // bbox
     indicators.calculateObservationDensity(polygon, route, detRange);
@@ -98,10 +100,15 @@ inline std::vector<std::vector<double>> buildMatrix(PrimaryEntities::Polygon<Poi
  */
 inline double buildAverageTime(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
 {
-    double result;
-
     Entities::EfficiencyIndicators indicators(100);
 
     return indicators.averageTime(polygon, route, detRange);
+}
+
+inline std::pair<double, double> buildTimeStatistics(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
+{
+    Entities::EfficiencyIndicators indicators(100);
+
+    return indicators.timeStatistics(polygon, route, detRange);
 }
 } // namespace Operations

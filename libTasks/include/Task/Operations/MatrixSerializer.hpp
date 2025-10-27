@@ -7,14 +7,14 @@
 namespace Operations {
 
 /*!
- * \brief split
+ * \brief splitLine
  * \details
  * \param line
  * \return
  */
-inline std::vector<int> splitLine(const std::string& line)
+inline std::vector<double> splitLine(const std::string& line)
 {
-    std::vector<int> result;
+    std::vector<double> result;
     std::string number;
     for (size_t i = 0; i < line.size(); ++i)
     {
@@ -32,7 +32,7 @@ inline std::vector<int> splitLine(const std::string& line)
 }
 
 /*!
- * \brief save
+ * \brief saveMatrix
  * \details Запись результата плотности в файл
  * \param m [in] плотность
  * \param path [in] путь до файла
@@ -57,24 +57,24 @@ inline void saveMatrix(const std::vector<std::vector<T>>& m, const std::string& 
 }
 
 /*!
- * \brief load
+ * \brief loadMatrix
  * \details Выгрузка плотности из файла
  * \param path [in] путь до файла
  * \return [out] плотность
  */
-inline std::vector<std::vector<int>> loadMatrix(const std::string& path)
+inline std::vector<std::vector<double>> loadMatrix(const std::string& path)
 {
     std::ifstream file(path);
     if (!file.is_open())
     {
         throw std::runtime_error("Не удалось открыть файл!");
     }
-    std::vector<std::vector<int>> result;
+    std::vector<std::vector<double>> result;
     std::string line;
 
     while (std::getline(file, line))
     {
-        std::vector<int> row = splitLine(line);
+        std::vector<double> row = splitLine(line);
         result.push_back(row);
     }
     file.close();

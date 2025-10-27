@@ -20,24 +20,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 #-------------------------------------------------------------------------------
 target_link_libraries(${PROJECT_NAME} ExceptionTools MathTools Point PrimaryEntities Geometry TriangularGeometry)
 #-------------------------------------------------------------------------------
-# Add input / output json-files
-file(GLOB json_files "${CMAKE_CURRENT_SOURCE_DIR}/data/*json")
-
-add_custom_target(JsonInput SOURCES ${json_files})
-
-foreach(json_file ${json_files})
-    get_filename_component(json_name ${json_file} NAME)
-    configure_file(${json_file} "${CMAKE_BINARY_DIR}/bin/${json_name}" COPYONLY)
-endforeach()
-#-------------------------------------------------------------------------------
 target_include_directories(${PROJECT_NAME}
 PUBLIC
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
-#-------------------------------------------------------------------------------
-  target_include_directories(
-    ${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
-
-  add_subdirectory(tests)
 #-------------------------------------------------------------------------------
 add_subdirectory(dependencies/)

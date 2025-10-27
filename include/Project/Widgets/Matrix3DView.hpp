@@ -78,9 +78,10 @@ public:
         stacked_ = new QStackedLayout(stackContainer);
 
         //! Надписи
-        averageTime = new QLabel("<T> =");
-        averageTime->setAlignment(Qt::AlignLeft);
-        averageTime->setAttribute(Qt::WA_TransparentForMouseEvents);
+
+        label = new QLabel("<T> = 0, <S> = <0, 0>");
+        label->setAlignment(Qt::AlignLeft);
+        label->setAttribute(Qt::WA_TransparentForMouseEvents);
 
         // --- Surface ---
         surface_ = new Q3DSurface();
@@ -89,7 +90,7 @@ public:
 
         auto* layout = new QVBoxLayout(this);
 
-        layout->addWidget(averageTime);
+        layout->addWidget(label);
         layout->addWidget(stackContainer);
     }
 
@@ -101,18 +102,33 @@ public slots:
 
     void setAverageTime(double value)
     {
-        averageTime->setText(QString("<T> = %1").arg(value));
+        averageTime_ = value;
+        updateLabel();
+    }
+
+    void setTimeStatistics(std::pair<double, double>& value)
+    {
+        timeStatistics_ = value;
+        updateLabel();
+    }
+
+    void updateLabel()
+    {
+        label->setText(QString("<T> = %1, <S> = <%2, %3>").arg(averageTime_).arg(timeStatistics_.first).arg(timeStatistics_.second));
     }
 
     void setWait()
     {
-        averageTime->setText("-.-");
+        label->setText("-.-");
     }
 
 private:
     QStackedLayout* stacked_;
     Q3DSurface* surface_;
 
-    QLabel* averageTime;
+    QLabel* label;
+
+    double averageTime_{0};
+    std::pair<double, double> timeStatistics_{0, 0};
 };
 } // namespace Widgets

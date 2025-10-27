@@ -1,11 +1,17 @@
 #pragma once
 
-#include <Task/Entities/Efficiency.hpp>
-#include <Task/SearchScheme.hpp>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 namespace Operations {
+
+inline std::string doubleToString(const double& val, const size_t& precision = 1)
+{
+    std::string str = std::to_string(val);
+    str.erase(str.find('.') + 1 + precision, std::string::npos);
+    return str;
+}
 
 /*!
  * \brief initTable
@@ -13,7 +19,7 @@ namespace Operations {
  * \param metric [in] метрики
  * \param path [in] путь до файла
  */
-inline void initTable(std::map<SearchScheme, std::vector<std::string>>& metric, const std::string& path)
+inline void writeTable(const std::vector<std::string> title, const std::vector<std::vector<std::string>>& values, const std::string& path)
 {
     std::ofstream file(path);
     if (!file.is_open())
@@ -21,40 +27,17 @@ inline void initTable(std::map<SearchScheme, std::vector<std::string>>& metric, 
         throw std::runtime_error("Не удалось открыть файл!");
     }
 
-    const std::map<SearchScheme, std::string> scheme = {{SearchScheme::Zigzag, "Зигзаг"},
-                                                        {SearchScheme::Shift, "Шифт"},
-                                                        {SearchScheme::DeterminedShift, "Д. Шифт"}};
-    file << "Схема;"
-         << "Размер, м ∙ м;"
-         << "Время, с;"
-         << "Дальность, м;"
-         << "Среднее время, с;"
-         << "СКО, с"
-         << std::endl;
-    for (auto& [indexScheme, valueData] : metric)
+    for (size_t i = 0; i < title.size(); ++i)
     {
-        file << scheme.at(indexScheme) << ";";
+        file << title[i] << ";";
+    }
+    file << std::endl;
+
+    for (auto valueData : values)
+    {
         for (size_t i = 0; i < valueData.size(); ++i)
         {
-            if (i == valueData.size() - 1)
-            {
-                for (size_t j = valueData[i].size() - 1; j >= 0; --j)
-                {
-                    if (valueData[i][j] == '0')
-                    {
-                        valueData[i].pop_back();
-                    }
-                    else
-                    {
-                        file << valueData[i] << ";";
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                file << valueData[i] << ";";
-            }
+            file << valueData[i] << ";";
         }
         file << std::endl;
     }

@@ -12,6 +12,7 @@ using Line = Entities::Line;
 class EfficiencyIndicators
 {
 protected:
+    PrimaryEntities::Box<Point2D> boxPolygon;
     std::vector<std::vector<double>> observationDensity;
     std::vector<std::vector<bool>> mask;
     double routeSquare;
@@ -59,7 +60,7 @@ protected:
      * \param secondPoint [in] конечная точка галса
      * \param detRange [in] радиус обнаружения
      */
-    void addObservationTack(const Point2D& minCorner, const Point2D& firstPoint, const Point2D& secondPoint, const double& searchVelocity, const double& detRange);
+    void addObservationTack(const Point2D& firstPoint, const Point2D& secondPoint, const double& searchVelocity, const double& detRange);
 
     /*!
      * \brief sumObservationTack
@@ -68,7 +69,7 @@ protected:
      * \param route [in] маршрут
      * \param detRange [in] дальность обнаружения
      */
-    void sumObservationTack(const PrimaryEntities::Box<Point2D>& box, const Outputs::Route& route, const double& detRange);
+    void sumObservationTack(const Outputs::Route& route, const double& detRange);
 
     /*!
      * \brief observationIntegral Наработка наблюдения (площадь х время).
