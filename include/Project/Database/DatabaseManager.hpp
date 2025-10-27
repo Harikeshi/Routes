@@ -30,14 +30,12 @@ public:
         //!
         //    QString connectionString = "host=127.0.0.1 dbname=requests_reports user=viz_user password=1 connect_timeout=3";
         QString connectionString = "host=192.168.50.52 dbname=requests_reports user=viz_user password=1 connect_timeout=1";
-        //        QString connectionString = "host=192.168.205.130 dbname=requests_reports user=viz_user password=1 connect_timeout=3";
         try
         {
             // TODO: need Create Factory
             repository = std::make_unique<Database::PostgreSQLRepository>(connectionString);
             qDebug() << QString("Request/Report PostgreSQL connected! %1").arg(connectionString.split(' ')[0]);
-        }
-        catch (std::exception& ex)
+        } catch (std::exception& ex)
         {
             // TODO: сообщение
             qDebug() << QString("Не удалось подключиться к PostgreSQL %1. %2").arg(connectionString.split(' ')[0]).arg(ex.what());
@@ -84,14 +82,12 @@ public:
                 {
                     // TODO: getAll()
                     reports.append(repository->findReportById(id));
-                }
-                catch (...)
+                } catch (...)
                 {
                     continue;
                 }
             }
-        }
-        catch (const std::exception& e)
+        } catch (const std::exception& e)
         {
             emit sendError(QString("Failed to load reports: %1").arg(e.what()));
         }
@@ -103,8 +99,7 @@ public:
         try
         {
             return repository->findReportById(id);
-        }
-        catch (const std::exception& e)
+        } catch (const std::exception& e)
         {
             emit sendError(QString("Failed to load report: %1").arg(e.what()));
             throw;
@@ -116,8 +111,7 @@ public:
         try
         {
             return repository->findRequestById(id);
-        }
-        catch (const std::exception& e)
+        } catch (const std::exception& e)
         {
             emit sendError(QString("Failed to load request: %1").arg(e.what()));
             throw;
@@ -144,8 +138,7 @@ public:
             emit reportSaved(repository->save(report));
 
             emit sendReportsModel(allReportRowsModel());
-        }
-        catch (const std::exception& e)
+        } catch (const std::exception& e)
         {
             emit sendError(QString("Failed to save report: %1").arg(e.what()));
         }
@@ -156,8 +149,7 @@ public:
         try
         {
             emit requestSaved(repository->save(request));
-        }
-        catch (const std::exception& e)
+        } catch (const std::exception& e)
         {
             emit sendError(QString("Failed to save request: %1").arg(e.what()));
         }

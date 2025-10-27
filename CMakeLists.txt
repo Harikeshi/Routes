@@ -78,7 +78,7 @@ function(check_arch_linux)
     endif ()
 endfunction()
 
-# Проверяем
+# # Проверяем
 check_arch_linux()
 
 if (IS_ARCH_LINUX)

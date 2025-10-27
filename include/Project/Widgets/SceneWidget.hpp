@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QComboBox>
-#include <QGraphicsScene>
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QStackedLayout>
@@ -224,10 +223,11 @@ public:
 
         sceneLayout->addWidget(timeWidget);
 
-        QStackedLayout* stackedLayout = new QStackedLayout(this);
+        QStackedLayout* stackedLayout = new QStackedLayout;//(this);
 
         stackedLayout->addWidget(upperWidget);
         stackedLayout->setCurrentIndex(1); // overlayWidget поверх
+        mainLayout->addLayout(stackedLayout);
     }
 
     ~SceneWidget() = default;

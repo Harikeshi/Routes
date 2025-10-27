@@ -3,10 +3,9 @@
 
 #include "BaseDAO.hpp"
 
-// #include <nlohmann/json.hpp>
 #include <pqxx/transaction.hxx>
 
-#include "../../GetCurrentUsername.hpp"
+#include <Project/GetCurrentUsername.hpp>
 
 namespace DataAccessObjects {
 class InfoDAO final : public BaseDAO

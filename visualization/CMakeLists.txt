@@ -12,10 +12,6 @@ endif ()
 
 target_link_libraries(${PROJECT_NAME} PUBLIC Routes)
 
-if (MSVC)
-    set(Qt5_DIR "C:/Qt/5.15.17-msvc2019_64/lib/cmake/Qt5")
-endif ()
-
 find_package(Qt5 COMPONENTS Widgets
         DataVisualization
         REQUIRED)
@@ -47,5 +43,3 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 #            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
 #    )
 #endif ()
-
-

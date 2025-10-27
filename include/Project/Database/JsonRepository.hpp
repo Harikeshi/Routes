@@ -50,17 +50,14 @@ public:
 
         if (!QFile::exists(reportPath))
             createEmptyJsonArrayFile(reportPath);
-
-        // QDir::homePath();
-        // QFileInfo file{requestPath};
     }
 
-    bool deleteReportById(size_t id)
+    bool deleteReportById(size_t id) override
     {
         return true;
     }
 
-    bool deleteRequestById(size_t id)
+    bool deleteRequestById(size_t id) override
     {
         return true;
     }

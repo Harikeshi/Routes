@@ -78,11 +78,9 @@ public:
 
         // Первый виджет
         table = new CustomTable(this);
-        QVBoxLayout* layout1 = new QVBoxLayout(table);
 
         // Второй виджет
         matrix = new Widgets::MatrixViewWidget(this);
-        QVBoxLayout* layout2 = new QVBoxLayout(matrix);
 
         // Добавляем вкладки
         tabs->addTab(table, "Таблица БЭНК");
@@ -90,7 +88,6 @@ public:
 
         rightVerticalSplitter->addWidget(dataWidget);
         rightVerticalSplitter->addWidget(tabs);
-        // rightVerticalSplitter->addWidget(table);
 
         //! Горизонтальный splitter нижний
         auto* innerHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);

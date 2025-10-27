@@ -9,7 +9,6 @@
 #include <QtDataVisualization/QSurface3DSeries>
 #include <QtDataVisualization/QSurfaceDataProxy>
 #include <QtWidgets>
-#include <cmath>
 #include <vector>
 
 #include <Project/Models/Report.hpp>

@@ -9,37 +9,20 @@
 namespace Database {
 class InformationRepository
 {
-    /*
-     * Пример использования
-     *
-    DatabaseRepository data(DatabaseConnection::createConnection());
-
-    try
-    {
-        data.updateInfo("Test ",
-                        "CRITICAL");
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Fatal error: " << e.what() << std::endl;
-        return 1;
-    }
-    */
-
     std::shared_ptr<pqxx::connection> connection;
 
     DataAccessObjects::InfoDAO infoDao;
 
 public:
     InformationRepository()
-        : connection(nullptr),
-          infoDao(nullptr)
+        : connection(nullptr)
+        , infoDao(nullptr)
     {
     }
 
     explicit InformationRepository(const std::shared_ptr<pqxx::connection>& conn)
-        : connection(conn),
-          infoDao(connection)
+        : connection(conn)
+        , infoDao(connection)
     {
     }
 
@@ -57,8 +40,7 @@ public:
         try
         {
             infoDao.update(message, severity);
-        }
-        catch (...)
+        } catch (...)
         {
             throw;
         }
