@@ -50,6 +50,7 @@ inline Outputs::Route routeFromReport(const Models::Report& report)
     for (auto const segment : report.routes()[0].getSegments())
     {
         route.push_back(Point2D{segment.getStart().x(), segment.getStart().y()});
+        vels.push_back(segment.baseSpeed);
     }
 
     route.push_back(Point2D{report.routes()[0].getSegments().last().getEnd().x(), report.routes()[0].getSegments().last().getEnd().y()});
@@ -110,6 +111,7 @@ inline double velocityFromRequest(const Models::Request& request)
  */
 inline std::vector<std::vector<double>> buildMatrix(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
 {
+    // return std::vector<std::vector<double>>{{1, 1, 1}, {2, 2, 2}, {1, 1, 1}};
     Entities::EfficiencyIndicators indicators(100);
     // bbox
     indicators.calculateObservationDensity(polygon, route, detRange);
@@ -127,6 +129,7 @@ inline std::vector<std::vector<double>> buildMatrix(PrimaryEntities::Polygon<Poi
  */
 inline double buildAverageTime(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange, const double& searchVelocity)
 {
+    // return 10;
     double result;
 
     Entities::EfficiencyIndicators indicators(100);
@@ -348,6 +351,11 @@ private slots:
     }
     bool checkFunc(const char* func)
     {
+        if (route.points.empty())
+        {
+            emit sendMessage(QString("%1%2").arg(func).arg("velocities.empty()"), 1);
+            return false;
+        }
         if (route.points.empty())
         {
             emit sendMessage(QString("%1%2").arg(func).arg("route.empty()"), 1);
