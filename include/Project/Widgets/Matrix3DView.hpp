@@ -27,12 +27,12 @@ public:
         if (!surface_->seriesList().isEmpty())
             surface_->removeSeries(surface_->seriesList().first());
     }
+
     //! Перезагружает отображение.
     void setMatrix(const std::vector<std::vector<double>>& matrix)
     {
         if (matrix.empty())
         {
-            qDebug() << "Матрица говна";
             return;
         }
 
@@ -78,8 +78,10 @@ public:
         stacked_ = new QStackedLayout(stackContainer);
 
         //! Надписи
-
-        label = new QLabel("<T> = 0, <S> = <0, 0>");
+        label = new QLabel(QString("T = , %1 = ").arg(QChar(0x03C3)));
+        QFont font = label->font();
+        font.setPointSize(12);
+        label->setFont(font);
         label->setAlignment(Qt::AlignLeft);
         label->setAttribute(Qt::WA_TransparentForMouseEvents);
 
@@ -114,7 +116,7 @@ public slots:
 
     void updateLabel()
     {
-        label->setText(QString("<T> = %1, <S> = <%2, %3>").arg(averageTime_).arg(timeStatistics_.first).arg(timeStatistics_.second));
+        label->setText(QString("T = %1, %2 = %3").arg(timeStatistics_.first).arg(QChar(0x03C3)).arg(timeStatistics_.second));
     }
 
     void setWait()

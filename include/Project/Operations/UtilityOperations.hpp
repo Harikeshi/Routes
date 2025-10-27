@@ -6,7 +6,6 @@
 #include <Task/Operations/JsonOperations.hpp>
 
 namespace Operations {
-
 inline void show_(const PrimaryEntities::Polygon<Point2D>& polygon)
 {
     //! Полигон
@@ -72,43 +71,49 @@ inline Outputs::Route routeFromReport(const Models::Report& report)
     return Outputs::Route{route, vels};
 }
 
-/*!
- * \brief buildMatrix
- * \param polygon
- * \param route
- * \param detRange
- * \return
- */
-inline std::vector<std::vector<double>> buildMatrix(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
+class Statistics
 {
-    //return {{1, 1, 1}, {2, 2, 2}, {1, 1, 1}};
+public:
+    static Entities::EfficiencyIndicators indicators;
 
-    Entities::EfficiencyIndicators indicators(100);
-    // bbox
-    indicators.calculateObservationDensity(polygon, route, detRange);
+    Statistics()
+    {
+        indicators = Entities::EfficiencyIndicators(100);
+    }
 
-    return indicators.getObservationDensity();
-}
+    /*!
+     * \brief buildMatrix
+     * \param polygon
+     * \param route
+     * \param detRange
+     * \return
+     */
+    static std::vector<std::vector<double>> buildMatrix(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
+    {
+        //return {{1, 1, 1}, {2, 2, 2}, {1, 1, 1}};
 
-/*!
- * \brief buildAverageTime
- * \param polygon
- * \param route
- * \param detRange
- * \param searchVelocity
- * \return
- */
-inline double buildAverageTime(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
-{
-    Entities::EfficiencyIndicators indicators(100);
+        // bbox
+        indicators.calculateObservationDensity(polygon, route, detRange);
 
-    return indicators.averageTime(polygon, route, detRange);
-}
+        return indicators.getObservationDensity();
+    }
 
-inline std::pair<double, double> buildTimeStatistics(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
-{
-    Entities::EfficiencyIndicators indicators(100);
+    /*!
+     * \brief buildAverageTime
+     * \param polygon
+     * \param route
+     * \param detRange
+     * \param searchVelocity
+     * \return
+     */
+    static double buildAverageTime(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
+    {
+        return indicators.averageTime(polygon, route, detRange);
+    }
 
-    return indicators.timeStatistics(polygon, route, detRange);
-}
+    static std::pair<double, double> buildTimeStatistics(PrimaryEntities::Polygon<Point2D>& polygon, const Outputs::Route& route, const double& detRange)
+    {
+        return indicators.timeStatistics(polygon, route, detRange);
+    }
+};
 } // namespace Operations

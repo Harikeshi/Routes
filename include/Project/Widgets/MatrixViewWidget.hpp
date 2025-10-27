@@ -50,41 +50,36 @@ public:
         layout->addWidget(button);
 
         //TODO: future перевести на int
-        futureWatcher_ = new QFutureWatcher<std::vector<std::vector<double>>>(this);
+        futureWatcher_ = new QFutureWatcher<void>(this);
         connect(futureWatcher_, &QFutureWatcherBase::finished, this, &MatrixViewWidget::onMatrixReady);
         connect(button, &QPushButton::clicked, this, &MatrixViewWidget::startAsyncCalculationMatrix);
 
-        futureWatcherTime_ = new QFutureWatcher<double>(this);
-        connect(futureWatcherTime_, &QFutureWatcherBase::finished, this, &MatrixViewWidget::isTimeReady);
-        connect(button, &QPushButton::clicked, this, &MatrixViewWidget::startAsyncCalculationTime);
+        // futureWatcherTime_ = new QFutureWatcher<double>(this);
+        // connect(futureWatcherTime_, &QFutureWatcherBase::finished, this, &MatrixViewWidget::isTimeReady);
+        // connect(button, &QPushButton::clicked, this, &MatrixViewWidget::startAsyncCalculationTime);
 
-        futureWatcherStats_ = new QFutureWatcher<std::pair<double, double>>(this);
-        connect(futureWatcherTime_, &QFutureWatcherBase::finished, this, &MatrixViewWidget::isStatsReady);
-        connect(button, &QPushButton::clicked, this, &MatrixViewWidget::startAsyncCalculationStats);
+        // futureWatcherStats_ = new QFutureWatcher<std::pair<double, double>>(this);
+        // connect(futureWatcherStats_, &QFutureWatcherBase::finished, this, &MatrixViewWidget::isStatsReady);
+        // connect(button, &QPushButton::clicked, this, &MatrixViewWidget::startAsyncCalculationStats);
     }
 signals:
     void sendMessage(const QString& message, size_t type);
 private slots:
     void onMatrixReady()
     {
-        auto matrix_ = futureWatcher_->result();
-
         loadingLabel_->hide();
+
+        auto matrix_ = indicators.getObservationDensity(); //futureWatcher_->result();
 
         if (matrix_.empty())
         {
             emit sendMessage("Матрица не построена. empty", 1);
             return;
         }
+        auto stats = indicators.timeStatistics(polygon, route, radius);
 
+        view_->setTimeStatistics(stats);
         view_->setMatrix(matrix_);
-    }
-
-    void isTimeReady()
-    {
-        auto time = futureWatcherTime_->result();
-        loadingLabel_->hide();
-        view_->setAverageTime(time);
     }
 
     void isStatsReady()
@@ -96,25 +91,10 @@ private slots:
         view_->setTimeStatistics(stats);
     }
 
-    void startAsyncCalculationTime()
-    {
-        auto func = "Расчет времени::";
-
-        if (!checkFunc(func))
-            return;
-
-        view_->setWait();
-
-        view_->clear();
-        QFuture<double> future = QtConcurrent::run([=]() {
-            return Operations::buildAverageTime(polygon, route, radius);
-        });
-        futureWatcherTime_->setFuture(future);
-    }
-
     void startAsyncCalculationMatrix()
     {
         auto func = "Расчет матрицы::";
+        view_->setWait();
 
         if (!checkFunc(func))
             return;
@@ -123,9 +103,12 @@ private slots:
 
         view_->clear();
 
-        QFuture<std::vector<std::vector<double>>> future = QtConcurrent::run([=]() {
-            return Operations::buildMatrix(polygon, route, radius);
+        QFuture<void> future = QtConcurrent::run([=]() {
+            indicators = Entities::EfficiencyIndicators{100};
+            indicators.calculateObservationDensity(polygon, route, radius);
+            //return indicators.getObservationDensity();
         });
+
         futureWatcher_->setFuture(future);
     }
 
@@ -141,7 +124,7 @@ private slots:
         view_->clear();
 
         QFuture<std::pair<double, double>> future = QtConcurrent::run([=]() {
-            return Operations::buildTimeStatistics(polygon, route, radius);
+            return indicators.timeStatistics(polygon, route, radius);
         });
         futureWatcherStats_->setFuture(future);
     }
@@ -178,11 +161,13 @@ private:
     PrimaryEntities::Polygon<Point2D> polygon;
     Outputs::Route route; // -> polyline
 
-    QFutureWatcher<std::vector<std::vector<double>>>* futureWatcher_;
-    QFutureWatcher<double>* futureWatcherTime_;
+    QFutureWatcher<void>* futureWatcher_;
+    //QFutureWatcher<double>* futureWatcherTime_;
     QFutureWatcher<std::pair<double, double>>* futureWatcherStats_;
 
     QLabel* loadingLabel_;
+
+    Entities::EfficiencyIndicators indicators{100};
 
     Matrix3DView* view_;
 };
