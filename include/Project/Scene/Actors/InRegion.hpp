@@ -49,11 +49,6 @@ public:
     virtual void reload(const Request& request) override
     {
         perimeter->setPerimeter(request.getPerimeter());
-
-        //        Entities::Limits limits;
-        //        limits.initFromPerimeter(request.getPerimeter());
-        //
-        //        return limits;
     }
 
     void setCurrentTime(double time) override

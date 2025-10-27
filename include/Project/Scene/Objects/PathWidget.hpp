@@ -8,112 +8,6 @@
 
 namespace Scene::Objects {
 
-enum TargetPathDrawType
-{
-    DrawAsLinesWithPoints,
-    DrawWithoutTurns
-};
-
-class TargetPathDrawState
-{
-    TargetPathDrawType state;
-
-public:
-    TargetPathDrawState(const TargetPathDrawType& state)
-        : state{state}
-    {
-    }
-
-    void drawLines(QPainter& painter, const QVector<QPointF>& path) const
-    {
-        QPen pen = QPen(Qt::darkYellow, 2);
-        pen.setStyle(Qt::DotLine);
-        pen.setCosmetic(true);
-
-        painter.setPen(pen);
-
-        for (int i = 0; i < path.size() - 1; ++i)
-        {
-            painter.drawLine(path[i], path[i + 1]);
-        }
-    }
-
-    TargetPathDrawType type() const
-    {
-        return state;
-    }
-
-    virtual void draw(QPainter& painter, const QVector<QPointF>& path) = 0;
-    virtual ~TargetPathDrawState() = default;
-};
-
-// Без отрисовки nullptr
-class DrawAsLinesWithPointsState : public TargetPathDrawState
-{
-public:
-    DrawAsLinesWithPointsState()
-        : TargetPathDrawState(TargetPathDrawType::DrawAsLinesWithPoints)
-    {
-    }
-
-    void draw(QPainter& painter, const QVector<QPointF>& path) override
-    {
-        painter.save();
-
-        // Рисуем все точки
-        painter.setPen(Qt::blue);
-        painter.setBrush(Qt::blue);
-
-        for (const QPointF& point : path)
-        {
-            // todo: Draw Point
-            painter.drawEllipse(point, 3, 3);
-        }
-
-        // Отрисовка линий
-        if (path.size() > 1)
-        {
-            drawLines(painter, path);
-        }
-
-        painter.restore();
-    }
-};
-
-class DrawWithoutTurnsState : public TargetPathDrawState
-{
-public:
-    DrawWithoutTurnsState()
-        : TargetPathDrawState(TargetPathDrawType::DrawWithoutTurns)
-    {
-    }
-
-    void draw(QPainter& painter, const QVector<QPointF>& path) override
-    {
-        painter.save();
-
-        drawLines(painter, path);
-
-        painter.restore();
-    }
-};
-
-class PathDraw
-{
-    std::map<TargetPathDrawType, std::function<void(QPainter&)>> funcs;
-
-public:
-    PathDraw()
-    {
-        funcs[TargetPathDrawType::DrawAsLinesWithPoints] = [](QPainter& painter) {};
-        funcs[TargetPathDrawType::DrawWithoutTurns] = [](QPainter& painter) {};
-    }
-
-    void draw()
-    {
-    }
-};
-
 class PointObject : public QWidget
 {
     Q_OBJECT
@@ -175,19 +69,6 @@ private:
     QPointF point;
     int hoveredPoint = -1;
     qreal radius;
-};
-
-enum DrawType
-{
-    OnlyLines,
-    OnlyPoints,
-    LinesAndPoints
-};
-
-enum AddType
-{
-    BySomeLines,
-    Continuous
 };
 
 class PathWidget final : public QWidget

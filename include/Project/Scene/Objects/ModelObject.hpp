@@ -150,6 +150,7 @@ public:
         // // Отрисовка стрелки
         QTransform transform; // перенос в точку
 
+        //! Дла вычисления направления модели.
         double angle = std::atan2(segment.getEnd().y() - segment.getStart().y(), segment.getEnd().x() - segment.getStart().x());
         transform.translate(segment.getCurrentPoint().x(), segment.getCurrentPoint().y());
         transform.rotateRadians(angle); // повернуть на угол

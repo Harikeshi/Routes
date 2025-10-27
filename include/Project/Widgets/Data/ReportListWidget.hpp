@@ -48,7 +48,21 @@ public slots:
     {
         try
         {
-            model_->setRows(std::move(rows));
+            model_->setRows(rows);
+
+            update(); // TODO: ?
+        }
+        catch (const std::exception& ex)
+        {
+            emit sendError(QString("Failed to load reports: %1").arg(ex.what()));
+        }
+    }
+
+    void refresh(const Database::ReportRowModel& row)
+    {
+        try
+        {
+            model_->addRow(row);
 
             update(); // TODO: ?
         }

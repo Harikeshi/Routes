@@ -35,7 +35,8 @@ public:
             // TODO: need Create Factory
             repository = std::make_unique<Database::PostgreSQLRepository>(connectionString);
             qDebug() << QString("Request/Report PostgreSQL connected! %1").arg(connectionString.split(' ')[0]);
-        } catch (std::exception& ex)
+        }
+        catch (std::exception& ex)
         {
             // TODO: сообщение
             qDebug() << QString("Не удалось подключиться к PostgreSQL %1. %2").arg(connectionString.split(' ')[0]).arg(ex.what());
@@ -82,12 +83,14 @@ public:
                 {
                     // TODO: getAll()
                     reports.append(repository->findReportById(id));
-                } catch (...)
+                }
+                catch (...)
                 {
                     continue;
                 }
             }
-        } catch (const std::exception& e)
+        }
+        catch (const std::exception& e)
         {
             emit sendError(QString("Failed to load reports: %1").arg(e.what()));
         }
@@ -99,7 +102,8 @@ public:
         try
         {
             return repository->findReportById(id);
-        } catch (const std::exception& e)
+        }
+        catch (const std::exception& e)
         {
             emit sendError(QString("Failed to load report: %1").arg(e.what()));
             throw;
@@ -111,7 +115,8 @@ public:
         try
         {
             return repository->findRequestById(id);
-        } catch (const std::exception& e)
+        }
+        catch (const std::exception& e)
         {
             emit sendError(QString("Failed to load request: %1").arg(e.what()));
             throw;
@@ -128,31 +133,42 @@ public:
         repository->deleteReportById(id);
     }
 
-    void saveReport(Models::Report report)
+    size_t saveReport(Models::Report report)
     {
+        size_t id{0};
+
         try
         {
             report.request_id = repository->getLastRequestId();
             report.scheme = scheme;
 
-            emit reportSaved(repository->save(report));
-
-            emit sendReportsModel(allReportRowsModel());
-        } catch (const std::exception& e)
+            id = repository->save(report);
+            emit sendReportRow(ReportRowModel{id, report.request_id, report.scheme, report.messages()[0].text, report.created_at.toString(), report.owner});
+            //emit sendReportsModel(allReportRowsModel());
+        }
+        catch (const std::exception& e)
         {
             emit sendError(QString("Failed to save report: %1").arg(e.what()));
         }
+
+        return id;
     }
 
-    void saveRequest(const Models::Request& request)
+    size_t saveRequest(const Models::Request& request)
     {
+        size_t id{0};
+
         try
         {
-            emit requestSaved(repository->save(request));
-        } catch (const std::exception& e)
+            auto id = repository->save(request);
+            emit requestSaved(id);
+        }
+        catch (const std::exception& e)
         {
             emit sendError(QString("Failed to save request: %1").arg(e.what()));
         }
+
+        return id;
     }
 public slots:
     void setScheme(const QString& name)
@@ -165,6 +181,7 @@ signals:
     void requestSaved(size_t id);
 
     void sendReportsModel(const QVector<ReportRowModel>&) const;
+    void sendReportRow(const ReportRowModel&);
     void sendError(const QString& message) const;
     void sendMessage(const QString& message) const;
 

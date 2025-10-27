@@ -75,8 +75,6 @@ protected:
     //        comboBox->addItem("Scheme 2");
     //        comboBox->setFixedWidth(200);
     // Widgets
-    // TODO: Внизу справа
-    QPushButton* metricChoose;
     TimeWidget* timeWidget;
     // TODO: Вверху Справа
     QComboBox* actorChoose;
@@ -86,11 +84,6 @@ protected:
 
     // Элементы отрисовки цели.
     Routes* routes_;
-
-    // TODO: Если вдруг задумаю продолжить делать
-    // HeatmapWidget* heatmap = new HeatmapWidget(this);
-    //SmoothHeatmapWidget* sHeatmap = new SmoothHeatmapWidget(this);
-    //Capsules* capsules = new Capsules(this);
 
     Targets* target;
     PathWidget* targetPath;
@@ -154,8 +147,6 @@ public:
 
         actorChoose->setFixedSize(80, 30);
 
-        // actorChoose->setEnabled(false);
-
         topLayout->addWidget(actorChoose);
 
         mainLayout->addWidget(topWidget);
@@ -172,14 +163,6 @@ public:
 
         // Добавляем растягивающееся пространство слева
         bottomLayout->addStretch();
-
-        metricChoose = new QPushButton("metric", bottomWidget);
-        metricChoose->setFixedSize(80, 30);
-        metricChoose->setFlat(true); // Убираем стандартное оформление
-
-        // Виджет в правом нижнем углу
-        bottomLayout->addWidget(metricChoose);
-        mainLayout->addWidget(bottomWidget);
 
         routes_ = new Routes(this);
         target = new Targets(this);
@@ -450,33 +433,6 @@ public:
         emit sceneStarted();
     }
 
-    QVector<QImage> fonts = QVector<QImage>(2);
-
-    void draw_full_segments(QPainter& painter)
-    {
-        // При загрузке route
-        if (routes_->isEmpty())
-            return;
-
-        for (auto const& segment : routes_->getRoutes().first()->getSegments())
-        {
-            segment->cDrawFull(painter, routes_->getRadius());
-        }
-    }
-
-    void current_segments(QPainter& painter)
-    {
-        if (routes_->isEmpty())
-            return;
-
-        auto index = routes_->getRoutes().first()->getCurrentIndex();
-        for (size_t i = 0; i < index; ++i)
-        {
-            routes_->getRoutes().first()->getSegments().at(i)->cDrawCurrent(painter, routes_->getRadius());
-        }
-        routes_->getRoutes().first()->getSegments().at(index)->cDrawCurrent(painter, routes_->getRadius());
-    }
-
     // Сброс к началу
     void clear()
     {
@@ -504,7 +460,6 @@ public:
     // Полный показ/Текущий показ
     void full()
     {
-        //if ()
         if (routes_->getStateType() == Scene::Objects::StateType::Full)
         {
             routes_->setStateType(new Scene::Objects::CurrentDrawState());
@@ -551,13 +506,6 @@ public:
     }
 
 public slots:
-    void changeShowRoutesPoints()
-    {
-        routes_->changeShowPoints();
-
-        update();
-    }
-
     void changeDrawing()
     {
         setDrawing(!drawing);
@@ -645,8 +593,6 @@ public slots:
          */
     void reloadRequest(const Request& request)
     {
-        //        this->reload();
-
         target->reset();
 
         // Гарантированно получаем полностью инициализированный request. Проверяется в mainWindow
@@ -731,16 +677,8 @@ protected
 
         painter.setTransform(cs.getTransform());
 
-        //! Отрисовка Объектов
-        if (showWidthPath)
-        {
-            current_segments(painter);
-        }
-        painter.save();
-        painter.restore();
         actor->draw(painter);
 
-        // draw_full_segments(painter);
         target->draw(painter);
         targetPath->draw(painter);
 
@@ -795,7 +733,7 @@ protected
             targetPath->mousePress(event, cs.toLogical(event->pos()));
 
         //! Обработка события pressMouse для Routes.
-        routes_->mousePressEvent(event, cs.toLogical(event->pos()));
+        //routes_->mousePressEvent(event, cs.toLogical(event->pos()));
 
         update();
     }

@@ -28,6 +28,7 @@ signals:
     void sendReportRequestIds(size_t report_id, size_t request_id);
     void sendDeleteReportRequestIds(size_t report_id, size_t request_id);
     void sendSaveReportRequestIds(size_t report_id, size_t request_id);
+    void sendAddReportToDbSignal();
 
     void sendReportId(size_t id);
     void sendRequestId(size_t id);
@@ -43,6 +44,13 @@ public slots:
     void updateReports(const QVector<Database::ReportRowModel>& rows)
     {
         reportList->refresh(rows);
+
+        update();
+    }
+
+    void updateReports_(const Database::ReportRowModel& row)
+    {
+        reportList->refresh(row);
 
         update();
     }
@@ -81,8 +89,14 @@ public:
 
         connect(reportList, &Data::ReportListWidget::reportActivated, this, &DataWidget::setIdsFromReportList);
         connect(reportList, &Data::ReportListWidget::deleteReportFromDb, this, &DataWidget::sendDeleteReportRequestIds); // delete
-        //connect(reportList, &Data::ReportListWidget::addReportToDb, this, &DataWidget::sendDeleteReportRequestIds);      // add
-        connect(reportList, &Data::ReportListWidget::saveReportToFile, this, &DataWidget::sendSaveReportRequestIds); // save
+        connect(reportList, &Data::ReportListWidget::addReportToDb, this, &DataWidget::sendAddReportToDbSlot);           // add
+        connect(reportList, &Data::ReportListWidget::saveReportToFile, this, &DataWidget::sendSaveReportRequestIds);     // save
+    }
+
+private:
+    void sendAddReportToDbSlot()
+    {
+        emit sendAddReportToDbSignal();
     }
 
 public:
