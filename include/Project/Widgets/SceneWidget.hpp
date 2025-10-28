@@ -2,15 +2,14 @@
 
 #include <QComboBox>
 #include <QMouseEvent>
-#include <QPushButton>
 #include <QStackedLayout>
-#include <QtWidgets>
 
 #include "Project/Models/Report.hpp"
 #include "Project/Models/Request.hpp"
 #include "Project/Scene/ActorTypeInfo.hpp"
 
 #include "TimeWidget.hpp"
+#include "ConfigWidget.hpp"
 
 #include "../Scene/Entities/CoordinateSystem.hpp"
 #include "../Scene/Entities/Limits.hpp"
@@ -76,6 +75,8 @@ protected:
     //        comboBox->setFixedWidth(200);
     // Widgets
     TimeWidget* timeWidget;
+    ConfigWidget* config;
+
     // TODO: Вверху Справа
     QComboBox* actorChoose;
 
@@ -115,8 +116,6 @@ public:
     explicit SceneWidget(QWidget* parent = nullptr)
         : QWidget(parent)
     {
-        targetPath = new PathWidget(this);
-
         QVBoxLayout* mainLayout = new QVBoxLayout(this);
 
         mainLayout->setContentsMargins(0, 0, 0, 0); // Убираем отступы по краям
@@ -124,29 +123,30 @@ public:
 
         // Верхняя часть
         QWidget* topWidget = new QWidget(this);
+        topWidget->setGeometry(0, 0, 0, 0);
+        topWidget->setContentsMargins(10, 0, 0, 0);
+
         QHBoxLayout* topLayout = new QHBoxLayout(topWidget);
-        topLayout->setContentsMargins(0, 10, 10, 0); // Отступы: слева, сверху, справа, снизу
+        topLayout->setContentsMargins(0, 0, 10, 0); // Отступы: слева, сверху, справа, снизу
+        topLayout->addStretch(); // Добавляем растягивающееся пространство слева
 
-        // Добавляем растягивающееся пространство слева
-        topLayout->addStretch();
+        // TimeWidget
+        timeWidget = new TimeWidget(this);
+        topLayout->addWidget(timeWidget);
 
-        // TODO: Все же отдельный виджет
+        // Todo: emit changeLineEdit1(double) -> mainWindow() -> set
+        config = new ConfigWidget(this);
+        config->hide();
+        topLayout->addWidget(config);
+
+        // TODO: Все же надо в отдельный виджет
         actorChoose = new QComboBox(topWidget);
 
         //! Инициализация Выбора Actor.
         for (const auto& act : Scene::ActorTypeName)
             actorChoose->addItem(act.second, static_cast<int>(act.first));
 
-        connect(actorChoose, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int number) {
-            qDebug() << "Выбран: " << number;
-            auto type = static_cast<Scene::ActorType>(number);
-            changeActor(type);
-
-            emit schemeChanged(Scene::ActorTypeName.find(type)->second);
-        });
-
         actorChoose->setFixedSize(80, 30);
-
         topLayout->addWidget(actorChoose);
 
         mainLayout->addWidget(topWidget);
@@ -163,17 +163,18 @@ public:
 
         // Добавляем растягивающееся пространство слева
         bottomLayout->addStretch();
+        mainLayout->addWidget(bottomWidget);
 
         routes_ = new Routes(this);
         target = new Targets(this);
         target->setState(new Scene::Objects::WithOutDrawState());
+        targetPath = new PathWidget(this);
 
         grid = new Grid(this);
         timer = new QTimer(this);
 
         // TODO: переименовать
         actor = new InRegionScene(this);
-
         cs = CoordinateSystem();
 
         drawing = false;
@@ -184,38 +185,32 @@ public:
         // Чтобы не было диких цифр при загрузке
         limitesToRect();
 
-        // connect(timer, &QTimer::timeout, this, &SceneWidget::updateDrawing);
-        connect(timer, &QTimer::timeout, this, &SceneWidget::moveFromTimer);
+        connect(actorChoose, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int number) {
+            auto type = static_cast<Scene::ActorType>(number);
+            changeActor(type);
 
+            emit schemeChanged(Scene::ActorTypeName.find(type)->second);
+        });
+
+        connect(this, &SceneWidget::sendCurrentTime, timeWidget, &TimeWidget::updateTime);
+        connect(timer, &QTimer::timeout, this, &SceneWidget::moveFromTimer);
         connect(routes_, &Routes::complete, this, &SceneWidget::stop);
         connect(routes_, &Routes::sendIndexCurrentPositionSpeed, this, &SceneWidget::sendObjectInformation);
 
-        // TimeWidget
-        timeWidget = new TimeWidget(this);
-        connect(this, &SceneWidget::sendCurrentTime, timeWidget, &TimeWidget::updateTime);
-
-        // Размещение Времени и множителя на сцене.
-
-        QWidget* upperWidget = new QWidget(this);
-        upperWidget->setGeometry(10, 10, 200, 70);                   // Отступы, ширина и высота
-        upperWidget->setAttribute(Qt::WA_TransparentForMouseEvents); // Игнорировать события мыши
-        upperWidget->show();
-        upperWidget->setStyleSheet("background: transparent;"); // Прозрачный фон
-
-        QVBoxLayout* sceneLayout = new QVBoxLayout(upperWidget);
-
-        sceneLayout->addWidget(timeWidget);
-
-        QStackedLayout* stackedLayout = new QStackedLayout;//(this);
-
-        stackedLayout->addWidget(upperWidget);
-        stackedLayout->setCurrentIndex(1); // overlayWidget поверх
-        mainLayout->addLayout(stackedLayout);
+        connect(config, &ConfigWidget::chengeEditLine0, this, &SceneWidget::chengeEditLine0);
+        connect(config, &ConfigWidget::chengeEditLine1, this, &SceneWidget::chengeEditLine1);
+        connect(config, &ConfigWidget::chengeEditLine2, this, &SceneWidget::chengeEditLine2);
+        connect(config, &ConfigWidget::chengeEditLine3, this, &SceneWidget::chengeEditLine3);
     }
 
     ~SceneWidget() = default;
 
 signals:
+    void chengeEditLine0(double);
+    void chengeEditLine1(double);
+    void chengeEditLine2(double);
+    void chengeEditLine3(double);
+
     void sendMessage(const QString&); // Оповещение о пересечении например
     void sendError(const QString&);
 

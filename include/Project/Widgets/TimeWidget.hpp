@@ -24,12 +24,13 @@ public:
 
         mainLayout->addWidget(labelTime);
 
-        multiplier = new QLabel("Multiplier: x1", this);
+        multiplier = new QLabel("Speed: x1", this);
         multiplier->setMinimumWidth(200);
         this->resize(200, 20);
         multiplier->setFont(QFont{"Arial", 10, QFont::Bold});
 
         mainLayout->addWidget(multiplier);
+        mainLayout->setContentsMargins(20, 0, 0, 0);
         this->setMaximumWidth(200);
         this->setMaximumHeight(70);
     }
@@ -37,7 +38,7 @@ public:
     void reset()
     {
         labelTime->setText(QString("Time: 0:0:0"));
-        multiplier->setText(QString("Multiplier: x1"));
+        multiplier->setText(QString("Speed: x1"));
         defaultNumber = 1;
     }
 
@@ -57,7 +58,7 @@ public:
 
     void setMultiplier()
     {
-        multiplier->setText(QString("Multiplier: x") + QString::number(defaultNumber, 'f', 2));
+        multiplier->setText(QString("Speed: x") + QString::number(defaultNumber, 'f', 2));
 
         update();
     }

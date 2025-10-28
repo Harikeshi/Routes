@@ -206,6 +206,20 @@ public:
 
         //! MatrixViewer
         connect(matrix, &MatrixViewWidget::sendMessage, this, &MainWindow::getMessage);
+
+        //! ConfigWidget
+        connect(scene, &SceneWidget::chengeEditLine0, [this](double x){
+            infoWidget->addMessage(QString("line0: %1").arg(x), MessageType::Info);
+        });
+         connect(scene, &SceneWidget::chengeEditLine1, [this](double x){
+            infoWidget->addMessage(QString("line1: %1").arg(x), MessageType::Info);
+        });
+         connect(scene, &SceneWidget::chengeEditLine2, [this](double x){
+            infoWidget->addMessage(QString("line2: %1").arg(x), MessageType::Info);
+        });
+         connect(scene, &SceneWidget::chengeEditLine3, [this](double x){
+            infoWidget->addMessage(QString("line3: %1").arg(x), MessageType::Info);
+        });
     }
 
 private slots:
