@@ -27,7 +27,6 @@ public:
         polygon = Operations::polygonFromRequest(request);
 
         radius = request.ship.detection_range;
-        qDebug() << "radius: " << radius;
     }
 
     MatrixViewWidget(QWidget* parent = nullptr)
@@ -53,14 +52,6 @@ public:
         futureWatcher_ = new QFutureWatcher<void>(this);
         connect(futureWatcher_, &QFutureWatcherBase::finished, this, &MatrixViewWidget::onMatrixReady);
         connect(button, &QPushButton::clicked, this, &MatrixViewWidget::startAsyncCalculationMatrix);
-
-        // futureWatcherTime_ = new QFutureWatcher<double>(this);
-        // connect(futureWatcherTime_, &QFutureWatcherBase::finished, this, &MatrixViewWidget::isTimeReady);
-        // connect(button, &QPushButton::clicked, this, &MatrixViewWidget::startAsyncCalculationTime);
-
-        // futureWatcherStats_ = new QFutureWatcher<std::pair<double, double>>(this);
-        // connect(futureWatcherStats_, &QFutureWatcherBase::finished, this, &MatrixViewWidget::isStatsReady);
-        // connect(button, &QPushButton::clicked, this, &MatrixViewWidget::startAsyncCalculationStats);
     }
 signals:
     void sendMessage(const QString& message, size_t type);
@@ -82,15 +73,6 @@ private slots:
         view_->setMatrix(matrix_);
     }
 
-    void isStatsReady()
-    {
-        auto stats = futureWatcherStats_->result();
-
-        loadingLabel_->hide();
-
-        view_->setTimeStatistics(stats);
-    }
-
     void startAsyncCalculationMatrix()
     {
         auto func = "Расчет матрицы::";
@@ -106,27 +88,9 @@ private slots:
         QFuture<void> future = QtConcurrent::run([=]() {
             indicators = Entities::EfficiencyIndicators{100};
             indicators.calculateObservationDensity(polygon, route, radius);
-            //return indicators.getObservationDensity();
         });
 
         futureWatcher_->setFuture(future);
-    }
-
-    void startAsyncCalculationStats()
-    {
-        auto func = "Расчет статистики::";
-
-        if (!checkFunc(func))
-            return;
-
-        loadingLabel_->show();
-
-        view_->clear();
-
-        QFuture<std::pair<double, double>> future = QtConcurrent::run([=]() {
-            return indicators.timeStatistics(polygon, route, radius);
-        });
-        futureWatcherStats_->setFuture(future);
     }
 
     bool checkFunc(const char* func)
@@ -157,13 +121,10 @@ private slots:
 
 private:
     double radius{0};
-
     PrimaryEntities::Polygon<Point2D> polygon;
     Outputs::Route route; // -> polyline
 
     QFutureWatcher<void>* futureWatcher_;
-    //QFutureWatcher<double>* futureWatcherTime_;
-    QFutureWatcher<std::pair<double, double>>* futureWatcherStats_;
 
     QLabel* loadingLabel_;
 
