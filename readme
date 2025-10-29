@@ -9,6 +9,8 @@
 Настройки для msvc для tasks
 -G Ninja -DCMAKE_CXX_FLAGS="/D_USE_MATH_DEFINES" -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_PREFIX_PATH=C:/Qt/5.15.17-msvc2019_64 -DQt5_DIR=C:/Qt/5.15.17-msvc2019_64/lib/cmake/Qt5 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON -DCMAKE_CXX_STANDARD:STRING=17
 
+Удалить /usr/lib/libpqxx* /usr/lib/x86_64-linux-gnu/libpxx*
+
 //------------------------------------------------------------------
 Требуется фикс в tasks:
 inline void validateRegionJson(const nlohmann::json& json)
