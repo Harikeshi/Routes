@@ -263,27 +263,21 @@ public:
         // //! ConfigWidget
         connect(config, &ConfigWidget::chengedEditLineP0, [this](double x) {
             parameters.traversaMin = x;
-            infoWidget->addMessage(QString("traversaMin = %1").arg(x), MessageType::Info);
         });
         connect(config, &ConfigWidget::chengedEditLineP1, [this](double x) {
             parameters.tackDistMin = x;
-            infoWidget->addMessage(QString("tackDistMin = %1").arg(x), MessageType::Info);
         });
         connect(config, &ConfigWidget::chengedEditLineA0, [this](double x) {
             parameters.tackDistLeft = x;
-            infoWidget->addMessage(QString("tackDistLeft = %1").arg(x), MessageType::Info);
         });
         connect(config, &ConfigWidget::chengedEditLineA1, [this](double x) {
             parameters.turnAngleDegMin = x;
-            infoWidget->addMessage(QString("turnAngleDegMin = %1").arg(x), MessageType::Info);
         });
         connect(config, &ConfigWidget::chengedEditLineA2, [this](double x) {
             parameters.turnAngleDegMax = x;
-            infoWidget->addMessage(QString("turnAngleDegMax = %1").arg(x), MessageType::Info);
         });
         connect(config, &ConfigWidget::chengedEditLineA3, [this](double x) {
             parameters.distributionCoefficient = x;
-            infoWidget->addMessage(QString("distributionCoefficient = %1").arg(x), MessageType::Info);
         });
     }
 
