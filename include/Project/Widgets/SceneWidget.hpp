@@ -9,7 +9,6 @@
 #include "Project/Scene/ActorTypeInfo.hpp"
 
 #include "TimeWidget.hpp"
-#include "ConfigWidget.hpp"
 
 #include "../Scene/Entities/CoordinateSystem.hpp"
 #include "../Scene/Entities/Limits.hpp"
@@ -75,7 +74,6 @@ protected:
     //        comboBox->setFixedWidth(200);
     // Widgets
     TimeWidget* timeWidget;
-    ConfigWidget* config;
 
     // TODO: Вверху Справа
     QComboBox* actorChoose;
@@ -128,16 +126,11 @@ public:
 
         QHBoxLayout* topLayout = new QHBoxLayout(topWidget);
         topLayout->setContentsMargins(0, 0, 10, 0); // Отступы: слева, сверху, справа, снизу
-        topLayout->addStretch(); // Добавляем растягивающееся пространство слева
+        topLayout->addStretch();                    // Добавляем растягивающееся пространство слева
 
         // TimeWidget
         timeWidget = new TimeWidget(this);
         topLayout->addWidget(timeWidget);
-
-        // Todo: emit changeLineEdit1(double) -> mainWindow() -> set
-        config = new ConfigWidget(this);
-        config->hide();
-        topLayout->addWidget(config);
 
         // TODO: Все же надо в отдельный виджет
         actorChoose = new QComboBox(topWidget);
@@ -196,21 +189,11 @@ public:
         connect(timer, &QTimer::timeout, this, &SceneWidget::moveFromTimer);
         connect(routes_, &Routes::complete, this, &SceneWidget::stop);
         connect(routes_, &Routes::sendIndexCurrentPositionSpeed, this, &SceneWidget::sendObjectInformation);
-
-        connect(config, &ConfigWidget::chengeEditLine0, this, &SceneWidget::chengeEditLine0);
-        connect(config, &ConfigWidget::chengeEditLine1, this, &SceneWidget::chengeEditLine1);
-        connect(config, &ConfigWidget::chengeEditLine2, this, &SceneWidget::chengeEditLine2);
-        connect(config, &ConfigWidget::chengeEditLine3, this, &SceneWidget::chengeEditLine3);
     }
 
     ~SceneWidget() = default;
 
 signals:
-    void chengeEditLine0(double);
-    void chengeEditLine1(double);
-    void chengeEditLine2(double);
-    void chengeEditLine3(double);
-
     void sendMessage(const QString&); // Оповещение о пересечении например
     void sendError(const QString&);
 

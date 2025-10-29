@@ -26,15 +26,15 @@ inline double tackLength(const double& tackMax, const double& detectionRange, co
 }
 */
 
-inline double tackLength(const double& tackMax, const double& weight)
+inline double tackLength(const double& tackMax, const double& weight, const double& tackDistLeft)
 {
-    if (tackMax <= TACK_DIST_LEFT)
+    if (tackMax <= tackDistLeft)
     {
         return tackMax;
     }
     else
     {
-        return TACK_DIST_LEFT + (tackMax - TACK_DIST_LEFT) * weight;
+        return tackDistLeft + (tackMax - tackDistLeft) * weight;
     }
 }
 

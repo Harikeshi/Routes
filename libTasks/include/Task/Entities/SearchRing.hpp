@@ -147,6 +147,7 @@ private:
      * @return std::unique_ptr<geos::geom::LinearRing>
      */
     std::unique_ptr<geos::geom::LinearRing> toGeosGeometry() const;
+
 public:
     // Методы Пети
     //==============================================================================
@@ -239,7 +240,7 @@ public:
      * \brief deepenConcavities
      * \return
      */
-    SearchRing deepenConcavities(const size_t& entrance, const size_t& exit) const;
+    SearchRing deepenConcavities(const size_t& entrance, const size_t& exit, const double& traversaMin) const;
 };
 
 } // namespace Entities

@@ -50,6 +50,24 @@ enum IntersectionMethod
     Core = 0,
     Geos = 1
 };
+
+struct RegionParameters
+{
+    /// минимальное траверзное расстояние
+    double traversaMin;
+    /// минимальная длина галса
+    double tackDistMin;
+    RegionParameters()
+    {
+        traversaMin = TRAVERSA_MIN;
+        tackDistMin = TACK_DIST_MIN;
+    }
+    RegionParameters(double traversaMin, double tackDistMin)
+        : traversaMin(traversaMin), tackDistMin(tackDistMin)
+    {
+    }
+};
+
 /*!
  * Класс Поискового региона.
  */
@@ -74,13 +92,18 @@ class SearchRegion
      * Внутренние поисковые кольца.
      */
     std::vector<SearchRing> mInnerRings;
+    //==============================================================================
+    /*!
+     * Параметры поиска в районе.
+     */
+    RegionParameters parameters;
 
 public:
     /*!
      * Конструктор по-умолчанию.
      */
     explicit SearchRegion() // = delete
-        : entrance(), exit(), mOuterRing(), mInnerRings()
+        : entrance(), exit(), mOuterRing(), mInnerRings(), parameters()
     {
     }
     //==============================================================================
@@ -99,6 +122,15 @@ public:
      * @param endPoint
      */
     explicit SearchRegion(const PrimaryEntities::Polygon<Point2D>& polygon, const Point2D& beginPoint, const Point2D& endPoint);
+    //==============================================================================
+    /**
+     * @brief Пользовательский конструктор из PrimaryEntities::Polygon<Point2D>.
+     * @param polygon TODO: Полигон, если можем изменять, то можно подавать по ссылке.
+     * @param beginPoint
+     * @param endPoint
+     * @param parameters
+     */
+    explicit SearchRegion(const PrimaryEntities::Polygon<Point2D>& polygon, const Point2D& beginPoint, const Point2D& endPoint, const RegionParameters& parameters);
     //==============================================================================
     /**
      * @brief
@@ -211,6 +243,11 @@ public:
     void setExit(const Point2D& point);
     //==============================================================================
     /**
+     * @brief Метод изменяет параметры.
+     */
+    void setParameters(const RegionParameters& parameters);
+    //==============================================================================
+    /**
      * @brief Метод возвращает индекс точки входа.
      * @return size_t
      */
@@ -221,6 +258,12 @@ public:
      * @return size_t
      */
     size_t getExit() const;
+    //==============================================================================
+    /**
+     * @brief Метод возвращает параметры региона.
+     * @return RegionParameters
+     */
+    RegionParameters getParameters() const;
     //==============================================================================
     /**
      * @brief Метод устанавливает кольца региона из заданного полигона.
@@ -437,6 +480,6 @@ public:
      * \brief inflatePolygon
      * \return
      */
-    std::vector<Polygon2D> crop(const double& distance) const;
+    std::vector<Polygon2D> crop() const;
 };
 } // namespace Entities

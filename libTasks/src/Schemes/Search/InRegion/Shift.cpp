@@ -19,6 +19,11 @@ Shift::Shift(const Input& input)
 {
 }
 
+Shift::Shift(const Input& input, const ShiftParameters& parameters)
+    : input{input}, parameters{parameters}
+{
+}
+
 /**
  * @brief Метод расчета траектории схемы Сдвиг.
  * 
@@ -36,7 +41,9 @@ Outputs::Route Shift::calculate()
     const double lengthError = TIME_ACCURRACY * vSearch;
 
     // линейное распределение: y = 2x,  0 <= x <= 1
-    std::piecewise_linear_distribution<> l2x(1, 0, 1, [](double x) { return 2 * x; });
+    std::piecewise_linear_distribution<> l2x(1, 0, 1, [=](double x) {
+        return parameters.distributionCoefficient * x;
+    });
 
     std::random_device randomDevice;
     std::mt19937 randomGenerator(randomDevice());
@@ -90,7 +97,7 @@ Outputs::Route Shift::calculate()
         }
     }
 
-    double tackLen = tackLength(tackMaxLen, l2x(randomGenerator));
+    double tackLen = tackLength(tackMaxLen, l2x(randomGenerator), parameters.tackDistLeft);
     positionCurr = Vector2D(positionCurr, tackLen, courseCurr).e;
     double timeCurr = tackLen / vSearch;
 
@@ -112,7 +119,7 @@ Outputs::Route Shift::calculate()
                 throw Exceptions::AlgorithmFailure(Exceptions::AlgorithmFailureEnum::IntersectionNotFound);
             }
             route.push_back(positionCurr);
-            tackLen = tackLength(maxTack->second, l2x(randomGenerator));
+            tackLen = tackLength(maxTack->second, l2x(randomGenerator), parameters.tackDistLeft);
             positionCurr = Vector2D(positionCurr, tackLen, courseCurr).e;
             timeCurr += tackLen / vSearch;
         }

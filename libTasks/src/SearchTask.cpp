@@ -59,6 +59,7 @@ nlohmann::json SearchTask::computeRoute(const SearchScheme scheme)
 #endif
         return result;
     }
+    /// @note здесь можно инициализировать параметры и задать для схемы и входных данных
 
     // 1. Алгоритм возвращает ошибку (Exceptions::AlgorithmException)
     // 2. Алгоритм возвращает результат

@@ -13,6 +13,7 @@
 #include <QtWidgets>
 
 #include "./Database/DatabaseManager.hpp"
+#include "./Widgets/ConfigWidget.hpp"
 #include "./Widgets/CustomTable.hpp"
 #include "./Widgets/DataWidget.hpp"
 #include "./Widgets/InformationWidget.hpp"
@@ -28,6 +29,12 @@
 #include "Task/Exceptions/AlgorithmException.hpp"
 #include "Task/SearchTask.hpp"
 
+#include <map>
+
+#include "Task/Schemes/Search/InRegion/Input.hpp"
+#include "Task/Schemes/Search/InRegion/Shift.hpp"
+#include "Task/Schemes/Search/InRegion/Zigzag.hpp"
+
 class MainWindow : public QMainWindow
 {
     using SceneWidget = Widgets::SceneWidget;
@@ -38,6 +45,8 @@ class MainWindow : public QMainWindow
     using SubWidget = Widgets::SubWidget;
     using InformationWidget = Widgets::InformationWidget;
     using UpdateProgressBar = Widgets::UpdateProgressBar;
+    using ConfigWidget = Widgets::ConfigWidget;
+    using ConfigWidget = Widgets::ConfigWidget;
 
     using Request = Models::Request;
     using Report = Models::Report;
@@ -46,13 +55,35 @@ class MainWindow : public QMainWindow
 
     SearchTask task;
 
+    std::map<SearchScheme, std::function<std::unique_ptr<Abstractions::Scheme>(const Models::Request& request)>> algorithms{
+        {SearchScheme::Zigzag, [this](const Models::Request& request) {
+             Schemes::Search::InRegion::ZigzagParameters params;
+             params.tackDistLeft = this->parameters.tackDistLeft;
+             params.turnAngleDegMax = this->parameters.turnAngleDegMax;
+             params.turnAngleDegMin = this->parameters.turnAngleDegMin;
+
+             auto input = std::make_unique<Schemes::Search::InRegion::Input>();
+             input->fromJson(request.toNJson());
+
+             return std::make_unique<Schemes::Search::InRegion::Zigzag>(*input, params);
+         }},
+        {SearchScheme::Shift, [this](const Models::Request& request) {
+             Schemes::Search::InRegion::ShiftParameters params;
+             params.tackDistLeft = this->parameters.tackDistLeft;
+             params.distributionCoefficient = this->parameters.distributionCoefficient;
+
+             auto input = std::make_unique<Schemes::Search::InRegion::Input>();
+             input->fromJson(request.toNJson());
+
+             return std::make_unique<Schemes::Search::InRegion::Shift>(*input, params);
+         }}};
+
 public:
     MainWindow(QWidget* parent = nullptr)
         : QMainWindow(parent)
     {
         //! MainLayout - Основная компоновка
         auto* centralWidget = new QWidget(this);
-
         auto* mainLayout = new QVBoxLayout(centralWidget);
         mainLayout->setContentsMargins(0, 0, 0, 0);
         mainLayout->setSpacing(0);
@@ -60,12 +91,19 @@ public:
         //! Главный горизонтальный splitter (разделитель между Scene и правой панелью)
         auto* mainHorizontalSplitter = new QSplitter(Qt::Horizontal, centralWidget);
 
+        auto* splitter = new QSplitter(Qt::Vertical, centralWidget);
+
+        config = new Widgets::ConfigWidget(this);
+        splitter->addWidget(config); //->setLayout(layout);
+
         //! SceneWidget
         scene = new SceneWidget(this);
         scene->setFocusPolicy(Qt::StrongFocus);
         scene->resize(800, 800);
         scene->setMouseTracking(false); // Отключить трекинг мыши
-        mainHorizontalSplitter->addWidget(scene);
+        splitter->addWidget(scene);
+
+        mainHorizontalSplitter->addWidget(splitter); // setLayout(layout); // addWidget(scene);
 
         //! Вертикальная компоновка справа
         auto* rightVerticalSplitter = new QSplitter(Qt::Vertical, centralWidget);
@@ -137,9 +175,16 @@ public:
         this->setEnabled(false);
 
         this->setWindowTitle("Visualization");
+
+        config->initialize(parameters);
     }
 
     ~MainWindow() = default;
+
+    Models::Parameters getParameters() const
+    {
+        return parameters;
+    }
 
     void initConnections()
     {
@@ -157,12 +202,6 @@ public:
 
         connect(&Initializer::instance(), &Initializer::changedRequest, this, &MainWindow::receiveRequest);
         connect(&Initializer::instance(), &Initializer::changedReport, this, &MainWindow::receiveReport);
-
-        // connect(&Initializer::instance(), &Initializer::changedRequest, this, &MainWindow::requestChange);
-        // connect(&Initializer::instance(), &Initializer::changedReport, this, &MainWindow::reportChange);
-
-        //connect(&Initializer::instance(), &Initializer::changedRequest, datamanager, &Database::DatabaseManager::saveRequest);
-        //connect(&Initializer::instance(), &Initializer::changedReport, datamanager, &Database::DatabaseManager::saveReport);
 
         //! ProgressBar <-> Scene
         connect(scene, &SceneWidget::sendFullTime, progress, &UpdateProgressBar::setTotalTime);
@@ -207,18 +246,30 @@ public:
         //! MatrixViewer
         connect(matrix, &MatrixViewWidget::sendMessage, this, &MainWindow::getMessage);
 
-        //! ConfigWidget
-        connect(scene, &SceneWidget::chengeEditLine0, [this](double x){
-            infoWidget->addMessage(QString("line0: %1").arg(x), MessageType::Info);
+        // //! ConfigWidget
+        connect(config, &ConfigWidget::chengedEditLineP0, [this](double x) {
+            parameters.traversaMin = x;
+            infoWidget->addMessage(QString("traversaMin = %1").arg(x), MessageType::Info);
         });
-         connect(scene, &SceneWidget::chengeEditLine1, [this](double x){
-            infoWidget->addMessage(QString("line1: %1").arg(x), MessageType::Info);
+        connect(config, &ConfigWidget::chengedEditLineP1, [this](double x) {
+            parameters.tackDistMin = x;
+            infoWidget->addMessage(QString("tackDistMin = %1").arg(x), MessageType::Info);
         });
-         connect(scene, &SceneWidget::chengeEditLine2, [this](double x){
-            infoWidget->addMessage(QString("line2: %1").arg(x), MessageType::Info);
+        connect(config, &ConfigWidget::chengedEditLineA0, [this](double x) {
+            parameters.tackDistLeft = x;
+            infoWidget->addMessage(QString("tackDistLeft = %1").arg(x), MessageType::Info);
         });
-         connect(scene, &SceneWidget::chengeEditLine3, [this](double x){
-            infoWidget->addMessage(QString("line3: %1").arg(x), MessageType::Info);
+        connect(config, &ConfigWidget::chengedEditLineA1, [this](double x) {
+            parameters.turnAngleDegMin = x;
+            infoWidget->addMessage(QString("turnAngleDegMin = %1").arg(x), MessageType::Info);
+        });
+        connect(config, &ConfigWidget::chengedEditLineA2, [this](double x) {
+            parameters.turnAngleDegMax = x;
+            infoWidget->addMessage(QString("turnAngleDegMax = %1").arg(x), MessageType::Info);
+        });
+        connect(config, &ConfigWidget::chengedEditLineA3, [this](double x) {
+            parameters.distributionCoefficient = x;
+            infoWidget->addMessage(QString("distributionCoefficient = %1").arg(x), MessageType::Info);
         });
     }
 
@@ -292,11 +343,11 @@ private slots:
             reportLoaded = false;
             try
             {
+                //todo: Если не 0 и не 1
                 // TODO: Можно сделать чтобы был перевод в nlohmann toNJson()
                 task.setTask(Initializer::instance().getRequest().toNJson());
 
                 auto report = task.computeRoute(static_cast<SearchScheme>(scene->getActorType()));
-
                 Initializer::instance().loadFromJson(Operations::convertToQJsonObject(report));
 
                 //TODO: message Произведен расчет
@@ -666,6 +717,8 @@ private:
 private:
     // TODO: Указатель на абстрактную сцену
     SceneWidget* scene;
+    Widgets::ConfigWidget* config;
+    Models::Parameters parameters; // todo: Можно убрать в Initializer
 
     // Правая панель
     UpdateProgressBar* progress;

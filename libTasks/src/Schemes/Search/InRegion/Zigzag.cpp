@@ -21,6 +21,12 @@ using Polygon = PrimaryEntities::Polygon<Point2D>;
 Zigzag::Zigzag(const Input& input)
     : input{input}
 {
+    parameters = ZigzagParameters();
+}
+
+Zigzag::Zigzag(const Input& input, const ZigzagParameters& parameters)
+    : input{input}, parameters{parameters}
+{
 }
 
 Outputs::SchemeEfficiency Zigzag::probability()
@@ -41,7 +47,7 @@ Outputs::Route Zigzag::calculate()
     const double lengthError = TIME_ACCURRACY * vSearch;
 
     std::uniform_real_distribution<> u01(0, 1);
-    std::uniform_real_distribution<> turnAngles(TURN_ANGLE_MIN_DEG, TURN_ANGLE_MAX_DEG);
+    std::uniform_real_distribution<> turnAngles(parameters.turnAngleDegMin, parameters.turnAngleDegMax);
 
     std::random_device randomDevice;
     std::mt19937 randomGenerator(randomDevice());
@@ -63,7 +69,7 @@ Outputs::Route Zigzag::calculate()
     /// @todo триангулировать полигон без стартовой точки
     ///
     std::vector<Point2D> pathToExit;
-    auto infPolygon = region.crop(TRAVERSA_MIN);
+    auto infPolygon = region.crop();
     const Entities::SearchRegion regionInf(infPolygon[0], infPolygon[0].outer()[entranceIdx], infPolygon[0].outer()[exitIdx]);
 
     if (!AbstractOperations::correct(infPolygon[0]))
@@ -95,7 +101,7 @@ Outputs::Route Zigzag::calculate()
         tackMaxLen = regionInf.maxTackLength(positionCurr, nearestIntersection);
     }
 
-    double tackLen = tackLength(tackMaxLen, u01(randomGenerator));
+    double tackLen = tackLength(tackMaxLen, u01(randomGenerator), parameters.tackDistLeft);
     double timeCurr = tackLen / vSearch;
     positionCurr = Vector2D(positionCurr, tackLen, courseCurr).e;
 
@@ -119,7 +125,7 @@ Outputs::Route Zigzag::calculate()
                 throw Exceptions::AlgorithmFailure(Exceptions::AlgorithmFailureEnum::IntersectionNotFound);
             }
             route.push_back(positionCurr);
-            tackLen = tackLength(maxTack->second, u01(randomGenerator));
+            tackLen = tackLength(maxTack->second, u01(randomGenerator), parameters.tackDistLeft);
             positionCurr = Vector2D(positionCurr, tackLen, courseCurr).e;
             timeCurr += tackLen / vSearch;
         }

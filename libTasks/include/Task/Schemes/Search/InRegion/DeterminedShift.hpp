@@ -9,6 +9,15 @@
 namespace Schemes {
 namespace Search {
 namespace InRegion {
+
+struct DeterminedShiftParameters
+{
+    /// минимальное траверзное рассояние
+    double traversaMin;
+    /// минимальная длина галса
+    double tackDistMin;
+};
+
 /**
  * @brief Класс схемы Детерменированный Сдвиг.
  *

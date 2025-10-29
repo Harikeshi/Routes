@@ -39,6 +39,7 @@ SearchRegion::SearchRegion(const std::initializer_list<SearchRing>& rings, const
     /// выход может быть в вершине
     setEntrance(start);
     setExit(end);
+    parameters = RegionParameters();
 }
 
 SearchRegion::SearchRegion(const PrimaryEntities::Polygon<Point2D>& polygon, const Point2D& beginPoint, const Point2D& endPoint)
@@ -49,6 +50,18 @@ SearchRegion::SearchRegion(const PrimaryEntities::Polygon<Point2D>& polygon, con
     // TODO: переименовать setEntrancePoint, setExitPoint
     setEntrance(beginPoint);
     setExit(endPoint);
+    parameters = RegionParameters();
+}
+
+SearchRegion::SearchRegion(const PrimaryEntities::Polygon<Point2D>& polygon, const Point2D& beginPoint, const Point2D& endPoint, const RegionParameters& parameters)
+{
+    this->setFromPolygon(polygon);
+
+    /// @note: Точки должны корректироваться? Почему точки не скорректированы
+    // TODO: переименовать setEntrancePoint, setExitPoint
+    setEntrance(beginPoint);
+    setExit(endPoint);
+    setParameters(parameters);
 }
 
 /* get/set */
@@ -80,6 +93,11 @@ size_t SearchRegion::getEntrance() const
 size_t SearchRegion::getExit() const
 {
     return exit;
+}
+
+RegionParameters SearchRegion::getParameters() const
+{
+    return parameters;
 }
 
 /* validates */
@@ -168,6 +186,11 @@ void SearchRegion::setExit(const Point2D& point)
     {
         entrance++;
     }
+}
+
+void SearchRegion::setParameters(const RegionParameters& parametersIn)
+{
+    parameters = parametersIn;
 }
 
 std::vector<RingIntersection> SearchRegion::intersectionsAllCore(const Line& line) const
@@ -415,7 +438,7 @@ std::optional<std::pair<Radian, double>> SearchRegion::longerTack(const Point2D&
         tackMaxLeft = this->maxTackLength(coordinates, nearestIntersectionLeft);
     }
     // Если в обоих направлениях слишком малая длина галса, возвращаем nullopt
-    if (tackMaxLeft < Schemes::Search::TACK_DIST_MIN && tackMaxRight < Schemes::Search::TACK_DIST_MIN)
+    if (tackMaxLeft < parameters.tackDistMin && tackMaxRight < parameters.tackDistMin)
     {
         return std::nullopt;
     }
@@ -521,7 +544,7 @@ double SearchRegion::maxTackLength(const Point2D& start, const RingIntersection&
     double traversaOffset;
     if (intersection.ringIndex == 0)
     {
-        traversaOffset = TRAVERSA_MIN;
+        traversaOffset = parameters.traversaMin;
     }
     else
     {
@@ -681,18 +704,18 @@ std::pair<Point2D, Point2D> SearchRegion::longestMidline(const SearchRing::OBB& 
     return {start, end};
 }
 
-std::vector<Polygon2D> SearchRegion::crop(const double& distance) const
+std::vector<Polygon2D> SearchRegion::crop() const
 {
     std::vector<Polygon2D> inflatePolygon(1);
     inflatePolygon[0].outer() = mOuterRing;
     MultiPolygon2D multiPoly;
     for (const auto& innerPolygon : mInnerRings)
     {
-        AbstractOperations::Helper::buffer(static_cast<Ring2D>(innerPolygon), multiPoly, distance, geos::operation::buffer::BufferParameters::DEFAULT_QUADRANT_SEGMENTS, geos::operation::buffer::BufferParameters::CAP_FLAT, geos::operation::buffer::BufferParameters::JOIN_MITRE, 5., true, true);
+        AbstractOperations::Helper::buffer(static_cast<Ring2D>(innerPolygon), multiPoly, parameters.traversaMin, geos::operation::buffer::BufferParameters::DEFAULT_QUADRANT_SEGMENTS, geos::operation::buffer::BufferParameters::CAP_FLAT, geos::operation::buffer::BufferParameters::JOIN_MITRE, 5., true, true);
         inflatePolygon[0].inners().push_back(multiPoly[0].outer());
     }
 
-    static_cast<Entities::SearchRing>(inflatePolygon[0].outer()).deepenConcavities(entrance, exit);
+    static_cast<Entities::SearchRing>(inflatePolygon[0].outer()).deepenConcavities(entrance, exit, parameters.traversaMin);
 
     return inflatePolygon;
 }

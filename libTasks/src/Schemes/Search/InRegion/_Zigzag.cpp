@@ -97,7 +97,7 @@ Outputs::Route _Zigzag::calculate()
     auto triangulation = std::make_shared<TriangularGeometry::TriangularArea>(poly);
     TriangularGeometry::PathFinder path(triangulation);
 
-    double tackLen = tackLength(tackMaxLen, u01(randomGenerator));
+    double tackLen = tackLength(tackMaxLen, u01(randomGenerator), TACK_DIST_LEFT);
     double timeCurr = tackLen / vSearch;
     positionCurr = Vector2D(positionCurr, tackLen, courseCurr).e;
 
@@ -121,7 +121,7 @@ Outputs::Route _Zigzag::calculate()
                 throw Exceptions::AlgorithmFailure(Exceptions::AlgorithmFailureEnum::IntersectionNotFound);
             }
             route.push_back(positionCurr);
-            tackLen = tackLength(courseLength->second, u01(randomGenerator));
+            tackLen = tackLength(courseLength->second, u01(randomGenerator), TACK_DIST_LEFT);
             positionCurr = Vector2D(positionCurr, tackLen, courseCurr).e;
             timeCurr += tackLen / vSearch;
         }

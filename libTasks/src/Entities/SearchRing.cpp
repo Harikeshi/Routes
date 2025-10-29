@@ -504,7 +504,7 @@ size_t SearchRing::indexOf(const Point2D& point) const
     throw std::runtime_error("Vertex not found!");
 }
 
-SearchRing SearchRing::deepenConcavities(const size_t& entrance, const size_t& exit) const
+SearchRing SearchRing::deepenConcavities(const size_t& entrance, const size_t& exit, const double& traversaMin) const
 {
     auto concavities = Entities::getConcavities(*this);
 
@@ -516,7 +516,7 @@ SearchRing SearchRing::deepenConcavities(const size_t& entrance, const size_t& e
             size_t secondIndex = (i + 1) % this->size();
             Line line((*this)[firstIndex], (*this)[secondIndex]);
             auto concaveLine = line.perpendicularLine((*this)[concavities[i].first]);
-            Point2D changedPoint = concaveLine.findPoint((*this)[concavities[i].first], TRAVERSA_MIN, false, false);
+            Point2D changedPoint = concaveLine.findPoint((*this)[concavities[i].first], traversaMin, false, false);
             const_cast<SearchRing*>(this)->insert(this->begin() + concavities[i].first, changedPoint);
         }
     }

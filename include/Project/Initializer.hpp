@@ -6,6 +6,8 @@
 #include <QObject>
 #include <QString>
 
+#include "Models/Parameters.hpp"
+
 // TODO: валидация, хранение и передача.
 
 /*!
