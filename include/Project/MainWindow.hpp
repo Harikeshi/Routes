@@ -56,17 +56,24 @@ class MainWindow : public QMainWindow
 
     SearchTask task;
 
-    std::map<SearchScheme, std::function<std::unique_ptr<Abstractions::Scheme>(const Models::Request& request)>> algorithms{
+    std::map<SearchScheme, std::function<Outputs::Route(const Models::Request& request)>> algorithms{
         {SearchScheme::Zigzag, [this](const Models::Request& request) {
              Schemes::Search::InRegion::ZigzagParameters params;
              params.tackDistLeft = this->parameters.tackDistLeft;
-             params.turnAngleDegMax = this->parameters.turnAngleDegMax;
              params.turnAngleDegMin = this->parameters.turnAngleDegMin;
+             params.turnAngleDegMax = this->parameters.turnAngleDegMax;
 
-             auto input = std::make_unique<Schemes::Search::InRegion::Input>();
-             input->fromJson(request.toNJson());
+             auto input = std::make_shared<Schemes::Search::InRegion::Input>();
+             input->fromJson(Initializer::instance().getRequest().toNJson());
 
-             return std::make_unique<Schemes::Search::InRegion::Zigzag>(*input, params);
+             Entities::RegionParameters regionParams;
+             regionParams.tackDistMin = this->parameters.tackDistMin;
+             regionParams.traversaMin = this->parameters.traversaMin;
+             input->region.setParameters(regionParams);
+
+             auto algorithm = std::make_shared<Schemes::Search::InRegion::Zigzag>(*input, params);
+
+             return algorithm->calculate();
          }},
         {SearchScheme::Shift, [this](const Models::Request& request) {
              Schemes::Search::InRegion::ShiftParameters params;
@@ -76,7 +83,14 @@ class MainWindow : public QMainWindow
              auto input = std::make_unique<Schemes::Search::InRegion::Input>();
              input->fromJson(request.toNJson());
 
-             return std::make_unique<Schemes::Search::InRegion::Shift>(*input, params);
+             Entities::RegionParameters regionParams;
+             regionParams.tackDistMin = this->parameters.tackDistMin;
+             regionParams.traversaMin = this->parameters.traversaMin;
+             input->region.setParameters(regionParams);
+
+             auto algorithm = std::make_unique<Schemes::Search::InRegion::Shift>(*input, params);
+
+             return algorithm->calculate();
          }}};
 
 public:
@@ -345,19 +359,20 @@ private slots:
             try
             {
                 auto scheme = static_cast<SearchScheme>(scene->getActorType());
-                if (scheme != SearchScheme::Zigzag || scheme != SearchScheme::Shift)
+
+                if (scheme != SearchScheme::Zigzag && scheme != SearchScheme::Shift)
                 {
                     infoWidget->addMessage("Выберите схему Зигзаг или Шифт!", MessageType::Info);
                     return;
                 }
 
-                auto route = algorithms[scheme](Initializer::instance().getRequest())->calculate();
+                auto route = algorithms[scheme](Initializer::instance().getRequest());
 
                 nlohmann::json report;
                 report["routes"] = nlohmann::json::array();
-                report["routes"].push_back(route.toJson());
-
                 report["messages"] = nlohmann::json::array();
+
+                report["routes"].push_back(route.toJson());
                 report["messages"].push_back(Outputs::Message{}.toJson());
 
                 Initializer::instance().loadFromJson(Operations::convertToQJsonObject(report));
@@ -385,7 +400,8 @@ private slots:
      * Действия после инициализации request.
      * Действия при изменении request
      */
-    void receiveRequest(const Request& request)
+    void
+    receiveRequest(const Request& request)
     {
         requestLoaded = true;
         reportLoaded = false;

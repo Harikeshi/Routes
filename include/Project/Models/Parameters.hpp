@@ -1,4 +1,5 @@
 #pragma once
+
 namespace Models {
 struct Parameters
 {
@@ -31,5 +32,25 @@ struct Parameters
         turnAngleDegMin = 30;
         turnAngleDegMax = 80;
     }
+
+    // Schemes::Search::InRegion::ShiftParameters getShiftParameters() const
+    // {
+    //     return Schemes::Search::InRegion::ShiftParameters{tackDistLeft, distributionCoefficient};
+    // }
+
+    // Schemes::Search::InRegion::ZigzagParameters getZigzagParameters() const
+    // {
+    //     Schemes::Search::InRegion::ZigzagParameters params;
+    //     params.tackDistLeft = tackDistLeft;
+    //     params.turnAngleDegMin = turnAngleDegMin;
+    //     params.turnAngleDegMax = turnAngleDegMax;
+    //
+    //     return params;
+    // }
+    //
+    // Entities::RegionParameters getRegParameters() const
+    // {
+    //     return Entities::RegionParameters{traversaMin, tackDistMin};
+    // }
 };
 } // namespace Models
