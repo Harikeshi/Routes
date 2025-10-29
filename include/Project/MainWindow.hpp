@@ -344,7 +344,14 @@ private slots:
             reportLoaded = false;
             try
             {
-                auto route = algorithms[static_cast<SearchScheme>(scene->getActorType())](Initializer::instance().getRequest())->calculate();
+                auto scheme = static_cast<SearchScheme>(scene->getActorType());
+                if (scheme != SearchScheme::Zigzag || scheme != SearchScheme::Shift)
+                {
+                    infoWidget->addMessage("Выберите схему Зигзаг или Шифт!", MessageType::Info);
+                    return;
+                }
+
+                auto route = algorithms[scheme](Initializer::instance().getRequest())->calculate();
 
                 nlohmann::json report;
                 report["routes"] = nlohmann::json::array();
