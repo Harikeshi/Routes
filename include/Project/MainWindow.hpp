@@ -31,6 +31,7 @@
 
 #include <map>
 
+#include "Task/Outputs/Message.hpp"
 #include "Task/Schemes/Search/InRegion/Input.hpp"
 #include "Task/Schemes/Search/InRegion/Shift.hpp"
 #include "Task/Schemes/Search/InRegion/Zigzag.hpp"
@@ -343,11 +344,15 @@ private slots:
             reportLoaded = false;
             try
             {
-                //todo: Если не 0 и не 1
-                // TODO: Можно сделать чтобы был перевод в nlohmann toNJson()
-                task.setTask(Initializer::instance().getRequest().toNJson());
+                auto route = algorithms[static_cast<SearchScheme>(scene->getActorType())](Initializer::instance().getRequest())->calculate();
 
-                auto report = task.computeRoute(static_cast<SearchScheme>(scene->getActorType()));
+                nlohmann::json report;
+                report["routes"] = nlohmann::json::array();
+                report["routes"].push_back(route.toJson());
+
+                report["messages"] = nlohmann::json::array();
+                report["messages"].push_back(Outputs::Message{}.toJson());
+
                 Initializer::instance().loadFromJson(Operations::convertToQJsonObject(report));
 
                 //TODO: message Произведен расчет
