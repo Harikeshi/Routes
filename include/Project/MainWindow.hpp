@@ -47,7 +47,6 @@ class MainWindow : public QMainWindow
     using InformationWidget = Widgets::InformationWidget;
     using UpdateProgressBar = Widgets::UpdateProgressBar;
     using ConfigWidget = Widgets::ConfigWidget;
-    using ConfigWidget = Widgets::ConfigWidget;
 
     using Request = Models::Request;
     using Report = Models::Report;
