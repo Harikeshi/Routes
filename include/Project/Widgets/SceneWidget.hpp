@@ -24,8 +24,8 @@
 
 namespace Widgets {
 /*!
-         * Класс отображения сцены.
-         */
+ * Класс отображения сцены.
+ */
 class SceneWidget final : public QWidget
 {
     using CoordinateSystem = Scene::Entities::CoordinateSystem;
