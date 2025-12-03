@@ -247,152 +247,138 @@ void FigureWidget::zoomAtPoint(const QPoint& widgetPos, double factor)
 void FigureWidget::drawGrid(QPainter& painter)
 {
     painter.save();
-
+    
     // Adjust grid spacing based on zoom level
     double gridSpacing = baseGridSpacing;
-
+    
     // Find appropriate grid spacing
     double scaleFactors[] = {0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100};
-    for (double factor : scaleFactors)
-    {
-        if (viewScale * baseGridSpacing * factor > 40)
-        {
+    for (double factor : scaleFactors) {
+        if (viewScale * baseGridSpacing * factor > 40) {
             gridSpacing = baseGridSpacing * factor;
             break;
         }
     }
-
+    
     // Set grid styles
     QPen mainGridPen(QColor(200, 200, 200), 1);
     QPen subGridPen(QColor(230, 230, 230), 1);
     QPen axisPen(Qt::black, 2);
     QPen textPen(Qt::black);
-
+    
     // Calculate visible area in world coordinates
     QRectF visibleWorldRect = inverseTransform.mapRect(rect());
-
+    
     // Calculate grid boundaries
-    double startX = std::floor(visibleWorldRect.left() / gridSpacing) * gridSpacing;
+   /* double startX = std::floor(visibleWorldRect.left() / gridSpacing) * gridSpacing;
     double endX = std::ceil(visibleWorldRect.right() / gridSpacing) * gridSpacing;
     double startY = std::floor(visibleWorldRect.bottom() / gridSpacing) * gridSpacing;
-    double endY = std::ceil(visibleWorldRect.top() / gridSpacing) * gridSpacing;
+    double endY = std::ceil(visibleWorldRect.top() / gridSpacing) * gridSpacing;*/
+    double startX = std::floor(viewMinX / gridSpacing) * gridSpacing;// left
+    double endX = std::ceil(viewMaxX / gridSpacing) * gridSpacing;// right
+    double startY = std::floor(viewMinY / gridSpacing) * gridSpacing;//bottom
+    double endY = std::ceil(viewMaxY / gridSpacing) * gridSpacing;//top
 
     // Draw sub-grid lines (more frequent) - только если достаточно приближены
-    if (viewScale > 0.5)
-    {
+    if (viewScale > 0.5) {
         double subGridSpacing = gridSpacing / 5.0;
         painter.setPen(subGridPen);
-
+        
         // Vertical sub-grid lines
-        for (double x = std::floor(visibleWorldRect.left() / subGridSpacing) * subGridSpacing;
-             x <= endX;
-             x += subGridSpacing)
-        {
-            if (std::abs(std::fmod(x, gridSpacing)) < 1e-6)
-                continue; // Skip main grid lines
-
-            QPointF p1 = transform.map(QPointF(x, visibleWorldRect.bottom()));
-            QPointF p2 = transform.map(QPointF(x, visibleWorldRect.top()));
+        for (double x = std::floor(viewMinX / subGridSpacing) * subGridSpacing; 
+             x <= endX; x += subGridSpacing) {
+            if (std::abs(std::fmod(x, gridSpacing)) < 1e-6) continue; // Skip main grid lines
+            
+            QPointF p1 = transform.map(QPointF(x, viewMinY));
+            QPointF p2 = transform.map(QPointF(x, viewMaxY));
             painter.drawLine(p1, p2);
         }
-
+        
         // Horizontal sub-grid lines
-        for (double y = std::floor(visibleWorldRect.bottom() / subGridSpacing) * subGridSpacing;
-             y <= endY;
-             y += subGridSpacing)
-        {
-            if (std::abs(std::fmod(y, gridSpacing)) < 1e-6)
-                continue; // Skip main grid lines
-
-            QPointF p1 = transform.map(QPointF(visibleWorldRect.left(), y));
-            QPointF p2 = transform.map(QPointF(visibleWorldRect.right(), y));
+        for (double y = std::floor(viewMinY / subGridSpacing) * subGridSpacing; 
+             y <= endY; y += subGridSpacing) {
+            if (std::abs(std::fmod(y, gridSpacing)) < 1e-6) continue; // Skip main grid lines
+            
+            QPointF p1 = transform.map(QPointF(viewMinX, y));
+            QPointF p2 = transform.map(QPointF(viewMaxX, y));
             painter.drawLine(p1, p2);
         }
     }
-
+    
     // Draw main grid lines
     painter.setPen(mainGridPen);
-
+    
     // Vertical main grid lines
-    for (double x = startX; x <= endX; x += gridSpacing)
-    {
-        QPointF p1 = transform.map(QPointF(x, visibleWorldRect.bottom()));
-        QPointF p2 = transform.map(QPointF(x, visibleWorldRect.top()));
+    for (double x = startX; x <= endX; x += gridSpacing) {
+        QPointF p1 = transform.map(QPointF(x, viewMinY));
+        QPointF p2 = transform.map(QPointF(x, viewMaxY));
         painter.drawLine(p1, p2);
     }
-
+    
     // Horizontal main grid lines
-    for (double y = startY; y <= endY; y += gridSpacing)
-    {
-        QPointF p1 = transform.map(QPointF(visibleWorldRect.left(), y));
-        QPointF p2 = transform.map(QPointF(visibleWorldRect.right(), y));
+    for (double y = startY; y <= endY; y += gridSpacing) {
+        QPointF p1 = transform.map(QPointF(viewMinX, y));
+        QPointF p2 = transform.map(QPointF(viewMaxX, y));
         painter.drawLine(p1, p2);
     }
-
+    
     // Draw axes
     painter.setPen(axisPen);
-    if (visibleWorldRect.bottom() <= 0 && visibleWorldRect.top() >= 0)
+    if (viewMinY <= 0 && viewMaxY >= 0)
     {
         // X axis (horizontal)
-        QPointF p1 = transform.map(QPointF(visibleWorldRect.left(), 0));
-        QPointF p2 = transform.map(QPointF(visibleWorldRect.right(), 0));
+        QPointF p1 = transform.map(QPointF(viewMinX, 0));
+        QPointF p2 = transform.map(QPointF(viewMaxX, 0));
         painter.drawLine(p1, p2);
     }
-    if (visibleWorldRect.left() <= 0 && visibleWorldRect.right() >= 0)
+    if (viewMinX <= 0 && viewMaxX >= 0)
     {
         // Y axis (vertical)
-        QPointF p1 = transform.map(QPointF(0, visibleWorldRect.bottom()));
-        QPointF p2 = transform.map(QPointF(0, visibleWorldRect.top()));
+        QPointF p1 = transform.map(QPointF(0, viewMinY));
+        QPointF p2 = transform.map(QPointF(0, viewMaxY));
         painter.drawLine(p1, p2);
     }
-
+    
     // Draw coordinate labels
     painter.setPen(textPen);
     QFont font = painter.font();
     font.setPointSize(8);
     painter.setFont(font);
-
+    
     // X axis labels (at bottom of widget)
-    for (double x = startX; x <= endX; x += gridSpacing)
-    {
-        if (std::abs(x) < 1e-6)
-            continue; // Skip zero for now
-
-        QPointF labelPos = transform.map(QPointF(x, visibleWorldRect.bottom()));
-        if (labelPos.x() >= 0 && labelPos.x() <= width())
-        {
+    for (double x = startX; x <= endX; x += gridSpacing) {
+        if (std::abs(x) < 1e-6) continue; // Skip zero for now
+        
+        QPointF labelPos = transform.map(QPointF(x, viewMinY));
+        if (labelPos.x() >= 0 && labelPos.x() <= width()) {
             QString label = QString::number(x, 'f', std::abs(x) < 1 ? 1 : 0);
             QRect textRect = painter.fontMetrics().boundingRect(label);
-            painter.drawText(labelPos.x() - textRect.width() / 2,
-                             height() - 5,
-                             label);
+            painter.drawText(labelPos.x() - textRect.width() / 2, 
+                            height() - 5, 
+                            label);
         }
     }
-
+    
     // Y axis labels (at left of widget)
-    for (double y = startY; y <= endY; y += gridSpacing)
-    {
-        if (std::abs(y) < 1e-6)
-            continue; // Skip zero for now
-
-        QPointF labelPos = transform.map(QPointF(visibleWorldRect.left(), y));
-        if (labelPos.y() >= 0 && labelPos.y() <= height())
-        {
+    for (double y = startY; y <= endY; y += gridSpacing) {
+        if (std::abs(y) < 1e-6) continue; // Skip zero for now
+        
+        QPointF labelPos = transform.map(QPointF(viewMinX, y));
+        if (labelPos.y() >= 0 && labelPos.y() <= height()) {
             QString label = QString::number(y, 'f', std::abs(y) < 1 ? 1 : 0);
             QRect textRect = painter.fontMetrics().boundingRect(label);
-            painter.drawText(5,
-                             labelPos.y() + textRect.height() / 3,
-                             label);
+            painter.drawText(5, 
+                            labelPos.y() + textRect.height() / 3, 
+                            label);
         }
     }
-
+    
     // Draw origin label if visible
-    if (visibleWorldRect.contains(0, 0))
-    {
+    if (visibleWorldRect.contains(0, 0)) {
         QPointF originWidgetPos = transform.map(QPointF(0, 0));
         painter.drawText(originWidgetPos.x() + 5, originWidgetPos.y() - 5, "0");
     }
-
+    
     painter.restore();
 }
 void FigureWidget::drawSegments(QPainter& painter)
