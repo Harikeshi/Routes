@@ -43,7 +43,8 @@ public:
     void drawCurrent(QPainter& painter, const QColor& color) const
     {
         setPen(painter, color);
-        painter.drawLine(segment.start, current);
+        if (segment.start != current)
+            painter.drawLine(segment.start, current);
     }
 
     void drawFull(QPainter& painter, const QColor& color) const

@@ -80,6 +80,12 @@ protected:
 
     CoordinateSystem cs; // Система координат
     Limits limits;       // Крайние значения по осям
+    Limits worldLimits;
+    QTransform transform;
+    QTransform inverseTransform;
+
+    bool isPanning = false;
+    QPoint lastMousePos;
 
     // Элементы отрисовки цели.
     Routes* routes_;
@@ -113,7 +119,14 @@ public slots:
 public:
     explicit SceneWidget(QWidget* parent = nullptr)
         : QWidget(parent)
+
     {
+        setMinimumSize(400, 400);
+        setMouseTracking(true);
+
+        worldLimits.set(0, 0, 400, 400);
+        resetView();
+
         QVBoxLayout* mainLayout = new QVBoxLayout(this);
 
         mainLayout->setContentsMargins(0, 0, 0, 0); // Убираем отступы по краям
@@ -176,7 +189,7 @@ public:
         this->resize(100, 100);
 
         // Чтобы не было диких цифр при загрузке
-        limitesToRect();
+        //limitesToRect();
 
         connect(actorChoose, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int number) {
             auto type = static_cast<Scene::ActorType>(number);
@@ -216,6 +229,67 @@ signals:
     void sceneReseted();
 
     void schemeChanged(const QString&);
+
+private:
+    void zoomAtPoint(const QPoint& widgetPos, double factor)
+    {
+        QPointF worldPos = inverseTransform.map(QPointF(widgetPos));
+
+        double newWidth = (limits.maxX - limits.minX) / factor;
+        double newHeight = (limits.maxY - limits.minY) / factor;
+
+        double centerX = (worldPos.x() - limits.minX) / (limits.maxX - limits.minX);
+        double centerY = (worldPos.y() - limits.minY) / (limits.maxY - limits.minY);
+
+        double newMinX = worldPos.x() - newWidth * centerX;
+        double newMaxX = newMinX + newWidth;
+        double newMinY = worldPos.y() - newHeight * centerY;
+        double newMaxY = newMinY + newHeight;
+
+        double minZoom = (worldLimits.maxX - worldLimits.minX) * 0.01;
+        double maxZoom = (worldLimits.maxX - worldLimits.minX) * 100;
+
+        if (newWidth >= minZoom && newWidth <= maxZoom)
+        {
+            limits.minX = newMinX;
+            limits.maxX = newMaxX;
+            limits.minY = newMinY;
+            limits.maxY = newMaxY;
+
+            updateTransformation();
+            update();
+        }
+    }
+
+    void updateTransformation()
+    {
+        double widgetWidth = width();
+        double widgetHeight = height();
+
+        double scaleX = widgetWidth / (limits.maxX - limits.minX);
+        double scaleY = widgetHeight / (limits.maxY - limits.minY);
+        double scale = qMin(scaleX, scaleY);
+
+        double offsetX = (widgetWidth - (limits.maxX - limits.minX) * scale) / 2;
+        double offsetY = (widgetHeight - (limits.maxY - limits.minY) * scale) / 2;
+
+        transform.reset();
+        transform.translate(offsetX, widgetHeight - offsetY);
+        transform.scale(scale, -scale);
+        transform.translate(-limits.minX, -limits.minY);
+
+        inverseTransform = transform.inverted();
+    }
+
+    void resetView()
+    {
+        limits.minX = worldLimits.minX;
+        limits.maxX = worldLimits.maxX;
+        limits.minY = worldLimits.minY;
+        limits.maxY = worldLimits.maxY;
+
+        updateTransformation();
+    }
 
 public:
     void changeShowWidthPath()
@@ -304,7 +378,7 @@ public:
 
         timer->stop();
 
-        limitesToRect();
+        //limitesToRect();
 
         initCoordinateSystem();
 
@@ -483,6 +557,13 @@ public:
         update();
     }
 
+      /*!
+         * Метод пересчета системы координат.
+         */
+    void initCoordinateSystem()
+    {
+        cs.setTransform(rect(), limits);
+    }
 public slots:
     void changeDrawing()
     {
@@ -529,27 +610,28 @@ public slots:
          */
     void setLimits(bool isReport)
     {
-        limits.reset();
-
+        worldLimits.reset();
         //! Собрать из Путей
         if (isReport)
-            limits.initFromRoutes(this->routes_->getRoutes());
+        {
+            worldLimits.initFromRoutes(this->routes_->getRoutes());
+        }
 
         //! Инициализация из Actor.
         //! Данные Actor не забываем сбросить.
-        this->limits.compareLimits(actor->getLimits());
-
+        this->worldLimits.compareLimits(actor->getLimits());
         //! ПЛ не учитываем, всегда сбрасываем путь лодки.
-        initTargetPath(limits.diagonal() * pointPercent);
+        initTargetPath(worldLimits.diagonal() * pointPercent);
 
         //! Обновляем модели.
-        setModels(Objects::Arrow, 0.01 * limits.diagonal());
+        setModels(Objects::Arrow, 0.01 * worldLimits.diagonal());
 
         if (axies.first > axies.second)
-            this->limits.swap();
+            this->worldLimits.swap();
 
         //! Обновляем систему координат.
         initCoordinateSystem();
+        resetView();
 
         update();
     }
@@ -651,16 +733,18 @@ protected
         //! Определение общего QPainter.
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing); // Более плавная отрисовка, но наложение линий
-        painter.drawImage(rect(), grid->getImage());
 
-        painter.setTransform(cs.getTransform());
+        grid->draw(painter, transform, inverseTransform, rect());
+
+        painter.setTransform(transform);
 
         actor->draw(painter);
 
-        target->draw(painter);
-        targetPath->draw(painter);
-
         routes_->draw(painter);
+
+        painter.setTransform(cs.getTransform());
+        targetPath->draw(painter);
+        target->draw(painter);
     }
 
     /*!
@@ -669,6 +753,8 @@ protected
          */
     void resizeEvent(QResizeEvent* event) override
     {
+        Q_UNUSED(event);
+        updateTransformation();
         initCoordinateSystem();
 
         update();
@@ -687,25 +773,49 @@ protected
         target->setModel(Objects::Arrow, 0.01 * limits.diagonal());
     }
 
+    void wheelEvent(QWheelEvent* event) override
+    {
+        QPoint numDegrees = event->angleDelta() / 8;
+
+        if (!numDegrees.isNull())
+        {
+            double zoomFactor = (numDegrees.y() > 0) ? 1.1 : (1.0 / 1.1);
+            zoomAtPoint(event->position().toPoint(), zoomFactor);
+            event->accept();
+        }
+        else
+        {
+            event->ignore();
+        }
+    }
     /*!
          *
          * @param event
          */
     void mousePressEvent(QMouseEvent* event) override
     {
-        if (drawing)
+        if (event->button() == Qt::LeftButton)
         {
-            // TODO: Включение отображения ПЛ.
-            if (targetPath->isEmpty())
-                target->setState(new Scene::Objects::CurrentDrawState());
+            if (drawing)
+            {
+                // TODO: Включение отображения ПЛ.
+                if (targetPath->isEmpty())
+                    target->setState(new Scene::Objects::CurrentDrawState());
 
-            addPointToTargetPathInitTargets(event->pos());
+                addPointToTargetPathInitTargets(event->pos());
+            }
+            else
+            {
+                isPanning = true;
+                lastMousePos = event->pos();
+                setCursor(Qt::ClosedHandCursor);
+                event->accept();
+            }
         }
         else
         {
             this->showPosition(event);
         }
-
         //! Обработка события pressMouse для targetPath.
         if (targetPath->hasDrawingPoints())
             targetPath->mousePress(event, cs.toLogical(event->pos()));
@@ -716,31 +826,53 @@ protected
         update();
     }
 
-public
-    :
+public:
+    void mouseReleaseEvent(QMouseEvent* event) override
+    {
+        if (event->button() == Qt::LeftButton && isPanning)
+        {
+            isPanning = false;
+            setCursor(Qt::ArrowCursor);
+            event->accept();
+        }
+    }
     /*!
          *
          * @param event
          */
     void mouseMoveEvent(QMouseEvent* event) override
     {
-        if (drawing)
+        if (isPanning)
         {
-            //! При рисовании добавляем точки движения.
-            if (rect().contains(event->pos()))
+            QPoint delta = event->pos() - lastMousePos;
+
+            if (!delta.isNull())
             {
-                addPointToTargetPathInitTargets(event->pos());
+                QPointF worldDelta = inverseTransform.map(QPointF(delta)) -
+                                     inverseTransform.map(QPointF(0, 0));
+                limits.minX -= worldDelta.x();
+                limits.maxX -= worldDelta.x();
+                limits.minY -= worldDelta.y();
+                limits.maxY -= worldDelta.y();
+
+                updateTransformation();
+                update();
             }
 
-            // Отрисовка
+            lastMousePos = event->pos();
+            event->accept();
         }
-        //! Обработка событий для путей и точек соответственно.
-        // if (targetPath->hasDrawingPoints())
-        //     targetPath->mouseMove(cs.toLogical(event->pos()));
-
-        //! Routes
-        // routes_->mouseMoveEvent(event);
-
+        else
+        {
+            if (drawing)
+            {
+                //! При рисовании добавляем точки движения.
+                if (rect().contains(event->pos()))
+                {
+                    addPointToTargetPathInitTargets(event->pos());
+                }
+            }
+        }
         update();
     }
 
@@ -768,20 +900,6 @@ public
     }
 
     /*!
-         * Метод пересчета системы координат.
-         */
-    void initCoordinateSystem()
-    {
-        //! Пределы с учетом отступов.
-        auto hightLimits = limits.limitsWithMargins(this->margin);
-
-        cs.setTransform(rect(), hightLimits);
-
-        //! Перерисовать изображение сетки Image.
-        grid->draw(this->limits, rect(), axies.first, axies.second);
-    }
-
-    /*!
          * Метод показывает координаты точки под курсором при нажатии.
          * @param event
          */
@@ -790,7 +908,7 @@ public
         // Отрисовка таблички X, Y.
         if (rect().contains(event->pos()))
         {
-            QPointF pos = cs.toLogical(event->pos());
+            QPointF pos = transform.inverted().map(event->pos());
 
             QString tooltipText = QString("X: %1, Y: %2").arg(pos.x()).arg(pos.y());
             // : QString("X: %1, Y: %2").arg(pos.y()).arg(pos.x());

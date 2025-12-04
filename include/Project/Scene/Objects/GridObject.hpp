@@ -7,211 +7,188 @@
 #include "../Entities/Limits.hpp"
 
 namespace Scene::Objects {
-    class GridObject final : public QObject {
-        using Limits = Entities::Limits;
+class GridObject final : public QObject
+{
+    using Limits = Entities::Limits;
 
-        Q_OBJECT
+    Q_OBJECT
 
-    public:
-        GridObject(QObject *parent = nullptr)
-            : QObject(parent) {
-            color = QColor(220, 220, 220);
-            steps = 10;
-            margin = 2;
-            image = QImage(800, 800, QImage::Format_ARGB32);
+public:
+    GridObject(QObject* parent = nullptr)
+        : QObject(parent), baseSpacing(20.0),
+          penColor(200, 200, 200), axisColor(Qt::black)
+    {
+        color = QColor(220, 220, 220);
+        steps = 10;
+        margin = 2;
+        image = QImage(800, 800, QImage::Format_ARGB32);
+    }
+
+    void setColor(const QColor& colour)
+    {
+        color = colour;
+    }
+
+    void setSteps(const int number)
+    {
+        steps = number;
+    }
+
+public:
+    
+    QImage getImage() const
+    {
+        return image;
+    }
+
+    void draw(QPainter& painter, const QTransform& transform, const QTransform& inverseTransform, const QRect& widgetRect)
+    {
+        painter.save();
+        QRectF worldRect = inverseTransform.mapRect(QRectF(widgetRect));
+
+        double scale = getScaleFromTransform(transform);
+        qDebug() << scale;
+        if (scale < 0.15)
+            scale = 0.19;
+        double spacing = calculateSpacing(scale);
+
+        double left = worldRect.left();
+        double right = worldRect.right();
+        double bottom = worldRect.bottom();
+        double top = worldRect.top();
+
+        double startX = std::floor(left / spacing) * spacing;
+        double endX = std::ceil(right / spacing) * spacing;
+        double startY = std::floor(top / spacing) * spacing;
+        double endY = std::ceil(bottom / spacing) * spacing;
+
+        painter.setTransform(QTransform());
+
+        // Вертикальные
+        painter.setPen(QPen(penColor, 1));
+        for (double x = startX; x <= endX; x += spacing)
+        {
+            QPointF p1 = transform.map(QPointF(x, bottom));
+            QPointF p2 = transform.map(QPointF(x, top));
+            painter.drawLine(p1, p2);
         }
 
-        void setColor(const QColor &colour) {
-            color = colour;
+        // Горизонтальные
+        for (double y = startY; y <= endY; y += spacing)
+        {
+            QPointF p1 = transform.map(QPointF(left, y));
+            QPointF p2 = transform.map(QPointF(right, y));
+            painter.drawLine(p1, p2);
         }
 
-        void setSteps(const int number) {
-            steps = number;
+        // Оси
+        painter.setPen(QPen(axisColor, 2));
+
+        // X
+        if (worldRect.top() <= 0 && worldRect.bottom() >= 0)
+        {
+            QPointF x1 = transform.map(QPointF(left, 0));
+            QPointF x2 = transform.map(QPointF(right, 0));
+            painter.drawLine(x1, x2);
         }
 
-        void draw(QPainter &painter, const Limits &limits) {
-            QPen pen(color, 2);
-            pen.setCosmetic(true);
+        // Y
+        if (worldRect.left() <= 0 && worldRect.right() >= 0)
+        {
+            QPointF y1 = transform.map(QPointF(0, bottom));
+            QPointF y2 = transform.map(QPointF(0, top));
+            painter.drawLine(y1, y2);
+        }
 
-            pen.setStyle(Qt::DotLine);
+        // Координаты
+        drawLabels(painter, transform, startX, endX, startY, endY, spacing, widgetRect);
 
-            QFont font = painter.font();
+        painter.restore();
+    }
 
-            font.setPointSize(8);
+private:
+    double calculateSpacing(double scale) const
+    {
+        double spacing = baseSpacing;
+        double scaleFactors[] = {0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100};
 
-            painter.setPen(pen);
-            painter.setFont(font);
-
-            // Вертикальные линии (ось X)
-            auto step = (limits.maxX - limits.minX) / steps;
-
-            double current = limits.minX;
-
-            for (int i = 0; i <= steps; ++i) {
-                QPointF p1(current, limits.minY);
-                QPointF p2(current, limits.maxY);
-
-                painter.drawLine(p1, p2);
-
-                auto font = painter.font();
-
-                painter.setFont(font);
-
-                current += step;
+        for (double factor : scaleFactors)
+        {
+            if (scale * baseSpacing * factor > 30)
+            {
+                spacing = baseSpacing * factor;
+                break;
             }
+        }
+        return spacing;
+    }
 
-            // Горизонтальные линии (ось Y)
-            step = (limits.maxY - limits.minY) / steps;
+    /*
+       Масштаб
+    */
+    double getScaleFromTransform(const QTransform& transform) const
+    {
+        return std::sqrt(transform.m11() * transform.m11() + transform.m12() * transform.m12());
+    }
 
-            current = limits.minY;
+    void drawLabels(QPainter& painter, const QTransform& transform, double startX, double endX, double startY, double endY, double spacing, const QRect& widgetRect)
+    {
+        painter.setPen(QPen(Qt::black));
+        QFont font = painter.font();
+        font.setPointSize(8);
+        painter.setFont(font);
 
-            for (int i = 0; i <= steps; ++i) {
-                QPointF p1(limits.minX, current);
-                QPointF p2(limits.maxX, current);
+        int widgetWidth = widgetRect.width();
+        int widgetHeight = widgetRect.height();
 
-                painter.drawLine(p1, p2);
+        // X
+        for (double x = startX; x <= endX; x += spacing)
+        {
+            if (std::abs(x) < 1e-6)
+                continue;
 
-                current += step;
+            QPointF labelPos = transform.map(QPointF(x, 0));
+            if (labelPos.x() >= 0 && labelPos.x() <= widgetWidth)
+            {
+                QString label = QString::number(x, 'f', std::abs(x) < 1 ? 1 : 0);
+                QRect textRect = painter.fontMetrics().boundingRect(label);
+                painter.drawText(labelPos.x() - textRect.width() / 2,
+                                 widgetHeight - 2,
+                                 label);
             }
         }
 
-    public:
-        // TODO: В отрисовку сетки добавить поворот чисел слева
-        void draw(const Limits &limits, const QRect &rect, const QString &H, const QString &V) {
-            this->image = QImage(rect.width(), rect.height(), QImage::Format_ARGB32);
+        // Y
+        for (double y = startY; y <= endY; y += spacing)
+        {
+            if (std::abs(y) < 1e-6)
+                continue;
 
-            image.fill(Qt::transparent);
-
-            QPainter painter(&image);
-
-            painter.setRenderHint(QPainter::Antialiasing);
-            painter.setRenderHint(QPainter::TextAntialiasing);
-
-            // Установка шрифта для подписей
-            QFont font("Arial", 8);
-            painter.setFont(font);
-            QFontMetrics fm(font);
-
-            // Отступы
-            const int topMargin = 15;
-            const int rightMargin = 10;
-
-            // TODO: Привязать отступы слева и справа к высоте цифр заданного шрифта
-            const int bottomMargin = fm.height();
-            const int leftMargin = fm.height();
-            // const int leftMargin = fm.horizontalAdvance(QString::number(limits.getMaxDifference()) + "00");
-
-            // 1 pixel по ширине
-            // TODO: Из прямоугольника вычесть отступы в пикселях.
-            auto wPixel = limits.getXDifference() / rect.width(); //! Логический размер пикселя по ширине.
-
-            // 2 pixel по высоте
-            auto hPixel = limits.getYDifference() / rect.height(); //! Логический размер пикселя по высоте.
-
-            // Начало по ширине из minX
-            // Вертикальные линии
-
-            // TODO: можно не отрисовывать
-            // 1. Начало отрисовки leftMargin
-            // первая линия {leftMargin, height - bottomMargin, leftMargin, topMargin}
-            // Последняя линия {width - rightMargin, height - bootomMargin, width-rightMargin, topMargin}
-            // 2. Следующие линии от minX до maxX
-            // Серединные линии
-            // Вертикальные
-
-            // TODO: Брать предел с отступами и и высчитывать логический размер пикселя.
-            auto mainLimints = limits.limitsWithMargins(margin);
-
-            // TODO: Начальные линии разметки брать от минимальных значений пределов.
-
-            // TODO: мы итак знаем значения в пикселях.
-            auto beginX = std::fabs(mainLimints.minX - limits.minX) / wPixel; // начало в пикселях
-            auto availableWidth = mainLimints.getXDifference() / wPixel; //
-
-            auto xLogicalStep = mainLimints.getXDifference() / steps; // шаг по X в координатах
-            auto xScreenStep = availableWidth / steps; // шаг по X в пикселях
-
-            auto beginY = std::fabs(mainLimints.maxY - limits.maxY) / hPixel;
-            auto availableHeight = mainLimints.getYDifference() / hPixel; // в пикселях
-
-            auto yLogicalStep = mainLimints.getYDifference() / steps;
-            auto yScreenStep = availableHeight / steps;
-
-            auto maxX = rect.width() - rightMargin;
-            auto maxY = rect.height() - bottomMargin;
-            double minX = leftMargin;
-            double minY = topMargin;
-
-            // Отрисовка сетки
-            painter.setPen(QPen(Qt::lightGray, 1, Qt::DotLine));
-
-            // Вертикальные линии
-            for (int i = 0; i <= steps; ++i) {
-                int x = beginX + i * xScreenStep;
-                painter.drawLine(x, minY, x, maxY);
-
-                QString label = QString::number(+mainLimints.minX + i * xLogicalStep); // X
-                int labelWidth = fm.horizontalAdvance(label);
-
-                // if (i != 0 && i != steps)
-                painter.drawText(x - labelWidth / 2, rect.height() - bottomMargin / 2, label);
+            QPointF labelPos = transform.map(QPointF(0, y));
+            if (labelPos.y() >= 0 && labelPos.y() <= widgetHeight)
+            {
+                QString label = QString::number(y, 'f', std::abs(y) < 1 ? 1 : 0);
+                QRect textRect = painter.fontMetrics().boundingRect(label);
+                painter.drawText(2, labelPos.y() + textRect.height() / 3, label);
             }
-
-            // Горизонтальные линии
-            for (int i = 0; i <= steps; ++i) {
-                int y = beginY + i * yScreenStep;
-
-                painter.drawLine(minX, y, maxX, y);
-
-                // Подписи по оси Y (левая ось)
-                QString label = QString::number(+mainLimints.maxY - i * yLogicalStep); // максимум -
-                int labelWidth = fm.horizontalAdvance(label);
-
-                drawCenteredRotatedText(painter, leftMargin / 2, y, -90, label); // поворот 90 влево
-            }
-            // Рисование осей
-            painter.setPen(QPen(Qt::black, 2));
-
-            // Подписи осей
-            QFont axisFont("Arial", 12, QFont::Bold);
-            painter.setFont(axisFont);
-
-            // Название оси X
-            painter.drawText(rect.width() - rightMargin - xScreenStep / 2, rect.height() - bottomMargin / 3, H);
-
-            // Название оси Y
-            painter.drawText(leftMargin / 2, topMargin + yScreenStep / 2, V);
-
-            painter.end();
         }
 
-        QImage getImage() const {
-            return image;
+        QPointF originPos = transform.map(QPointF(0, 0));
+        if (originPos.x() >= 0 && originPos.x() <= widgetWidth &&
+            originPos.y() >= 0 && originPos.y() <= widgetHeight)
+        {
+            painter.drawText(originPos.x() + 3, originPos.y() - 3, "0");
         }
+    }
+private:
+    double baseSpacing;
+    QColor penColor;
+    QColor axisColor;
 
-    private:
-        void drawCenteredRotatedText(QPainter &painter, qreal centerX, qreal centerY, qreal angle,
-                                     const QString &text) {
-            painter.save();
+    QColor color;
+    int steps; // Количество шагов
 
-            QFontMetrics fm(painter.font());
-            QRect textRect = fm.boundingRect(text);
-
-            // Перенос начала координат в центр поворота
-            painter.translate(centerX, centerY);
-
-            painter.rotate(angle);
-
-            painter.drawText(-textRect.width() / 2, textRect.height() / 2 - fm.descent(), text);
-
-            painter.restore();
-        }
-
-    private:
-        QColor color;
-        int steps; // Количество шагов
-
-        double margin = 2; // Отступ в процентах
-        QImage image; // Кэш изображения
-    };
+    double margin = 2; // Отступ в процентах
+    QImage image;      // Кэш изображения
+};
 } // namespace Scene::Objects
