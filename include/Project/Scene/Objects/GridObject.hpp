@@ -15,12 +15,10 @@ class GridObject final : public QObject
 
 public:
     GridObject(QObject* parent = nullptr)
-        : QObject(parent), baseSpacing(20.0),
-          penColor(200, 200, 200), axisColor(Qt::black)
+        : QObject(parent),
+          penColor(200, 200, 200), axisColor(Qt::black), steps(10.)
     {
         color = QColor(220, 220, 220);
-        steps = 10;
-        margin = 2;
         image = QImage(800, 800, QImage::Format_ARGB32);
     }
 
@@ -65,7 +63,7 @@ public:
         double bottom = worldRect.bottom();
         double top = worldRect.top();
 
-        double spacing = round(qMin(qAbs(right - left), qAbs(top - bottom)) / 10.);
+        double spacing = round(qMin(qAbs(right - left), qAbs(top - bottom)) / steps);
 
         double startX = std::floor(left / spacing) * spacing;
         double endX = std::ceil(right / spacing) * spacing;
@@ -167,14 +165,12 @@ public:
     }
 
 private:
-    double baseSpacing;
     QColor penColor;
     QColor axisColor;
 
     QColor color;
     int steps; // Количество шагов
 
-    double margin = 2; // Отступ в процентах
     QImage image;      // Кэш изображения
 };
 } // namespace Scene::Objects
