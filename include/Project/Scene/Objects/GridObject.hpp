@@ -35,27 +35,37 @@ public:
     }
 
 public:
-    
     QImage getImage() const
     {
         return image;
     }
 
+private:
+    double round(double x)
+    {
+        if (x == 0.)
+            return 0.;
+        double power = std::pow(10., std::floor(std::log10(x)));
+        double step = power / 2.0;
+
+        if (step < 5)
+            step = 5; // минимальный шаг
+
+        return std::ceil(x / step) * step;
+    }
+
+public:
     void draw(QPainter& painter, const QTransform& transform, const QTransform& inverseTransform, const QRect& widgetRect)
     {
         painter.save();
         QRectF worldRect = inverseTransform.mapRect(QRectF(widgetRect));
 
-        double scale = getScaleFromTransform(transform);
-        qDebug() << scale;
-        if (scale < 0.15)
-            scale = 0.19;
-        double spacing = calculateSpacing(scale);
-
         double left = worldRect.left();
         double right = worldRect.right();
         double bottom = worldRect.bottom();
         double top = worldRect.top();
+
+        double spacing = round(qMin(qAbs(right - left), qAbs(top - bottom)) / 10.);
 
         double startX = std::floor(left / spacing) * spacing;
         double endX = std::ceil(right / spacing) * spacing;
@@ -104,31 +114,6 @@ public:
         drawLabels(painter, transform, startX, endX, startY, endY, spacing, widgetRect);
 
         painter.restore();
-    }
-
-private:
-    double calculateSpacing(double scale) const
-    {
-        double spacing = baseSpacing;
-        double scaleFactors[] = {0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100};
-
-        for (double factor : scaleFactors)
-        {
-            if (scale * baseSpacing * factor > 30)
-            {
-                spacing = baseSpacing * factor;
-                break;
-            }
-        }
-        return spacing;
-    }
-
-    /*
-       Масштаб
-    */
-    double getScaleFromTransform(const QTransform& transform) const
-    {
-        return std::sqrt(transform.m11() * transform.m11() + transform.m12() * transform.m12());
     }
 
     void drawLabels(QPainter& painter, const QTransform& transform, double startX, double endX, double startY, double endY, double spacing, const QRect& widgetRect)
@@ -180,6 +165,7 @@ private:
             painter.drawText(originPos.x() + 3, originPos.y() - 3, "0");
         }
     }
+
 private:
     double baseSpacing;
     QColor penColor;
